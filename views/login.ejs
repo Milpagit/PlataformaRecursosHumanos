@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="es">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="/css/styles.css" rel="stylesheet" />
+  <title>Acceso - Poder Judicial</title>
+</head>
+
+<body class="bg-gray-100 font-sans text-grisTexto flex flex-col items-center min-h-screen">
+
+  <!-- ENCABEZADO PRINCIPAL -->
+  <header class="w-full bg-verdegris text-white py-6 shadow-md">
+    <div class="container mx-auto flex items-center justify-center">
+      <img src="/images/pj-logo.png" alt="Logo PJ" class="w-24 h-auto mr-4" />
+      <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-wide">
+        Poder Judicial del Estado de Hidalgo
+      </h1>
+      <img src="/images/consejo-logo.png" alt="Logo Consejo" class="w-24 h-auto mr-4" />
+    
+    </div>
+  </header>
+
+  
+  <section class="w-full py-2">
+  <div class="container mx-auto text-center space-y-1">
+    <!-- Nivel 1: más destacado -->
+    <h3 class="text-xl md:text-2xl font-extrabold text-verdegris uppercase tracking-wide">
+      Consejo de la Judicatura
+    </h3>
+    <div class="mx-auto w-16 border-t-2 border-verdegris"></div>
+    <!-- Nivel 2 -->
+    <p class="text-lg font-bold text-grisTexto uppercase tracking-normal">
+      Comisión de Administración
+    </p>
+    <div class="mx-auto w-12 border-t border-grisTexto"></div>
+    <!-- Nivel 3 -->
+    <p class="text-base font-semibold text-grisTexto uppercase tracking-wide">
+      Coordinación General de Administración
+    </p>
+    <div class="mx-auto w-8 border-t border-grisTexto"></div>
+    <!-- Nivel 4 -->
+    <p class="text-sm font-medium text-grisTexto uppercase tracking-wide">
+      Dirección de Recursos Humanos
+    </p>
+  </div>
+</section>
+
+  <!-- FORMULARIO -->
+  <main class="flex-grow w-full flex justify-center items-center px-4 mt-12">
+    <form action="/login" method="POST"
+      class="w-full max-w-md bg-white rounded-xl shadow-lg border border-verdegris p-8 space-y-6">
+
+      <!-- TÍTULO DEL FORMULARIO -->
+      <h2 class="text-center text-2xl font-bold text-verdegris uppercase">Ingreso al sistema</h2>
+      <p class="text-center text-sm text-grisTexto">Ingresa tu CURP, RFC y Contraseña</p>
+
+      <!-- CURP -->
+      <div>
+        <label class="block mb-1 text-sm font-medium">CURP</label>
+        <input type="text" name="curp" placeholder="CURP" required
+        class="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris uppercase" />
+      </div>
+
+      <!-- RFC -->
+      <div>
+        <label class="block mb-1 text-sm font-medium">RFC</label>
+        <input type="text" name="rfc" placeholder="RFC" required
+        class="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris uppercase" />
+      </div>
+
+      <!-- Contraseña -->
+      <div>
+        <label class="block mb-1 text-sm font-medium">Contraseña</label>
+        <input type="password" name="password" placeholder="Contraseña" required
+          class="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris" />
+      </div>
+        
+      <!-- BOTÓN -->
+      <button type="submit"
+        class="w-full bg-amarilloPJ hover:bg-[#e1c27d] text-grisTexto font-semibold py-3 rounded-md transition">
+        Ingresar
+      </button>
+
+      <div class="text-center mt-4">
+        <a href="/registrar-password" class="text-sm text-verdegris hover:underline">
+          ¿Primera vez? Registra tu contraseña aquí
+        </a>       
+      </div>
+
+      <div class="text-center mt-4">
+         <a href="/recuperar-password" class="text-sm text-verdegris hover:underline">
+          ¿Olvidaste tu contraseña? Recuperala aquí
+        </a>
+      </div>
+
+    </form>
+  </main>
+
+
+  <!-- CRÉDITOS 
+  <p class="mt-8 text-sm italic text-grisTexto">Elaborado por José Isac Frausto Cadena.</p>-->
+
+  <!-- FOOTER -->
+  <footer class="w-full bg-verdegris text-white text-center py-4 mt-12">
+    <p class="text-xs">© 2025 Poder Judicial del Estado de Hidalgo. Todos los derechos reservados.</p>
+  </footer>
+
+  <script src="/js/formulario.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Progreso de Generación</title>
+  <style>
+    .progress-container {
+      width: 80%;
+      margin: 50px auto;
+      text-align: center;
+    }
+    .progress-bar {
+      height: 30px;
+      background-color: #f0f0f0;
+      border-radius: 15px;
+      overflow: hidden;
+    }
+    .progress-fill {
+      height: 100%;
+      background-color: #4caf50;
+      transition: width 0.3s ease;
+    }
+  </style>
+</head>
+<body>
+  <div class="progress-container">
+    <h1>Generando reportes...</h1>
+    <div class="progress-bar">
+      <div class="progress-fill" id="progress-bar" style="width: 0%"></div>
+    </div>
+    <p id="progress-text">0% (0/0)</p>
+    <p id="status-message">Esperando inicio...</p>
+  </div>
+
+  <script>
+    function actualizarProgreso() {
+      fetch('/progreso')
+        .then(response => response.json())
+        .then(data => {
+          // Calcular porcentaje
+          const porcentaje = data.total > 0 
+            ? Math.round((data.current / data.total) * 100)
+            : 0;
+          
+          // Actualizar UI
+          document.getElementById('progress-bar').style.width = `${porcentaje}%`;
+          document.getElementById('progress-text').textContent = 
+            `${porcentaje}% (${data.current}/${data.total})`;
+          document.getElementById('status-message').textContent = data.message;
+          
+          // Continuar actualizando si no está completo
+          if (porcentaje < 100) {
+            setTimeout(actualizarProgreso, 1000);
+          }
+        })
+        .catch(error => {
+          console.error('Error obteniendo progreso:', error);
+          setTimeout(actualizarProgreso, 3000);
+        });
+    }
+    
+    // Iniciar la actualización
+    window.onload = actualizarProgreso;
+  </script>
+</body>
+</html>

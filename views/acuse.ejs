@@ -1,0 +1,310 @@
+﻿<!DOCTYPE html>
+<html lang="es">
+<div id="reporte">
+
+  <head>
+    <meta charset="UTF-8">
+    <title>Acuse de Registro</title>
+    <link href="/css/styles.css" rel="stylesheet">
+    <style>
+      @media print {
+        .noprint {
+          display: none !important;
+        }
+      }
+
+      .acuse-container {
+        max-width: 850px;
+        margin: auto;
+        background-color: white;
+        padding: 40px;
+        border: 2px solid #ccc;
+        border-radius: 10px;
+      }
+
+      h2 {
+        margin-top: 30px;
+        font-size: 1.5rem;
+        font-weight: bold;
+        color: #1a202c;
+      }
+    </style>
+  </head>
+
+  <body class="bg-gray-100 text-gray-900 p-6">
+
+    <div id="acuseContent" class="acuse-container">
+
+      <div class="flex justify-center items-center mb-6">
+        <img src="/images/pj-logo-verde.png" alt="Logo" class="h-28 w-24 mr-4">
+        <div aling="text-center">
+          <p class="text-center font-bold text-grisTexto tracking-normal">Poder Judicial del Estado de Hidalgo</p>
+          <p class="text-center font-bold text-grisTexto tracking-normal">Consejo de la Judicatura </p>
+          <p class="text-center font-bold text-grisTexto tracking-normal">Comisión de Administración</p>
+          <p class="text-center font-bold text-grisTexto tracking-normal">Coordinación General de Administración</p>
+          <p class="text-center font-bold text-grisTexto tracking-normal">Dirección de Recursos Humanos</p>
+        </div>
+        <img src="/images/consejo-logo-verde.png" alt="Logo" class="h-20 ml-4">
+      </div>
+
+      <h1 class="text-4xl font-extrabold text-center text-gray-800 mb-8 underline">ACUSE</h1>
+
+      <p class="text-center mb-8 text-gray-700">
+        Este documento certifica que el siguiente trabajador ha completado correctamente el registro y actualización de
+        datos en la plataforma del Poder Judicial del Estado de Hidalgo.
+      </p>
+
+      <h2>Datos del Trabajador</h2>
+      <ul class="list-disc pl-6">
+        <li><strong>No. de Trabajador:</strong>
+          <%= trabajador.noTrabajador %>
+        </li>
+        <li><strong>Nombre Completo:</strong>
+          <%= trabajador.nombreTrabajador %>
+        </li>
+        <li><strong>RFC:</strong>
+          <%= trabajador.rfc %>
+        </li>
+        <li><strong>CURP:</strong>
+          <%= trabajador.curp %>
+        </li>
+        <li><strong>Fecha de Ingreso:</strong>
+          <%= formatearFecha(trabajador.fechaIngreso) %>
+        </li>
+        <li><strong>Adscripción Actual:</strong>
+          <%= trabajador.adscripcionActual %>
+        </li>
+        <li><strong>Cargo Actual:</strong>
+          <%= trabajador.cargoActual %>
+        </li>
+        <li><strong>Sexo:</strong>
+          <%= trabajador.sexoTrabajador %>
+        </li>
+        <li><strong>Fecha de Nacimiento:</strong>
+          <%= formatearFecha(trabajador.fechaNacimiento) %>
+        </li>
+        <li><strong>Lugar de Nacimiento:</strong>
+          <%= trabajador.lugarNacimiento %>
+        </li>
+        <li><strong>Estado Civil:</strong>
+          <%= trabajador.estadoCivil %>
+        </li>
+        <li><strong>Nombre del Cónyuge:</strong>
+          <%= trabajador.nombreConyuge %>
+        </li>
+        <li><strong>Fecha de Nacimiento del Cónyuge:</strong>
+          <%= formatearFecha(trabajador.fechaNacimientoConyuge) %>
+        </li>
+        <li><strong>Sexo del Cónyuge:</strong>
+          <%= trabajador.sexoConyuge %>
+        </li>
+        <li><strong>Tipo de Sangre:</strong>
+          <%= trabajador.tipoSangre %>
+        </li>
+        <li><strong>Vigencia INE:</strong>
+          <%= trabajador.vigenciaINE %>
+        </li>
+        <li><strong>Correo Electrónico:</strong>
+          <%= trabajador.correoElectronico %>
+        </li>
+        <li><strong>Teléfono Celular:</strong>
+          <%= trabajador.noTelefono %>
+        </li>
+        <li><strong>Teléfono de Casa:</strong>
+          <%= trabajador.telefonoCasa %>
+        </li>
+        <li><strong>Teléfono Familiar:</strong>
+          <%= trabajador.telefonoFamiliar %> (<%= trabajador.parentescoFamiliar %>)
+        </li>
+        <li><strong>Domicilio INE:</strong>
+          <%= trabajador.calleNumero %>, <%= trabajador.colonia %>, <%= trabajador.municipio %>, <%= trabajador.estado
+                  %>, CP: <%= trabajador.codigoPostal %>
+        </li>
+        <li><strong>Domicilio Actual:</strong>
+          <%= trabajador.actualCalleNumero %>, <%= trabajador.actualColonia %>, <%= trabajador.actualMunicipio %>, <%=
+                  trabajador.actualEstado %>, CP: <%= trabajador.actualCP %>
+        </li>
+        <li><strong>Comunidad Indígena:</strong>
+          <%= trabajador.comunidadIndigena %>
+        </li>
+        <li><strong>Familia Lingüística:</strong>
+          <%= trabajador.familiaLinguistica %>
+        </li>
+        <li><strong>Tipo de Discapacidad:</strong>
+          <%= trabajador.tipoDiscapacidad %>
+        </li>
+        <li><strong>Discapacidad Especificada:</strong>
+          <%= trabajador.discapacidadEspecificada %>
+        </li>
+        <li><strong>Lenguaje de Señas:</strong>
+          <%= trabajador.lenguajeSenias %> (Dominio: <%= trabajador.dominioLSM %>)
+        </li>
+        <li><strong>¿Tiene enfermedad crónica?:</strong>
+          <%= trabajador.tieneEnfermedadCronica %>
+        </li>
+        <li><strong>Tipo de Enfermedad:</strong>
+          <%= trabajador.tipoCronica %>
+        </li>
+        <li><strong>¿Es padre o madre?:</strong>
+          <%= trabajador.es_padre_madre %>
+        </li>
+        <li><strong>¿Está embarazada?:</strong>
+          <%= trabajador.embarazada %>
+        </li>
+        <li><strong>Cantidad de Hijos:</strong>
+          <%= trabajador.cantidadHijos %>
+        </li>
+      </ul>
+
+      <% if (escolaridad.length> 0) { %>
+        <h2>Escolaridad</h2>
+        <ul class="list-disc pl-6">
+          <% escolaridad.forEach(e=> { %>
+            <li>
+              <%= e.nivelAcademico %>: <%= e.nombreTitulo %> — <%= e.institucion %> — <%= e.fechaObtencion %> — <%=
+                        e.estatus %> — Documento: <%= e.documentoAdquirido %> — Cédula: <%= e.cedulaProfesional %>
+            </li>
+            <% }) %>
+        </ul>
+        <% } %>
+
+          <% if (actualizacion.length> 0) { %>
+            <h2>Actualizaciones Profesionales</h2>
+            <ul class="list-disc pl-6">
+              <% actualizacion.forEach(a=> { %>
+                <li>
+                  <%= a.tema %> — <%= a.institucion %> — <%= formatearFecha(a.fecha) %> — Documento: <%= a.documento %>
+                </li>
+                <% }) %>
+            </ul>
+            <% } %>
+
+             <% if (experienciaPJ.length> 0) { %>
+            <h2>Experiencia Laboral</h2>
+            <ul class="list-disc pl-6">
+              <% experienciaPJ.forEach(p=> { %>
+                <li>
+                  <%= p.cargo %> — <%= p.institucion %> — <%= p.adscripcion %> — <%= p.campoExperiencia %> — Inicio: <%= p.periodoInicio %> — Fin: <%= p.periodoFin %>
+                </li>
+                <% }) %>
+            </ul>
+            <% } %>
+
+            <% if (hijos.length> 0) { %>
+              <h2>Hijos</h2>
+              <ul class="list-disc pl-6">
+                <% hijos.forEach(h=> { %>
+                  <li>
+                    <%= h.inicialesHijo %> — <%= h.sexoHijo %> — <%= formatearFecha(h.fechaNacimientoHijo) %> — <%= h.edadHijo %> años
+                  </li>
+                <% }) %>
+              </ul>
+            <% } %>  
+
+                <p class="text-center mt-8 text-gray-700 text-center"><span class="text-red-500">
+                  He leído y acepto el aviso de privacidad de la Plataforma de Actualización de Datos Personales del Personal del Poder Judicial del Estado de Hidalgo</span>
+                </p>
+
+                  <div class="mt-16 text-center">
+                    <p class="text-gray-700">_______________________________________</p>
+                    <p class="text-gray-800 font-bold">
+                      <%= trabajador.nombreTrabajador %>
+                    </p>
+                    <p class="text-gray-600 text-sm italic">Firma del trabajador</p>
+                  </div>
+
+                  <p class="text-center mt-8 text-gray-700 text-center">
+                    Entregar en el área de Recursos Humanos del Poder Judicial del Estado de Hidalgo
+                  </p>
+    </div>
+
+    <div class="text-center mt-10 noprint">
+      <button onclick="window.print()"
+        class="noprint bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Imprimir</button>
+      <button onclick="descargarPDF()"
+        class="noprint bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Descargar</button>
+
+    </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+
+
+
+<script>
+  async function descargarPDF() {
+    const { jsPDF } = window.jspdf;
+
+    const elementos = document.querySelectorAll('.noprint');
+  const estilosOriginales = [];
+
+  elementos.forEach(el => {
+    estilosOriginales.push(el.style.display);
+    el.style.display = 'none';
+  });
+
+
+    // Espera a que se oculte antes de capturar
+    await new Promise(resolve => setTimeout(resolve, 100)); // Pequeña espera
+    const elemento = document.getElementById("reporte");
+
+    // Captura en alta resolución
+    const canvas = await html2canvas(elemento, {
+      scale: 2, // Mejor calidad
+      useCORS: true
+    });
+
+    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+
+    const pdf = new jsPDF("p", "pt", "letter"); // 612x792 puntos aprox.
+    const pageWidth = pdf.internal.pageSize.getWidth();
+    const pageHeight = pdf.internal.pageSize.getHeight();
+
+    const imgWidth = canvas.width;
+    const imgHeight = canvas.height;
+
+    const ratio = pageWidth / imgWidth;
+    const scaledHeight = imgHeight * ratio;
+
+    const canvasPerPageHeight = pageHeight / ratio;
+
+    let position = 0;
+
+    while (position < imgHeight) {
+      const tempCanvas = document.createElement("canvas");
+      tempCanvas.width = imgWidth;
+      tempCanvas.height = Math.min(canvasPerPageHeight, imgHeight - position);
+
+      const ctx = tempCanvas.getContext("2d");
+      ctx.drawImage(
+        canvas,
+        0,
+        position,
+        imgWidth,
+        tempCanvas.height,
+        0,
+        0,
+        imgWidth,
+        tempCanvas.height
+      );
+
+      const pageImage = tempCanvas.toDataURL("image/jpeg", 1.0);
+      if (position > 0) pdf.addPage();
+      pdf.addImage(pageImage, "JPEG", 0, 0, pageWidth, (tempCanvas.height * ratio));
+
+      position += canvasPerPageHeight;
+    }
+
+     elementos.forEach((el, i) => {
+    el.style.display = estilosOriginales[i];
+  });
+
+    pdf.save("reporte_paginas.pdf");
+  }
+</script>
+
+
+</body>
+
+</html>
