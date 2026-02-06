@@ -155,543 +155,279 @@
           name="fechaIngreso"
           data-format="dd-mm-yyyy"
           placeholder="dd-mm-yyyy"
+          value="<%= user.fechaIngreso ? user.fechaIngreso.split('-').reverse().join('-') : '' %>"
           required
-        />
+          />
       </div>
 
       <div class="mb-3">
         <label class="block mb-1 text-gray-700 font-bold"
           >Adscripción actual</label
         >
-        <select
-          class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
-          id="adscripcionActual"
-          name="adscripcionActual"
-          required
-        >
-          <option value="">Seleccione su adscripción actual</option>
-          <option value="PRESIDENCIA">PRESIDENCIA</option>
-          <option value="SECRETARIA GENERAL">SECRETARIA GENERAL</option>
-          <option value="DIRECCIÓN JURIDICA CONSULTIVA">
-            DIRECCIÓN JURIDICA CONSULTIVA
-          </option>
-          <option value="CONTRALORIA GENERAL">CONTRALORIA GENERAL</option>
-          <option value="COORDINACIÓN DE COMUNICACION SOCIAL">
-            COORDINACIÓN DE COMUNICACION SOCIAL
-          </option>
-          <option value="COORDINACIÓN GENERAL DE ARCHIVOS DEL PJ">
-            COORDINACIÓN GENERAL DE ARCHIVOS DEL PJ
-          </option>
-          <option value="FONDO AUXILIAR DEL PODER JUDICIAL">
-            FONDO AUXILIAR DEL PODER JUDICIAL
-          </option>
-          <option value="PENSIONES ALIMENTICIAS IXMIQUILPAN">
-            PENSIONES ALIMENTICIAS IXMIQUILPAN
-          </option>
-          <option value="PENSIONES ALIMENTICIAS TIZAYUCA">
-            PENSIONES ALIMENTICIAS TIZAYUCA
-          </option>
-          <option value="PENSIONES ALIMENTICIAS TULA DE ALLENDE">
-            PENSIONES ALIMENTICIAS TULA DE ALLENDE
-          </option>
-          <option value="PENSIONES ALIMENTICIAS TULANCINGO">
-            PENSIONES ALIMENTICIAS TULANCINGO
-          </option>
-          <option value="COORDINACIÓN GENERAL DE ADMINISTRACION">
-            COORDINACIÓN GENERAL DE ADMINISTRACION
-          </option>
-          <option value="DIRECCIÓN DE ADMINISTRACION Y FINANZAS">
-            DIRECCIÓN DE ADMINISTRACION Y FINANZAS
-          </option>
-          <option value="DIRECCIÓN DE RECURSOS HUMANOS">
-            DIRECCIÓN DE RECURSOS HUMANOS
-          </option>
-          <option value="DIRECCIÓN DE SERVICIOS GENERALES">
-            DIRECCIÓN DE SERVICIOS GENERALES
-          </option>
-          <option value="DIRECCIÓN DE CONTROL INTERNO">
-            DIRECCIÓN DE CONTROL INTERNO
-          </option>
-          <option value="COMISIÓN DE CARRERA JUDICIAL Y JUSTICIA ALTERNATIVA">
-            COMISIÓN DE CARRERA JUDICIAL Y JUSTICIA ALTERNATIVA
-          </option>
-          <option
-            value="INSTITUTO DE PROFESIONALIZACION E INVESTIGACIONES JURIDICAS"
+      <% 
+        // Array completo - TODAS LAS OPCIONES EN MAYÚSCULAS Y SIN ACENTOS
+        const opcionesAdscripcion = [
+          { value: "", texto: "SELECCIONE SU ADSCRIPCION ACTUAL" },
+          { value: "PRESIDENCIA", texto: "PRESIDENCIA" },
+          { value: "SECRETARIA GENERAL", texto: "SECRETARIA GENERAL" },
+          { value: "DIRECCION JURIDICA CONSULTIVA", texto: "DIRECCION JURIDICA CONSULTIVA" },
+          { value: "CONTRALORIA GENERAL", texto: "CONTRALORIA GENERAL" },
+          { value: "COORDINACION DE COMUNICACION SOCIAL", texto: "COORDINACION DE COMUNICACION SOCIAL" },
+          { value: "COORDINACION GENERAL DE ARCHIVOS DEL PJ", texto: "COORDINACION GENERAL DE ARCHIVOS DEL PJ" },
+          { value: "FONDO AUXILIAR DEL PODER JUDICIAL", texto: "FONDO AUXILIAR DEL PODER JUDICIAL" },
+          { value: "PENSIONES ALIMENTICIAS IXMIQUILPAN", texto: "PENSIONES ALIMENTICIAS IXMIQUILPAN" },
+          { value: "PENSIONES ALIMENTICIAS TIZAYUCA", texto: "PENSIONES ALIMENTICIAS TIZAYUCA" },
+          { value: "PENSIONES ALIMENTICIAS TULA DE ALLENDE", texto: "PENSIONES ALIMENTICIAS TULA DE ALLENDE" },
+          { value: "PENSIONES ALIMENTICIAS TULANCINGO", texto: "PENSIONES ALIMENTICIAS TULANCINGO" },
+          { value: "COORDINACION GENERAL DE ADMINISTRACION", texto: "COORDINACION GENERAL DE ADMINISTRACION" },
+          { value: "DIRECCION DE ADMINISTRACION Y FINANZAS", texto: "DIRECCION DE ADMINISTRACION Y FINANZAS" },
+          { value: "DIRECCION DE RECURSOS HUMANOS", texto: "DIRECCION DE RECURSOS HUMANOS" },
+          { value: "DIRECCION DE SERVICIOS GENERALES", texto: "DIRECCION DE SERVICIOS GENERALES" },
+          { value: "DIRECCION DE CONTROL INTERNO", texto: "DIRECCION DE CONTROL INTERNO" },
+          { value: "COMISION DE CARRERA JUDICIAL Y JUSTICIA ALTERNATIVA", texto: "COMISION DE CARRERA JUDICIAL Y JUSTICIA ALTERNATIVA" },
+          { value: "INSTITUTO DE PROFESIONALIZACION E INVESTIGACIONES JURIDICAS", texto: "INSTITUTO DE PROFESIONALIZACION E INVESTIGACIONES JURIDICAS" },
+          { value: "CONSEJO DE FAMILIA PACHUCA", texto: "CONSEJO DE FAMILIA PACHUCA" },
+          { value: "CONSEJO DE FAMILIA HUEJUTLA", texto: "CONSEJO DE FAMILIA HUEJUTLA" },
+          { value: "CONSEJO DE FAMILIA IXMIQUILPAN", texto: "CONSEJO DE FAMILIA IXMIQUILPAN" },
+          { value: "CONSEJO DE FAMILIA TEPEJI DEL RIO", texto: "CONSEJO DE FAMILIA TEPEJI DEL RIO" },
+          { value: "CONSEJO DE FAMILIA TULA", texto: "CONSEJO DE FAMILIA TULA" },
+          { value: "CONSEJO DE FAMILIA TULANCINGO", texto: "CONSEJO DE FAMILIA TULANCINGO" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA PACHUCA", texto: "CENTRO DE JUSTICIA ALTERNATIVA PACHUCA" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA HUEJUTLA", texto: "CENTRO DE JUSTICIA ALTERNATIVA HUEJUTLA" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA IXMIQUILPAN", texto: "CENTRO DE JUSTICIA ALTERNATIVA IXMIQUILPAN" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA TENANGO", texto: "CENTRO DE JUSTICIA ALTERNATIVA TENANGO" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA TULANCINGO", texto: "CENTRO DE JUSTICIA ALTERNATIVA TULANCINGO" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA TULA", texto: "CENTRO DE JUSTICIA ALTERNATIVA TULA" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA TIZAYUCA", texto: "CENTRO DE JUSTICIA ALTERNATIVA TIZAYUCA" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA APAN", texto: "CENTRO DE JUSTICIA ALTERNATIVA APAN" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA ACTOPAN", texto: "CENTRO DE JUSTICIA ALTERNATIVA ACTOPAN" },
+          { value: "CENTRO DE JUSTICIA ALTERNATIVA PARA MUJERES", texto: "CENTRO DE JUSTICIA ALTERNATIVA PARA MUJERES" },
+          { value: "SALA DE MEDIACION INTRAJUDICIAL", texto: "SALA DE MEDIACION INTRAJUDICIAL" },
+          { value: "COMISION DE PLANEACION, ADSCRIPCION Y CREACION DE NUEVOS ORGANOS", texto: "COMISION DE PLANEACION, ADSCRIPCION Y CREACION DE NUEVOS ORGANOS" },
+          { value: "DIRECCION DE TECNOLOGIAS", texto: "DIRECCION DE TECNOLOGIAS" },
+          { value: "COORDINACION DE PLANEACION Y PROGRAMAS", texto: "COORDINACION DE PLANEACION Y PROGRAMAS" },
+          { value: "ARCHIVO DE CONCENTRACION", texto: "ARCHIVO DE CONCENTRACION" },
+          { value: "ARCHIVO HISTORICO", texto: "ARCHIVO HISTORICO" },
+          { value: "UNIDAD DE TRANSPARENCIA", texto: "UNIDAD DE TRANSPARENCIA" },
+          { value: "UNIDAD PARA LA IGUALDAD DE GENERO Y DERECHOS HUMANOS", texto: "UNIDAD PARA LA IGUALDAD DE GENERO Y DERECHOS HUMANOS" },
+          { value: "COMISION DE DISCIPLINA", texto: "COMISION DE DISCIPLINA" },
+          { value: "VISITADURIA JUDICIAL CIVIL", texto: "VISITADURIA JUDICIAL CIVIL" },
+          { value: "VISITADURIA JUDICIAL PENAL", texto: "VISITADURIA JUDICIAL PENAL" },
+          { value: "UNIDAD DE RESPONSABILIDADES", texto: "UNIDAD DE RESPONSABILIDADES" },
+          { value: "COMISION DE INVESTIGACION Y ESTUDIOS JURIDICOS", texto: "COMISION DE INVESTIGACION Y ESTUDIOS JURIDICOS" },
+          { value: "COORDINACION DE ACTUARIOS PACHUCA", texto: "COORDINACION DE ACTUARIOS PACHUCA" },
+          { value: "OFICIALIA DE PARTES PACHUCA", texto: "OFICIALIA DE PARTES PACHUCA" },
+          { value: "SINDICATO DE TRABAJADORES", texto: "SINDICATO DE TRABAJADORES" },
+          { value: "JUZGADO PRIMERO CIVIL PACHUCA", texto: "JUZGADO PRIMERO CIVIL PACHUCA" },
+          { value: "JUZGADO SEGUNDO CIVIL PACHUCA", texto: "JUZGADO SEGUNDO CIVIL PACHUCA" },
+          { value: "JUZGADO TERCERO CIVIL PACHUCA", texto: "JUZGADO TERCERO CIVIL PACHUCA" },
+          { value: "JUZGADO CUARTO CIVIL PACHUCA", texto: "JUZGADO CUARTO CIVIL PACHUCA" },
+          { value: "JUZGADO PRIMERO MERCANTIL PACHUCA", texto: "JUZGADO PRIMERO MERCANTIL PACHUCA" },
+          { value: "JUZGADO SEGUNDO MERCANTIL PACHUCA", texto: "JUZGADO SEGUNDO MERCANTIL PACHUCA" },
+          { value: "JUZGADO TERCERO MERCANTIL PACHUCA", texto: "JUZGADO TERCERO MERCANTIL PACHUCA" },
+          { value: "JUZGADO PRIMERO PENAL PACHUCA", texto: "JUZGADO PRIMERO PENAL PACHUCA" },
+          { value: "JUZGADO PRIMERO FAMILIAR PACHUCA", texto: "JUZGADO PRIMERO FAMILIAR PACHUCA" },
+          { value: "JUZGADO SEGUNDO FAMILIAR PACHUCA", texto: "JUZGADO SEGUNDO FAMILIAR PACHUCA" },
+          { value: "JUZGADO TERCERO FAMILIAR PACHUCA", texto: "JUZGADO TERCERO FAMILIAR PACHUCA" },
+          { value: "JUZGADO CUARTO FAMILIAR PACHUCA", texto: "JUZGADO CUARTO FAMILIAR PACHUCA" },
+          { value: "JUZGADO PRIMERO CIVIL Y FAMILIAR ACTOPAN", texto: "JUZGADO PRIMERO CIVIL Y FAMILIAR ACTOPAN" },
+          { value: "JUZGADO SEGUNDO CIVIL Y FAMILIAR ACTOPAN", texto: "JUZGADO SEGUNDO CIVIL Y FAMILIAR ACTOPAN" },
+          { value: "JUZGADO TERCERO CIVIL Y FAMILIAR ACTOPAN", texto: "JUZGADO TERCERO CIVIL Y FAMILIAR ACTOPAN" },
+          { value: "JUZGADO MIXTO ACTOPAN", texto: "JUZGADO MIXTO ACTOPAN" },
+          { value: "JUZGADO PRIMERO CIVIL Y FAMILIAR APAN", texto: "JUZGADO PRIMERO CIVIL Y FAMILIAR APAN" },
+          { value: "JUZGADO SEGUNDO CIVIL Y FAMILIAR APAN", texto: "JUZGADO SEGUNDO CIVIL Y FAMILIAR APAN" },
+          { value: "JUZGADO TERCERO CIVIL Y FAMILIAR APAN", texto: "JUZGADO TERCERO CIVIL Y FAMILIAR APAN" },
+          { value: "JUZGADO MIXTO APAN", texto: "JUZGADO MIXTO APAN" },
+          { value: "JUZGADO MIXTO ATOTONILCO", texto: "JUZGADO MIXTO ATOTONILCO" },
+          { value: "JUZGADO PRIMERO CIVIL Y FAMILIAR HUEJUTLA", texto: "JUZGADO PRIMERO CIVIL Y FAMILIAR HUEJUTLA" },
+          { value: "JUZGADO SEGUNDO CIVIL Y FAMILIAR HUEJUTLA", texto: "JUZGADO SEGUNDO CIVIL Y FAMILIAR HUEJUTLA" },
+          { value: "JUZGADO PENAL HUEJUTLA", texto: "JUZGADO PENAL HUEJUTLA" },
+          { value: "JUZGADO CIVIL Y FAMILIAR HUICHAPAN", texto: "JUZGADO CIVIL Y FAMILIAR HUICHAPAN" },
+          { value: "JUZGADO MIXTO HUICHAPAN", texto: "JUZGADO MIXTO HUICHAPAN" },
+          { value: "JUZGADO PRIMERO CIVIL Y FAMILIAR IXMIQUILPAN", texto: "JUZGADO PRIMERO CIVIL Y FAMILIAR IXMIQUILPAN" },
+          { value: "JUZGADO SEGUNDO CIVIL Y FAMILIAR IXMIQUILPAN", texto: "JUZGADO SEGUNDO CIVIL Y FAMILIAR IXMIQUILPAN" },
+          { value: "JUZGADO MIXTO IXMIQUILPAN", texto: "JUZGADO MIXTO IXMIQUILPAN" },
+          { value: "JUZGADO MIXTO JACALA", texto: "JUZGADO MIXTO JACALA" },
+          { value: "JUZGADO MIXTO METZTITLAN", texto: "JUZGADO MIXTO METZTITLAN" },
+          { value: "JUZGADO CIVIL Y FAMILIAR MIXQUIAHUALA", texto: "JUZGADO CIVIL Y FAMILIAR MIXQUIAHUALA" },
+          { value: "JUZGADO MIXTO MIXQUIAHUALA", texto: "JUZGADO MIXTO MIXQUIAHUALA" },
+          { value: "JUZGADO MIXTO MOLANGO", texto: "JUZGADO MIXTO MOLANGO" },
+          { value: "JUZGADO MIXTO TENANGO DE DORIA", texto: "JUZGADO MIXTO TENANGO DE DORIA" },
+          { value: "JUZGADO MIXTO TEPEJI DEL RIO", texto: "JUZGADO MIXTO TEPEJI DEL RIO" },
+          { value: "JUZGADO PRIMERO CIVIL Y FAMILIAR TIZAYUCA", texto: "JUZGADO PRIMERO CIVIL Y FAMILIAR TIZAYUCA" },
+          { value: "JUZGADO SEGUNDO CIVIL Y FAMILIAR TIZAYUCA", texto: "JUZGADO SEGUNDO CIVIL Y FAMILIAR TIZAYUCA" },
+          { value: "JUZGADO MIXTO TIZAYUCA", texto: "JUZGADO MIXTO TIZAYUCA" },
+          { value: "JUZGADO PRIMERO CIVIL Y FAMILIAR TULA", texto: "JUZGADO PRIMERO CIVIL Y FAMILIAR TULA" },
+          { value: "JUZGADO SEGUNDO CIVIL Y FAMILIAR TULA", texto: "JUZGADO SEGUNDO CIVIL Y FAMILIAR TULA" },
+          { value: "JUZGADO TERCERO CIVIL Y FAMILIAR TULA", texto: "JUZGADO TERCERO CIVIL Y FAMILIAR TULA" },
+          { value: "JUZGADO CUARTO CIVIL Y FAMILIAR TULA", texto: "JUZGADO CUARTO CIVIL Y FAMILIAR TULA" },
+          { value: "JUZGADO PRIMERO PENAL TULA", texto: "JUZGADO PRIMERO PENAL TULA" },
+          { value: "JUZGADO MERCANTIL TULA", texto: "JUZGADO MERCANTIL TULA" },
+          { value: "JUZGADO PRIMERO CIVIL Y FAMILIAR TULANCINGO", texto: "JUZGADO PRIMERO CIVIL Y FAMILIAR TULANCINGO" },
+          { value: "JUZGADO SEGUNDO CIVIL Y FAMILIAR TULANCINGO", texto: "JUZGADO SEGUNDO CIVIL Y FAMILIAR TULANCINGO" },
+          { value: "JUZGADO TERCERO CIVIL Y FAMILIAR TULANCINGO", texto: "JUZGADO TERCERO CIVIL Y FAMILIAR TULANCINGO" },
+          { value: "JUZGADO CUARTO CIVIL Y FAMILIAR TULANCINGO", texto: "JUZGADO CUARTO CIVIL Y FAMILIAR TULANCINGO" },
+          { value: "JUZGADO PRIMERO PENAL TULANCINGO", texto: "JUZGADO PRIMERO PENAL TULANCINGO" },
+          { value: "JUZGADO MERCANTIL TULANCINGO", texto: "JUZGADO MERCANTIL TULANCINGO" },
+          { value: "ARCHIVO REGIONAL TULANCINGO", texto: "ARCHIVO REGIONAL TULANCINGO" },
+          { value: "JUZGADO MIXTO ZACUALTIPAN", texto: "JUZGADO MIXTO ZACUALTIPAN" },
+          { value: "JUZGADO MIXTO ZIMAPAN", texto: "JUZGADO MIXTO ZIMAPAN" },
+          { value: "JUZGADO ESPECIALIZADO EN MATERIA P/ ADOLESCENTES", texto: "JUZGADO ESPECIALIZADO EN MATERIA P/ ADOLESCENTES" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO PACHUCA", texto: "SISTEMA PROCESAL PENAL ACUSATORIO PACHUCA" },
+          { value: "JUZGADO PRIMERO PENAL DE EJECUCION", texto: "JUZGADO PRIMERO PENAL DE EJECUCION" },
+          { value: "JUZGADO SEGUNDO PENAL DE EJECUCION", texto: "JUZGADO SEGUNDO PENAL DE EJECUCION" },
+          { value: "CENTRO DE JUSTICIA PARA MUJERES PACHUCA", texto: "CENTRO DE JUSTICIA PARA MUJERES PACHUCA" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO TULA", texto: "SISTEMA PROCESAL PENAL ACUSATORIO TULA" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO TIZAYUCA", texto: "SISTEMA PROCESAL PENAL ACUSATORIO TIZAYUCA" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO ACTOPAN", texto: "SISTEMA PROCESAL PENAL ACUSATORIO ACTOPAN" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO HUEJUTLA", texto: "SISTEMA PROCESAL PENAL ACUSATORIO HUEJUTLA" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO HUICHAPAN", texto: "SISTEMA PROCESAL PENAL ACUSATORIO HUICHAPAN" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO IXMIQUILPAN", texto: "SISTEMA PROCESAL PENAL ACUSATORIO IXMIQUILPAN" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO TULANCINGO", texto: "SISTEMA PROCESAL PENAL ACUSATORIO TULANCINGO" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO APAN", texto: "SISTEMA PROCESAL PENAL ACUSATORIO APAN" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO ATOTONILCO", texto: "SISTEMA PROCESAL PENAL ACUSATORIO ATOTONILCO" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO JACALA", texto: "SISTEMA PROCESAL PENAL ACUSATORIO JACALA" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO METZTITLAN", texto: "SISTEMA PROCESAL PENAL ACUSATORIO METZTITLAN" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO MIXQUIAHUALA", texto: "SISTEMA PROCESAL PENAL ACUSATORIO MIXQUIAHUALA" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO MOLANGO", texto: "SISTEMA PROCESAL PENAL ACUSATORIO MOLANGO" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO TENANGO", texto: "SISTEMA PROCESAL PENAL ACUSATORIO TENANGO" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO ZACUALTIPAN", texto: "SISTEMA PROCESAL PENAL ACUSATORIO ZACUALTIPAN" },
+          { value: "SISTEMA PROCESAL PENAL ACUSATORIO ZIMAPAN", texto: "SISTEMA PROCESAL PENAL ACUSATORIO ZIMAPAN" },
+          { value: "PRIMERA SALA CIVIL Y FAMILIAR", texto: "PRIMERA SALA CIVIL Y FAMILIAR" },
+          { value: "SEGUNDA SALA CIVIL Y FAMILIAR", texto: "SEGUNDA SALA CIVIL Y FAMILIAR" },
+          { value: "TERCERA SALA CIVIL Y FAMILIAR", texto: "TERCERA SALA CIVIL Y FAMILIAR" },
+          { value: "PRIMERA SALA PENAL", texto: "PRIMERA SALA PENAL" },
+          { value: "SEGUNDA SALA PENAL", texto: "SEGUNDA SALA PENAL" },
+          { value: "SEPTIMA SALA UNITARIA", texto: "SEPTIMA SALA UNITARIA" },
+          { value: "OCTAVA SALA UNITARIA", texto: "OCTAVA SALA UNITARIA" },
+          { value: "SALA UNITARIA ESPECIALIZADA PARA ADOLESCENTES", texto: "SALA UNITARIA ESPECIALIZADA PARA ADOLESCENTES" },
+          { value: "SALAS DE ORALIDAD DE SEGUNDA INSTANCIA", texto: "SALAS DE ORALIDAD DE SEGUNDA INSTANCIA" },
+          { value: "TRIBUNAL LABORAL", texto: "TRIBUNAL LABORAL" },
+          { value: "TRIBUNAL DE JUSTICIA ADMINISTRATIVA", texto: "TRIBUNAL DE JUSTICIA ADMINISTRATIVA" }
+        ];
+
+        // Valor actual del usuario (normalizado a mayúsculas y sin acentos)
+        const valorActual = user.adscripcionActual 
+          ? user.adscripcionActual.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+          : '';
+      %>
+
+      <select
+        class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
+        id="adscripcionActual"
+        name="adscripcionActual"
+        required
+      >
+        <% opcionesAdscripcion.forEach(opcion => { %>
+          <option 
+            value="<%= opcion.value %>" 
+            <%= valorActual === opcion.value ? 'selected' : '' %>
           >
-            INSTITUTO DE PROFESIONALIZACION E INVESTIGACIONES JURIDICAS
-          </option>
-          <option value="CONSEJO DE FAMILIA PACHUCA">
-            CONSEJO DE FAMILIA PACHUCA
-          </option>
-          <option value="CONSEJO DE FAMILIA HUEJUTLA">
-            CONSEJO DE FAMILIA HUEJUTLA
-          </option>
-          <option value="CONSEJO DE FAMILIA IXMIQUILPAN">
-            CONSEJO DE FAMILIA IXMIQUILPAN
-          </option>
-          <option value="CONSEJO DE FAMILIA TEPEJI DEL RIO">
-            CONSEJO DE FAMILIA TEPEJI DEL RIO
-          </option>
-          <option value="CONSEJO DE FAMILIA TULA">
-            CONSEJO DE FAMILIA TULA
-          </option>
-          <option value="CONSEJO DE FAMILIA TULANCINGO">
-            CONSEJO DE FAMILIA TULANCINGO
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA PACHUCA">
-            CENTRO DE JUSTICIA ALTERNATIVA PACHUCA
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA HUEJUTLA">
-            CENTRO DE JUSTICIA ALTERNATIVA HUEJUTLA
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA IXMIQUILPAN">
-            CENTRO DE JUSTICIA ALTERNATIVA IXMIQUILPAN
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA TENANGO">
-            CENTRO DE JUSTICIA ALTERNATIVA TENANGO
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA TULANCINGO">
-            CENTRO DE JUSTICIA ALTERNATIVA TULANCINGO
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA TULA">
-            CENTRO DE JUSTICIA ALTERNATIVA TULA
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA TIZAYUCA">
-            CENTRO DE JUSTICIA ALTERNATIVA TIZAYUCA
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA APAN">
-            CENTRO DE JUSTICIA ALTERNATIVA APAN
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA ACTOPAN">
-            CENTRO DE JUSTICIA ALTERNATIVA ACTOPAN
-          </option>
-          <option value="CENTRO DE JUSTICIA ALTERNATIVA PARA MUJERES">
-            CENTRO DE JUSTICIA ALTERNATIVA PARA MUJERES
-          </option>
-          <option value="SALA DE MEDIACION INTRAJUDICIAL">
-            SALA DE MEDIACION INTRAJUDICIAL
-          </option>
-          <option
-            value="COMISIÓN DE PLANEACION, ADSCRIPCIÓN Y CREACIÓN DE NUEVOS ÓRGANOS"
-          >
-            COMISIÓN DE PLANEACION, ADSCRIPCIÓN Y CREACIÓN DE NUEVOS ÓRGANOS
-          </option>
-          <option value="DIRECCIÓN DE TECNOLOGÍAS">
-            DIRECCIÓN DE TECNOLOGÍAS
-          </option>
-          <option value="COORDINACIÓN DE PLANEACION Y PROGRAMAS">
-            COORDINACIÓN DE PLANEACION Y PROGRAMAS
-          </option>
-          <option value="ARCHIVO DE CONCENTRACIÓN">
-            ARCHIVO DE CONCENTRACIÓN
-          </option>
-          <option value="ARCHIVO HISTÓRICO">ARCHIVO HISTÓRICO</option>
-          <option value="UNIDAD DE TRANSPARENCIA">
-            UNIDAD DE TRANSPARENCIA
-          </option>
-          <option value="UNIDAD PARA LA IGUALDAD DE GENERO Y DERECHOS HUMANOS">
-            UNIDAD PARA LA IGUALDAD DE GENERO Y DERECHOS HUMANOS
-          </option>
-          <option value="COMISIÓN DE DISCIPLINA">COMISIÓN DE DISCIPLINA</option>
-          <option value="VISITADURIA JUDICIAL CIVIL">
-            VISITADURIA JUDICIAL CIVIL
-          </option>
-          <option value="VISITADURIA JUDICIAL PENAL">
-            VISITADURIA JUDICIAL PENAL
-          </option>
-          <option value="UNIDAD DE RESPONSABILIDADES">
-            UNIDAD DE RESPONSABILIDADES
-          </option>
-          <option value="COMISIÓN DE INVESTIGACIÓN Y ESTUDIOS JURIDICOS">
-            COMISIÓN DE INVESTIGACIÓN Y ESTUDIOS JURIDICOS
-          </option>
-          <option value="COORDINACIÓN DE ACTUARIOS PACHUCA">
-            COORDINACIÓN DE ACTUARIOS PACHUCA
-          </option>
-          <option value="OFICIALÍA DE PARTES PACHUCA">
-            OFICIALIA DE PARTES PACHUCA
-          </option>
-          <option value="SINDICATO DE TRABAJADORES">
-            SINDICATO DE TRABAJADORES
-          </option>
-          <option value="JUZGADO PRIMERO CIVIL PACHUCA">
-            JUZGADO PRIMERO CIVIL PACHUCA
-          </option>
-          <option value="JUZGADO SEGUNDO CIVIL PACHUCA">
-            JUZGADO SEGUNDO CIVIL PACHUCA
-          </option>
-          <option value="JUZGADO TERCERO CIVIL PACHUCA">
-            JUZGADO TERCERO CIVIL PACHUCA
-          </option>
-          <option value="JUZGADO CUARTO CIVIL PACHUCA">
-            JUZGADO CUARTO CIVIL PACHUCA
-          </option>
-          <option value="JUZGADO PRIMERO MERCANTIL PACHUCA">
-            JUZGADO PRIMERO MERCANTIL PACHUCA
-          </option>
-          <option value="JUZGADO SEGUNDO MERCANTIL PACHUCA">
-            JUZGADO SEGUNDO MERCANTIL PACHUCA
-          </option>
-          <option value="JUZGADO TERCERO MERCANTIL PACHUCA">
-            JUZGADO TERCERO MERCANTIL PACHUCA
-          </option>
-          <option value="JUZGADO PRIMERO PENAL PACHUCA">
-            JUZGADO PRIMERO PENAL PACHUCA
-          </option>
-          <option value="JUZGADO PRIMERO FAMILIAR PACHUCA">
-            JUZGADO PRIMERO FAMILIAR PACHUCA
-          </option>
-          <option value="JUZGADO SEGUNDO FAMILIAR PACHUCA">
-            JUZGADO SEGUNDO FAMILIAR PACHUCA
-          </option>
-          <option value="JUZGADO TERCERO FAMILIAR PACHUCA">
-            JUZGADO TERCERO FAMILIAR PACHUCA
-          </option>
-          <option value="JUZGADO CUARTO FAMILIAR PACHUCA">
-            JUZGADO CUARTO FAMILIAR PACHUCA
-          </option>
-          <option value="JUZGADO PRIMERO CIVIL Y FAMILIAR ACTOPAN">
-            JUZGADO PRIMERO CIVIL Y FAMILIAR ACTOPAN
-          </option>
-          <option value="JUZGADO SEGUNDO CIVIL Y FAMILIAR ACTOPAN">
-            JUZGADO SEGUNDO CIVIL Y FAMILIAR ACTOPAN
-          </option>
-          <option value="JUZGADO TERCERO CIVIL Y FAMILIAR ACTOPAN">
-            JUZGADO TERCERO CIVIL Y FAMILIAR ACTOPAN
-          </option>
-          <option value="JUZGADO MIXTO ACTOPAN">JUZGADO MIXTO ACTOPAN</option>
-          <option value="JUZGADO PRIMERO CIVIL Y FAMILIAR APAN">
-            JUZGADO PRIMERO CIVIL Y FAMILIAR APAN
-          </option>
-          <option value="JUZGADO SEGUNDO CIVIL Y FAMILIAR APAN">
-            JUZGADO SEGUNDO CIVIL Y FAMILIAR APAN
-          </option>
-          <option value="JUZGADO TERCERO CIVIL Y FAMILIAR APAN">
-            JUZGADO TERCERO CIVIL Y FAMILIAR APAN
-          </option>
-          <option value="JUZGADO MIXTO APAN">JUZGADO MIXTO APAN</option>
-          <option value="JUZGADO MIXTO ATOTONILCO">
-            JUZGADO MIXTO ATOTONILCO
-          </option>
-          <option value="JUZGADO PRIMERO CIVIL Y FAMILIAR HUEJUTLA">
-            JUZGADO PRIMERO CIVIL Y FAMILIAR HUEJUTLA
-          </option>
-          <option value="JUZGADO SEGUNDO CIVIL Y FAMILIAR HUEJUTLA">
-            JUZGADO SEGUNDO CIVIL Y FAMILIAR HUEJUTLA
-          </option>
-          <option value="JUZGADO PENAL HUEJUTLA">JUZGADO PENAL HUEJUTLA</option>
-          <option value="JUZGADO CIVIL Y FAMILIAR HUICHAPAN">
-            JUZGADO CIVIL Y FAMILIAR HUICHAPAN
-          </option>
-          <option value="JUZGADO MIXTO HUICHAPAN">
-            JUZGADO MIXTO HUICHAPAN
-          </option>
-          <option value="JUZGADO PRIMERO CIVIL Y FAMILIAR IXMIQUILPAN">
-            JUZGADO PRIMERO CIVIL Y FAMILIAR IXMIQUILPAN
-          </option>
-          <option value="JUZGADO SEGUNDO CIVIL Y FAMILIAR IXMIQUILPAN">
-            JUZGADO SEGUNDO CIVIL Y FAMILIAR IXMIQUILPAN
-          </option>
-          <option value="JUZGADO MIXTO IXMIQUILPAN">
-            JUZGADO MIXTO IXMIQUILPAN
-          </option>
-          <option value="JUZGADO MIXTO JACALA">JUZGADO MIXTO JACALA</option>
-          <option value="JUZGADO MIXTO METZTITLAN">
-            JUZGADO MIXTO METZTITLAN
-          </option>
-          <option value="JUZGADO CIVIL Y FAMILIAR MIXQUIAHUALA">
-            JUZGADO CIVIL Y FAMILIAR MIXQUIAHUALA
-          </option>
-          <option value="JUZGADO MIXTO MIXQUIAHUALA">
-            JUZGADO MIXTO MIXQUIAHUALA
-          </option>
-          <option value="JUZGADO MIXTO MOLANGO">JUZGADO MIXTO MOLANGO</option>
-          <option value="JUZGADO MIXTO TENANGO DE DORIA">
-            JUZGADO MIXTO TENANGO DE DORIA
-          </option>
-          <option value="JUZGADO MIXTO TEPEJI DEL RIO">
-            JUZGADO MIXTO TEPEJI DEL RIO
-          </option>
-          <option value="JUZGADO PRIMERO CIVIL Y FAMILIAR TIZAYUCA">
-            JUZGADO PRIMERO CIVIL Y FAMILIAR TIZAYUCA
-          </option>
-          <option value="JUZGADO SEGUNDO CIVIL Y FAMILIAR TIZAYUCA">
-            JUZGADO SEGUNDO CIVIL Y FAMILIAR TIZAYUCA
-          </option>
-          <option value="JUZGADO MIXTO TIZAYUCA">JUZGADO MIXTO TIZAYUCA</option>
-          <option value="JUZGADO PRIMERO CIVIL Y FAMILIAR TULA">
-            JUZGADO PRIMERO CIVIL Y FAMILIAR TULA
-          </option>
-          <option value="JUZGADO SEGUNDO CIVIL Y FAMILIAR TULA">
-            JUZGADO SEGUNDO CIVIL Y FAMILIAR TULA
-          </option>
-          <option value="JUZGADO TERCERO CIVIL Y FAMILIAR TULA">
-            JUZGADO TERCERO CIVIL Y FAMILIAR TULA
-          </option>
-          <option value="JUZGADO CUARTO CIVIL Y FAMILIAR TULA">
-            JUZGADO CUARTO CIVIL Y FAMILIAR TULA
-          </option>
-          <option value="JUZGADO PRIMERO PENAL TULA">
-            JUZGADO PRIMERO PENAL TULA
-          </option>
-          <option value="JUZGADO MERCANTIL TULA">JUZGADO MERCANTIL TULA</option>
-          <option value="JUZGADO PRIMERO CIVIL Y FAMILIAR TULANCINGO">
-            JUZGADO PRIMERO CIVIL Y FAMILIAR TULANCINGO
-          </option>
-          <option value="JUZGADO SEGUNDO CIVIL Y FAMILIAR TULANCINGO">
-            JUZGADO SEGUNDO CIVIL Y FAMILIAR TULANCINGO
-          </option>
-          <option value="JUZGADO TERCERO CIVIL Y FAMILIAR TULANCINGO">
-            JUZGADO TERCERO CIVIL Y FAMILIAR TULANCINGO
-          </option>
-          <option value="JUZGADO CUARTO CIVIL Y FAMILIAR TULANCINGO">
-            JUZGADO CUARTO CIVIL Y FAMILIAR TULANCINGO
-          </option>
-          <option value="JUZGADO PRIMERO PENAL TULANCINGO">
-            JUZGADO PRIMERO PENAL TULANCINGO
-          </option>
-          <option value="JUZGADO MERCANTIL TULANCINGO">
-            JUZGADO MERCANTIL TULANCINGO
-          </option>
-          <option value="ARCHIVO REGIONAL TULANCINGO">
-            ARCHIVO REGIONAL TULANCINGO
-          </option>
-          <option value="JUZGADO MIXTO ZACUALTIPAN">
-            JUZGADO MIXTO ZACUALTIPAN
-          </option>
-          <option value="JUZGADO MIXTO ZIMAPAN">JUZGADO MIXTO ZIMAPAN</option>
-          <option value="JUZGADO ESPECIALIZADO EN MATERIA P/ ADOLESCENTES">
-            JUZGADO ESPECIALIZADO EN MATERIA P/ ADOLESCENTES
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO PACHUCA">
-            SISTEMA PROCESAL PENAL ACUSATORIO PACHUCA
-          </option>
-          <option value="JUZGADO PRIMERO PENAL DE EJECUCION">
-            JUZGADO PRIMERO PENAL DE EJECUCION
-          </option>
-          <option value="JUZGADO SEGUNDO PENAL DE EJECUCION">
-            JUZGADO SEGUNDO PENAL DE EJECUCION
-          </option>
-          <option value="CENTRO DE JUSTICIA PARA MUJERES PACHUCA">
-            CENTRO DE JUSTICIA PARA MUJERES PACHUCA
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO TULA">
-            SISTEMA PROCESAL PENAL ACUSATORIO TULA
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO TIZAYUCA">
-            SISTEMA PROCESAL PENAL ACUSATORIO TIZAYUCA
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO ACTOPAN">
-            SISTEMA PROCESAL PENAL ACUSATORIO ACTOPAN
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO HUEJUTLA">
-            SISTEMA PROCESAL PENAL ACUSATORIO HUEJUTLA
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO HUICHAPAN">
-            SISTEMA PROCESAL PENAL ACUSATORIO HUICHAPAN
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO IXMIQUILPAN">
-            SISTEMA PROCESAL PENAL ACUSATORIO IXMIQUILPAN
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO TULANCINGO">
-            SISTEMA PROCESAL PENAL ACUSATORIO TULANCINGO
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO APAN">
-            SISTEMA PROCESAL PENAL ACUSATORIO APAN
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO ATOTONILCO">
-            SISTEMA PROCESAL PENAL ACUSATORIO ATOTONILCO
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO JACALA">
-            SISTEMA PROCESAL PENAL ACUSATORIO JACALA
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO METZTITLAN">
-            SISTEMA PROCESAL PENAL ACUSATORIO METZTITLAN
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO MIXQUIAHUALA">
-            SISTEMA PROCESAL PENAL ACUSATORIO MIXQUIAHUALA
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO MOLANGO">
-            SISTEMA PROCESAL PENAL ACUSATORIO MOLANGO
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO TENANGO">
-            SISTEMA PROCESAL PENAL ACUSATORIO TENANGO
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO ZACUALTIPAN">
-            SISTEMA PROCESAL PENAL ACUSATORIO ZACUALTIPAN
-          </option>
-          <option value="SISTEMA PROCESAL PENAL ACUSATORIO ZIMAPAN">
-            SISTEMA PROCESAL PENAL ACUSATORIO ZIMAPAN
-          </option>
-          <option value="PRIMERA SALA CIVIL Y FAMILIAR">
-            PRIMERA SALA CIVIL Y FAMILIAR
-          </option>
-          <option value="SEGUNDA SALA CIVIL Y FAMILIAR">
-            SEGUNDA SALA CIVIL Y FAMILIAR
-          </option>
-          <option value="TERCERA SALA CIVIL Y FAMILIAR">
-            TERCERA SALA CIVIL Y FAMILIAR
-          </option>
-          <option value="PRIMERA SALA PENAL">PRIMERA SALA PENAL</option>
-          <option value="SEGUNDA SALA PENAL">SEGUNDA SALA PENAL</option>
-          <option value="SEPTIMA SALA UNITARIA">SEPTIMA SALA UNITARIA</option>
-          <option value="OCTAVA SALA UNITARIA">OCTAVA SALA UNITARIA</option>
-          <option value="SALA UNITARIA ESPECIALIZADA PARA ADOLESCENTES">
-            SALA UNITARIA ESPECIALIZADA PARA ADOLESCENTES
-          </option>
-          <option value="SALAS DE ORALIDAD DE SEGUNDA INSTANCIA">
-            SALAS DE ORALIDAD DE SEGUNDA INSTANCIA
-          </option>
-          <option value="TRIBUNAL LABORAL">TRIBUNAL LABORAL</option>
-          <option value="TRIBUNAL DE JUSTICIA ADMINISTRATIVA">
-            TRIBUNAL DE JUSTICIA ADMINISTRATIVA
-          </option>
-        </select>
-      </div>
+            <%= opcion.texto %>
+          </option>
+        <% }); %>
+      </select>
+
 
       <div class="mb-3">
         <label class="block mb-1 text-gray-700 font-bold"
           >Cargo funcional actual</label
         >
+          <select
+            class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
+            id="cargoActual"
+            name="cargoActual"
+            required
+          >
+            <% 
+              // Array completo - TODAS LAS OPCIONES EN MAYÚSCULAS Y SIN ACENTOS
+              const opcionesCargo = [
+                { value: "", texto: "SELECCIONE SU CARGO" },
+                { value: "ABOGADA (O) INDIGENA", texto: "ABOGADA (O) INDIGENA" },
+                { value: "ACTUARIA (O)", texto: "ACTUARIA (O)" },
+                { value: "ADMINISTRADOR (A)", texto: "ADMINISTRADOR (A)" },
+                { value: "AGENTE DE ATENCION CIUDADANA", texto: "AGENTE DE ATENCION CIUDADANA" },
+                { value: "ASESOR (A)", texto: "ASESOR (A)" },
+                { value: "ASISTENTE DE CONSEJERA (O)", texto: "ASISTENTE DE CONSEJERA (O)" },
+                { value: "AUXILIAR ADMINISTRATIVA (O)", texto: "AUXILIAR ADMINISTRATIVA (O)" },
+                { value: "AUXILIAR DE ACTUARIA (O)", texto: "AUXILIAR DE ACTUARIA (O)" },
+                { value: "AUXILIAR DE AREA", texto: "AUXILIAR DE AREA" },
+                { value: "AUXILIAR DE AUDIENCIA", texto: "AUXILIAR DE AUDIENCIA" },
+                { value: "AUXILIAR DE FACILITADOR (A)", texto: "AUXILIAR DE FACILITADOR (A)" },
+                { value: "AUXILIAR DE JUEZ (A)", texto: "AUXILIAR DE JUEZ (A)" },
+                { value: "AUXILIAR DE PROYECTISTA", texto: "AUXILIAR DE PROYECTISTA" },
+                { value: "AUXILIAR DE SECRETARIA (O)", texto: "AUXILIAR DE SECRETARIA (O)" },
+                { value: "AUXILIAR DE VISITADURIA", texto: "AUXILIAR DE VISITADURIA" },
+                { value: "AUXILIAR GENERAL", texto: "AUXILIAR GENERAL" },
+                { value: "AUXILIAR JURIDICA (O)", texto: "AUXILIAR JURIDICA (O)" },
+                { value: "COMISARIA (O)", texto: "COMISARIA (O)" },
+                { value: "CONCILIADOR (A)", texto: "CONCILIADOR (A)" },
+                { value: "CONSEJERA (O)", texto: "CONSEJERA (O)" },
+                { value: "CONTRALOR (A) GENERAL", texto: "CONTRALOR (A) GENERAL" },
+                { value: "DIRECTOR (A) DE AREA", texto: "DIRECTOR (A) DE AREA" },
+                { value: "DIRECTOR (A) GENERAL", texto: "DIRECTOR (A) GENERAL" },
+                { value: "ENCARGADA (O) DE AUDIENCIA", texto: "ENCARGADA (O) DE AUDIENCIA" },
+                { value: "ENCARGADA (O) DE CAUSA", texto: "ENCARGADA (O) DE CAUSA" },
+                { value: "ENCARGADA (O) DE DEPARTAMENTO", texto: "ENCARGADA (O) DE DEPARTAMENTO" },
+                { value: "ENCARGADA (O) DE UNIDAD RECEPTORA", texto: "ENCARGADA (O) DE UNIDAD RECEPTORA" },
+                { value: "FACILITADOR (A)", texto: "FACILITADOR (A)" },
+                { value: "INTENDENTE", texto: "INTENDENTE" },
+                { value: "JEFE (A) DE DEPARTAMENTO", texto: "JEFE (A) DE DEPARTAMENTO" },
+                { value: "JEFE (A) DE LA UNIDAD DE INFORMATICA", texto: "JEFE (A) DE LA UNIDAD DE INFORMATICA" },
+                { value: "JEFE (A) DE SECCION", texto: "JEFE (A) DE SECCION" },
+                { value: "JEFE (A) DE UNIDAD ADMINISTRATIVA", texto: "JEFE (A) DE UNIDAD ADMINISTRATIVA" },
+                { value: "JEFE (A) DE UNIDAD DE CAUSA", texto: "JEFE (A) DE UNIDAD DE CAUSA" },
+                { value: "JUEZ (A)", texto: "JUEZ (A)" },
+                { value: "MAGISTRADA (O) DE SALA", texto: "MAGISTRADA (O) DE SALA" },
+                { value: "MAGISTRADA (O) PRESIDENTE DE SALA", texto: "MAGISTRADA (O) PRESIDENTE DE SALA" },
+                { value: "MAGISTRADA (O) PRESIDENTE DEL TRIBUNAL DE JUSTICIA ADMINISTRATIVA", texto: "MAGISTRADA (O) PRESIDENTE DEL TRIBUNAL DE JUSTICIA ADMINISTRATIVA" },
+                { value: "MAGISTRADA (O) PRESIDENTE DEL TRIBUNAL SUPERIOR DE JUSTICIA", texto: "MAGISTRADA (O) PRESIDENTE DEL TRIBUNAL SUPERIOR DE JUSTICIA" },
+                { value: "MEDICA", texto: "MEDICA" },
+                { value: "NOTIFICADOR (A)", texto: "NOTIFICADOR (A)" },
+                { value: "OFICIAL DE PARTES", texto: "OFICIAL DE PARTES" },
+                { value: "PRESIDENTE (A) DE CONSEJO DE FAMILIA", texto: "PRESIDENTE (A) DE CONSEJO DE FAMILIA" },
+                { value: "PROGRAMADOR (A)", texto: "PROGRAMADOR (A)" },
+                { value: "PROYECTISTA", texto: "PROYECTISTA" },
+                { value: "PSICOLOGA (O)", texto: "PSICOLOGA (O)" },
+                { value: "SECRETARIA (O) AUXILIAR DEL TRIBUNAL", texto: "SECRETARIA (O) AUXILIAR DEL TRIBUNAL" },
+                { value: "SECRETARIA (O) DE ACUERDOS", texto: "SECRETARIA (O) DE ACUERDOS" },
+                { value: "SECRETARIA (O) DE EJECUCION", texto: "SECRETARIA (O) DE EJECUCION" },
+                { value: "SECRETARIA (O) GENERAL", texto: "SECRETARIA (O) GENERAL" },
+                { value: "SECRETARIA (O) GENERAL DEL SUTSPJEH", texto: "SECRETARIA (O) GENERAL DEL SUTSPJEH" },
+                { value: "SECRETARIA (O) GENERAL TJA", texto: "SECRETARIA (O) GENERAL TJA" },
+                { value: "SECRETARIA (O) INSTRUCTOR (A)", texto: "SECRETARIA (O) INSTRUCTOR (A)" },
+                { value: "SECRETARIA (O) OPERATIVA (O)", texto: "SECRETARIA (O) OPERATIVA (O)" },
+                { value: "SECRETARIA (O) PROYECTISTA", texto: "SECRETARIA (O) PROYECTISTA" },
+                { value: "SECRETARIA (O) TECNICA (O) DE ADMINISTRACION", texto: "SECRETARIA (O) TECNICA (O) DE ADMINISTRACION" },
+                { value: "SUBADMINISTRADOR (A) DE JUZGADO", texto: "SUBADMINISTRADOR (A) DE JUZGADO" },
+                { value: "SUBDIRECTOR (A) DE AREA", texto: "SUBDIRECTOR (A) DE AREA" },
+                { value: "TECNICA (O) MULTIMEDIA", texto: "TECNICA (O) MULTIMEDIA" },
+                { value: "TRABAJADOR (A) DE ENLACE", texto: "TRABAJADOR (A) DE ENLACE" },
+                { value: "TRABAJADOR (A) SOCIAL", texto: "TRABAJADOR (A) SOCIAL" },
+                { value: "VELADOR", texto: "VELADOR" },
+                { value: "VISITADOR (A)", texto: "VISITADOR (A)" },
+                { value: "OTRO", texto: "OTRO" }
+              ];
 
-        <select
-          class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
-          id="cargoActual"
-          name="cargoActual"
-          required
-        >
-          <option value="">Seleccione su cargo</option>
-          <option value="ABOGADA (O) INDIGENA">ABOGADA (O) INDIGENA</option>
-          <option value="ACTUARIA (O)">ACTUARIA (O)</option>
-          <option value="ADMINISTRADOR (A)">ADMINISTRADOR (A)</option>
-          <option value="AGENTE DE ATENCION CIUDADANA">
-            AGENTE DE ATENCION CIUDADANA
-          </option>
-          <option value="ASESOR (A)">ASESOR (A)</option>
-          <option value="ASISTENTE DE CONSEJERA (O)">
-            ASISTENTE DE CONSEJERA (O)
-          </option>
-          <option value="AUXILIAR ADMINISTRATIVA (O)">
-            AUXILIAR ADMINISTRATIVA (O)
-          </option>
-          <option value="AUXILIAR DE ACTUARIA (O)">
-            AUXILIAR DE ACTUARIA (O)
-          </option>
-          <option value="AUXILIAR DE AREA">AUXILIAR DE AREA</option>
-          <option value="AUXILIAR DE AUDIENCIA">AUXILIAR DE AUDIENCIA</option>
-          <option value="AUXILIAR DE FACILITADOR (A)">
-            AUXILIAR DE FACILITADOR (A)
-          </option>
-          <option value="AUXILIAR DE JUEZ (A)">AUXILIAR DE JUEZ (A)</option>
-          <option value="AUXILIAR DE PROYECTISTA">
-            AUXILIAR DE PROYECTISTA
-          </option>
-          <option value="AUXILIAR DE SECRETARIA (O)">
-            AUXILIAR DE SECRETARIA (O)
-          </option>
-          <option value="AUXILIAR DE VISITADURIA">
-            AUXILIAR DE VISITADURIA
-          </option>
-          <option value="AUXILIAR GENERAL">AUXILIAR GENERAL</option>
-          <option value="AUXILIAR JURIDICA (O)">AUXILIAR JURIDICA (O)</option>
-          <option value="COMISARIA (O)">COMISARIA (O)</option>
-          <option value="CONCILIADOR (A)">CONCILIADOR (A)</option>
-          <option value="CONSEJERA (O)">CONSEJERA (O)</option>
-          <option value="CONTRALOR (A) GENERAL">CONTRALOR (A) GENERAL</option>
-          <option value="DIRECTOR (A) DE AREA">DIRECTOR (A) DE AREA</option>
-          <option value="DIRECTOR (A) GENERAL">DIRECTOR (A) GENERAL</option>
-          <option value="ENCARGADA (O) DE AUDIENCIA">
-            ENCARGADA (O) DE AUDIENCIA
-          </option>
-          <option value="ENCARGADA (O) DE CAUSA">ENCARGADA (O) DE CAUSA</option>
-          <option value="ENCARGADA (O) DE DEPARTAMENTO">
-            ENCARGADA (O) DE DEPARTAMENTO
-          </option>
-          <option value="ENCARGADA (O) DE UNIDAD RECEPTORA">
-            ENCARGADA (O) DE UNIDAD RECEPTORA
-          </option>
-          <option value="FACILITADOR (A)">FACILITADOR (A)</option>
-          <option value="INTENDENTE">INTENDENTE</option>
-          <option value="JEFE (A) DE DEPARTAMENTO">
-            JEFE (A) DE DEPARTAMENTO
-          </option>
-          <option value="JEFE (A) DE LA UNIDAD DE INFORMATICA">
-            JEFE (A) DE LA UNIDAD DE INFORMATICA
-          </option>
-          <option value="JEFE (A) DE SECCION">JEFE (A) DE SECCION</option>
-          <option value="JEFE (A) DE UNIDAD ADMINISTRATIVA">
-            JEFE (A) DE UNIDAD ADMINISTRATIVA
-          </option>
-          <option value="JEFE (A) DE UNIDAD DE CAUSA">
-            JEFE (A) DE UNIDAD DE CAUSA
-          </option>
-          <option value="JUEZ (A)">JUEZ (A)</option>
-          <option value="MAGISTRADA (O) DE SALA">MAGISTRADA (O) DE SALA</option>
-          <option value="MAGISTRADA (O) PRESIDENTE DE SALA">
-            MAGISTRADA (O) PRESIDENTE DE SALA
-          </option>
-          <option
-            value="MAGISTRADA (O) PRESIDENTE DEL TRIBUNAL DE JUSTICIA ADMINISTRATIVA"
-          >
-            MAGISTRADA (O) PRESIDENTE DEL TRIBUNAL DE JUSTICIA ADMINISTRATIVA
-          </option>
-          <option
-            value="MAGISTRADA (O) PRESIDENTE DEL TRIBUNAL SUPERIOR DE JUSTICIA"
-          >
-            MAGISTRADA (O) PRESIDENTE DEL TRIBUNAL SUPERIOR DE JUSTICIA
-          </option>
-          <option value="MEDICA">MEDICA</option>
-          <option value="NOTIFICADOR (A)">NOTIFICADOR (A)</option>
-          <option value="OFICIAL DE PARTES">OFICIAL DE PARTES</option>
-          <option value="PRESIDENTE (A) DE CONSEJO DE FAMILIA">
-            PRESIDENTE (A) DE CONSEJO DE FAMILIA
-          </option>
-          <option value="PROGRAMADOR (A)">PROGRAMADOR (A)</option>
-          <option value="PROYECTISTA">PROYECTISTA</option>
-          <option value="PSICOLOGA (O)">PSICOLOGA (O)</option>
-          <option value="SECRETARIA (O) AUXILIAR DEL TRIBUNAL">
-            SECRETARIA (O) AUXILIAR DEL TRIBUNAL
-          </option>
-          <option value="SECRETARIA (O) DE ACUERDOS">
-            SECRETARIA (O) DE ACUERDOS
-          </option>
-          <option value="SECRETARIA (O) DE EJECUCION">
-            SECRETARIA (O) DE EJECUCION
-          </option>
-          <option value="SECRETARIA (O) GENERAL">SECRETARIA (O) GENERAL</option>
-          <option value="SECRETARIA (O) GENERAL DEL SUTSPJEH">
-            SECRETARIA (O) GENERAL DEL SUTSPJEH
-          </option>
-          <option value="SECRETARIA (O) GENERAL TJA">
-            SECRETARIA (O) GENERAL TJA
-          </option>
-          <option value="SECRETARIA (O) INSTRUCTOR (A)">
-            SECRETARIA (O) INSTRUCTOR (A)
-          </option>
-          <option value="SECRETARIA (O) OPERATIVA (O)">
-            SECRETARIA (O) OPERATIVA (O)
-          </option>
-          <option value="SECRETARIA (O) PROYECTISTA">
-            SECRETARIA (O) PROYECTISTA
-          </option>
-          <option value="SECRETARIA (O) TECNICA (O) DE ADMINISTRACION">
-            SECRETARIA (O) TECNICA (O) DE ADMINISTRACION
-          </option>
-          <option value="SUBADMINISTRADOR (A) DE JUZGADO">
-            SUBADMINISTRADOR (A) DE JUZGADO
-          </option>
-          <option value="SUBDIRECTOR (A) DE AREA">
-            SUBDIRECTOR (A) DE AREA
-          </option>
-          <option value="TECNICA (O) MULTIMEDIA">TECNICA (O) MULTIMEDIA</option>
-          <option value="TRABAJADOR (A) DE ENLACE">
-            TRABAJADOR (A) DE ENLACE
-          </option>
-          <option value="TRABAJADOR (A) SOCIAL">TRABAJADOR (A) SOCIAL</option>
-          <option value="VELADOR">VELADOR</option>
-          <option value="VISITADOR (A)">VISITADOR (A)</option>
-          <option value="OTRO">otro</option>
-        </select>
+              // Variable distinta: actualCargo (en mayúsculas y sin acentos)
+              const actualCargo = user.cargoActual 
+                ? user.cargoActual.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                : '';
+            %>
+
+            <% 
+              // Generamos las opciones con el loop
+              opcionesCargo.forEach(opcion => { 
+            %>
+              <option 
+                value="<%= opcion.value %>" 
+                <%= actualCargo === opcion.value ? 'selected' : '' %>
+              >
+                <%= opcion.texto %>
+              </option>
+            <% }); %>
+          </select>
+        </div>
 
         <div id="otroCargoContainer" class="hidden mt-2">
           <label class="block mb-1 text-gray-700">Especifique su cargo</label>
@@ -709,20 +445,33 @@
           -----------------DATOS PERSONALES-----------------</label
         >
       </div>
-      <!-- Sexo -->
+      <!-------------------------- Sexo ------------------------------>
       <div>
-        <label class="block mb-1 font-bold text-gray-700"
-          >Seleccione su género</label
-        >
+        <label class="block mb-1 font-bold text-gray-700">Seleccione su género</label>
         <select
           class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
           name="sexo"
           id="sexo-opciones"
           required
         >
-          <option value="">Seleccione su género</option>
-          <option value="Masculino">Masculino</option>
-          <option value="Femenino">Femenino</option>
+          <% 
+            // Normalizamos el valor para comparar (por si viene con variaciones)
+            const generoActual = user.sexo 
+              ? user.sexo.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+              : '';
+          %>
+
+          <option value="" <%= generoActual === '' ? 'selected' : '' %>>
+            Seleccione su género
+          </option>
+
+          <option value="Masculino" <%= generoActual === 'MASCULINO' ? 'selected' : '' %>>
+            Masculino
+          </option>
+
+          <option value="Femenino" <%= generoActual === 'FEMENINO' ? 'selected' : '' %>>
+            Femenino
+          </option>
         </select>
       </div>
 
@@ -737,6 +486,7 @@
           name="fechaNacimiento"
           data-format="dd-mm-yyyy"
           placeholder="dd-mm-yyyy"
+          value="<%= user.fechaNacimiento ? user.fechaNacimiento.split('-').reverse().join('-') : '' %>"
           required
         />
       </div>
@@ -753,6 +503,7 @@
               name="municipioNacimiento"
               class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
               placeholder="Ej. PACHUCA"
+              value="<%= user.lugarNacimiento && user.lugarNacimiento.includes(',') ? user.lugarNacimiento.split(',')[0].trim() : '' %>"
               required
             />
           </div>
@@ -764,6 +515,7 @@
               name="estadoNacimiento"
               class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
               placeholder="Ej. HIDALGO"
+              value="<%= user.lugarNacimiento && user.lugarNacimiento.includes(',') ? user.lugarNacimiento.split(',')[1].trim() : '' %>"
               required
             />
           </div>
@@ -776,7 +528,7 @@
 
           <label class="block font-semibold text-gray-800 mb-1"
             >Acta de nacimiento
-            <span class="text-red-500">(2024 - a la fecha) </span></label
+            <span class="text-red-500">(2025 - a la fecha) </span></label
           >
           <input
             type="file"
@@ -803,6 +555,7 @@
             required
             pattern="[0-9]{10}"
             title="El número debe tener exactamente 10 dígitos"
+            value="<%= user.noTelefono?.trim() || '' %>"
           />
           <span id="error-message" style="color: red; display: none"
             >El número debe tener exactamente 10 dígitos.</span
@@ -826,6 +579,7 @@
             required
             pattern="[0-9]{10}"
             title="El número debe tener exactamente 10 dígitos."
+            value="<%= user.telefonoCasa?.trim() || '' %>"
           />
           <span id="error-message" style="color: red; display: none"
             >El número debe tener exactamente 10 dígitos.</span
@@ -848,6 +602,7 @@
             required
             pattern="[0-9]{10}"
             title="El número debe tener exactamente 10 dígitos."
+            value="<%= user.telefonoFamiliar?.trim() || '' %>"
           />
 
           <span id="error-message" style="color: red; display: none"
@@ -864,6 +619,7 @@
             name="parentesco"
             placeholder="parentesco"
             required
+            value="<%= user.parentescoFamiliar ? user.parentescoFamiliar:'' %>"
           />
         </div>
 
@@ -881,6 +637,7 @@
             name="correo"
             placeholder="Correo Electrónico"
             required
+            value="<%= user.correoElectronico ? user.correoElectronico:'' %>"
           />
         </div>
 
@@ -924,6 +681,7 @@
               required
               pattern="[0-9]{4}"
               title="El año debe tener 4 numeros exactos"
+              value="<%= user.vigenciaINE ? user.vigenciaINE : '' %>"
             />
           </div>
 
@@ -935,6 +693,7 @@
               name="callenumero"
               placeholder="Calle y Número"
               required
+              value="<%= user.calleNumero ? user.calleNumero:'' %>"
             />
           </div>
 
@@ -946,6 +705,7 @@
               name="colonia"
               placeholder="Colonia"
               required
+              value="<%= user.colonia ? user.colonia:'' %>"
             />
           </div>
 
@@ -957,6 +717,7 @@
               name="municipio"
               placeholder="municipio"
               required
+              value="<%= user.municipio ? user.municipio:'' %>"
             />
           </div>
 
@@ -968,6 +729,7 @@
               name="estado"
               placeholder="estado"
               required
+              value="<%= user.estado ? user.estado:'' %>"
             />
           </div>
 
@@ -983,6 +745,7 @@
               name="codigopostal"
               placeholder="Codigo Postal"
               required
+              value="<%= user.codigoPostal?.trim() || '' %>"
             />
             <span id="error-message2" style="color: red; display: none"
               >El C.P. debe tener exactamente 5 dígitos.</span
@@ -1081,94 +844,159 @@
 
         <!-- ¿Perteneces a comunidad indígena? -->
         <div class="mb-3">
-          <label class="block mb-1 font-bold text-gray-700"
-            >¿Perteneces a una comunidad o pueblo indígena?</label
-          >
+          <label class="block mb-1 font-bold text-gray-700">
+            ¿Perteneces a una comunidad o pueblo indígena?
+          </label>
           <div class="flex gap-4">
-            <label
-              ><input
+            <% 
+              // Lógica principal: inferir Sí/No mirando comunidadIndigena
+              const tieneComunidad = user.comunidadIndigena 
+              && user.comunidadIndigena.trim().toUpperCase() !== 'N/A'
+              && user.comunidadIndigena.trim() !== '';
+
+              const esIndigena = tieneComunidad ? '1' : '0';
+            %>
+
+            <label class="flex items-center cursor-pointer">
+              <input
                 type="radio"
                 name="indigena"
                 value="1"
                 class="mr-2"
+                <%= esIndigena === '1' ? 'checked' : '' %>
                 required
+                data-toggle="comunidad-indigena"
               />
-              Sí</label
-            >
-            <label
-              ><input type="radio" name="indigena" value="0" class="mr-2" />
-              No</label
-            >
+              Sí
+            </label>
+
+            <label class="flex items-center cursor-pointer">
+              <input
+                type="radio"
+                name="indigena"
+                value="0"
+                class="mr-2"
+                <%= esIndigena === '0' ? 'checked' : '' %>
+                data-toggle="comunidad-indigena"
+              />
+              No
+            </label>
           </div>
         </div>
 
-        <!-- Selector de comunidad -->
-        <div id="comunidadIndigenaContainer" class="hidden mb-3">
-          <label class="block mb-1 font-bold text-gray-700"
-            >Selecciona tu comunidad o pueblo indígena</label
-          >
-          <select
-            class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
-            id="comunidadIndigena"
-            name="comunidadIndigena"
-          >
-            <option value="">SELECCIONA UNA OPCIÓN</option>
-            <option value="CHINANTECO">CHINANTECO</option>
-            <option value="CH'OL">CH'OL</option>
-            <option value="CORA">CORA</option>
-            <option value="HUASTECO">HUASTECO</option>
-            <option value="HUICHOL">HUICHOL</option>
-            <option value="MAYA">MAYA</option>
-            <option value="MAYO">MAYO</option>
-            <option value="MAZAHUA">MAZAHUA</option>
-            <option value="MAZATECO">MAZATECO</option>
-            <option value="MIXE">MIXE</option>
-            <option value="MIXTECO">MIXTECO</option>
-            <option value="NÁHUATL">NÁHUATL</option>
-            <option value="OTOMÍ">OTOMÍ</option>
-            <option value="TARASCO/ PURÉPECHA">TARASCO/ PURÉPECHA</option>
-            <option value="TARAHUMARA">TARAHUMARA</option>
-            <option value="TEPEHUANO">TEPEHUANO</option>
-            <option value="TLAPANECO">TLAPANECO</option>
-            <option value="TOTONACO">TOTONACO</option>
-            <option value="TSELTAL">TSELTAL</option>
-            <option value="TSOTSIL">TSOTSIL</option>
-            <option value="YAQUI">YAQUI</option>
-            <option value="ZAPOTECO">ZAPOTECO</option>
-            <option value="ZOQUE">ZOQUE</option>
+        <!-- Contenedor de comunidad indígena -->
+        <div id="comunidadIndigenaContainer" class="<%= esIndigena === '1' ? '' : 'hidden' %> mb-3">
+          <label class="block mb-1 font-bold text-gray-700">
+            Selecciona tu comunidad o pueblo indígena
+          </label>
+          <!-- Contenedor de comunidad indígena (se muestra si es "Sí") -->
+        <select
+          class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
+          id="comunidadIndigena"
+          name="comunidadIndigena"
+          <%= esIndigena === '1' ? 'required' : '' %>
+          <% 
+            // Array completo con TODAS las opciones en MAYÚSCULAS y SIN ACENTOS
+            const opcionesComunidad = [
+              { value: "", texto: "SELECCIONA UNA OPCION" },
+              { value: "CHINANTECO", texto: "CHINANTECO" },
+              { value: "CH'OL", texto: "CH'OL" },
+              { value: "CORA", texto: "CORA" },
+              { value: "HUASTECO", texto: "HUASTECO" },
+              { value: "HUICHOL", texto: "HUICHOL" },
+              { value: "MAYA", texto: "MAYA" },
+              { value: "MAYO", texto: "MAYO" },
+              { value: "MAZAHUA", texto: "MAZAHUA" },
+              { value: "MAZATECO", texto: "MAZATECO" },
+              { value: "MIXE", texto: "MIXE" },
+              { value: "MIXTECO", texto: "MIXTECO" },
+              { value: "NAHUATL", texto: "NAHUATL" },
+              { value: "OTOMI", texto: "OTOMI" },
+              { value: "TARASCO / PUREPECHA", texto: "TARASCO / PUREPECHA" },
+              { value: "TARAHUMARA", texto: "TARAHUMARA" },
+              { value: "TEPEHUANO", texto: "TEPEHUANO" },
+              { value: "TLAPANECO", texto: "TLAPANECO" },
+              { value: "TOTONACO", texto: "TOTONACO" },
+              { value: "TSELTAL", texto: "TSELTAL" },
+              { value: "TSOTSIL", texto: "TSOTSIL" },
+              { value: "YAQUI", texto: "YAQUI" },
+              { value: "ZAPOTECO", texto: "ZAPOTECO" },
+              { value: "ZOQUE", texto: "ZOQUE" },
+              { value: "PUEBLO INDIGENA NO IDENTIFICADO", texto: "PUEBLO INDIGENA NO IDENTIFICADO" },
+              { value: "OTRO", texto: "OTRO PUEBLO INDIGENA (ESPECIFIQUE)" }
+            ];
 
-            <option value="PUEBLO INDÍGENA NO IDENTIFICADO">
-              PUEBLO INDÍGENA NO IDENTIFICADO
+            // Valor actual normalizado (mayúsculas y sin acentos)
+            const comunidadActual = user.comunidadIndigena 
+              ? user.comunidadIndigena.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+              : '';
+          %>
+
+          <% 
+            // Generamos todas las opciones con el loop
+            opcionesComunidad.forEach(opcion => { 
+          %>
+            <option 
+              value="<%= opcion.value %>" 
+              <%= comunidadActual === opcion.value ? 'selected' : '' %>
+            >
+              <%= opcion.texto %>
             </option>
-            <option value="OTRO">OTRO PUEBLO INDÍGENA (ESPECIFIQUE)</option>
-          </select>
-        </div>
+          <% }); %>
+        </select>
 
-        <div id="otraComunidadContainer" class="hidden mt-2 mb-4">
-          <label class="block text-gray-700"
-            >Especifique su comunidad a la que pertenece</label
-          >
+        <!-- Campo adicional para "OTRO" -->
+        <div id="otraComunidadContainer" class="<%= comunidadActual === 'OTRO' ? '' : 'hidden' %> mt-3">
+          <label class="block mb-1 font-bold text-gray-700">
+            Especifica tu comunidad o pueblo indígena
+          </label>
           <input
             type="text"
             name="otraComunidad"
-            id="otraComunidadInput"
-            class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
+            value="<%= user.otraComunidad && user.otraComunidad.toUpperCase() !== 'N/A' ? user.otraComunidad.trim() : '' %>"
+            class="border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
+            <%= comunidadActual === 'OTRO' ? 'required' : '' %>
           />
         </div>
+      </div>
 
+          <!-- Campo para "OTRO" -->
+          <div id="otraComunidadContainer" class="<%= comunidadActual === 'OTRO' ? '' : 'hidden' %> mt-3">
+            <label class="block mb-1 font-bold text-gray-700">
+              Especifica tu comunidad o pueblo indígena
+            </label>
+            <input
+              type="text"
+              name="otraComunidad"
+              value="<%= user.otraComunidad && user.otraComunidad.toUpperCase() !== 'N/A' ? user.otraComunidad : '' %>"
+              class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
+              <%= comunidadActual === 'OTRO' ? 'required' : '' %>
+            />
+          </div>
+        </div>
         <!-- ¿Hablas una lengua indígena? -->
         <div class="mb-3">
           <label class="block mb-1 font-bold text-gray-700"
             >¿Hablas alguna lengua indígena?</label
           >
           <div class="flex gap-4">
+            <% 
+              // Lógica principal: inferir Sí/No mirando comunidadIndigena
+              const lenguaIndigena = user.hablaLenguaIndigena 
+              && user.hablaLenguaIndigena.trim().toUpperCase() !== 'N/A'
+              && user.hablaLenguaIndigena.trim() !== '';
+
+              const leIndigena = lenguaIndigena ? '1' : '0';
+            %>
             <label
               ><input
                 type="radio"
                 name="hablaLenguaIndigena"
                 value="1"
                 class="mr-2"
+                <%= leIndigena === '1' ? 'checked' : '' %>
                 required
+                data-toggle="lengua-indigena"
               />
               Sí</label
             >
@@ -1178,6 +1006,8 @@
                 name="hablaLenguaIndigena"
                 value="0"
                 class="mr-2"
+                <%= leIndigena === '0' ? 'checked' : '' %>
+                data-toggle="lengua-indigena"
               />
               No</label
             >
@@ -1226,90 +1056,137 @@
             class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
           />
         </div>
-
+<!------------------------Lengua de señas Mexicanas------------------------------------------------------------>
         <div class="mb-3">
-          <label class="block mb-1 font-bold text-gray-700"
-            >¿Interpretas la Lengua de Señas Mexicana (LSM)?</label
-          >
+          <label class="block mb-1 font-bold text-gray-700">
+            ¿Interpretas la Lengua de Señas Mexicana (LSM)?
+          </label>
           <div class="flex gap-4">
-            <label
-              ><input
+            <% 
+              // Usamos directamente el valor guardado (normalizado a string)
+              const respuestaLSM = user.lenguaSenias 
+                ? String(user.lenguaSenias).trim() 
+                : 'No';  // por defecto No si no existe
+            %>
+
+            <label class="flex items-center cursor-pointer">
+              <input
                 type="radio"
                 name="lenguaSenias"
                 value="Sí"
                 class="mr-2"
+                <%= respuestaLSM === 'Sí' ? 'checked' : '' %>
                 required
+                data-toggle="nivel-lsm"
               />
-              Sí</label
-            >
-            <label
-              ><input
+              Sí
+            </label>
+
+            <label class="flex items-center cursor-pointer">
+              <input
                 type="radio"
                 name="lenguaSenias"
                 value="No"
                 class="mr-2"
+                <%= respuestaLSM === 'No' ? 'checked' : '' %>
+                data-toggle="nivel-lsm"
               />
-              No</label
-            >
+              No
+            </label>
           </div>
         </div>
 
-        <!-- Contenedor oculto por defecto -->
-        <div id="nivelLSMContainer" class="hidden mb-3">
-          <label class="block mb-1 font-bold text-gray-700"
-            >Nivel de dominio de LSM</label
-          >
+        <!-- Contenedor de nivel de LSM -->
+        <div id="nivelLSMContainer" class="<%= respuestaLSM === 'Sí' ? '' : 'hidden' %> mb-3">
+          <label class="block mb-1 font-bold text-gray-700">
+            Nivel de dominio de LSM
+          </label>
           <select
             name="nivelLSM"
             id="nivelLSM"
             class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
-            required
+            <%= respuestaLSM === 'Sí' ? 'required' : '' %>
           >
-            <option value="">Selecciona un nivel</option>
-            <option value="Básico">Nivel Básico</option>
-            <option value="Intermedio">Nivel Intermedio</option>
-            <option value="Avanzado">Nivel Avanzado</option>
+            <% 
+              // Array completo - en MAYÚSCULAS y SIN ACENTOS (como en los otros)
+              const opcionesNivel = [
+                { value: "", texto: "SELECCIONA UN NIVEL" },
+                { value: "BASICO", texto: "NIVEL BASICO" },
+                { value: "INTERMEDIO", texto: "NIVEL INTERMEDIO" },
+                { value: "AVANZADO", texto: "NIVEL AVANZADO" }
+              ];
+
+              // Valor actual normalizado
+              const nivelActual = user.nivelLSM 
+                ? user.nivelLSM.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+                : '';
+            %>
+
+            <% 
+              opcionesNivel.forEach(opcion => { 
+            %>
+              <option 
+                value="<%= opcion.value %>" 
+                <%= nivelActual === opcion.value ? 'selected' : '' %>
+              >
+                <%= opcion.texto %>
+              </option>
+            <% }); %>
           </select>
 
+          <!-- Descripción de niveles (se mantiene visible si el contenedor está abierto) -->
           <div class="mt-2 text-sm text-gray-600 space-y-1 mb-6">
-            <p>
-              <strong>Básico:</strong> Gramática básica, vocabulario
-              fundamental, deletreo, números y cultura sorda.
-            </p>
-            <p>
-              <strong>Intermedio:</strong> Mayor vocabulario y estructuras más
-              complejas, habilidades conversacionales.
-            </p>
-            <p>
-              <strong>Avanzado:</strong> Fluidez, precisión y comprensión
-              profunda de matices lingüísticos y culturales.
-            </p>
+            <p><strong>Básico:</strong> Gramática básica, vocabulario fundamental, deletreo, números y cultura sorda.</p>
+            <p><strong>Intermedio:</strong> Mayor vocabulario y estructuras más complejas, habilidades conversacionales.</p>
+            <p><strong>Avanzado:</strong> Fluidez, precisión y comprensión profunda de matices lingüísticos y culturales.</p>
           </div>
         </div>
-
+<!-------------------------Tipo de sangre del trabajador-------------------------------------->
         <div class="my-3">
-          <label class="block mb-1 font-bold text-gray-700"
-            >Tipo de sangre del trabajador</label
-          >
+          <label class="block mb-1 font-bold text-gray-700">
+            Tipo de sangre del trabajador
+          </label>
           <select
             class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
             name="sangre"
             id="sangre-opciones"
             required
           >
-            <option value="">Seleccione su tipo</option>
-            <option value="O+">O+</option>
-            <option value="O-">O-</option>
-            <option value="A+">A+</option>
-            <option value="A-">A-</option>
-            <option value="B+">B+</option>
-            <option value="B-">B-</option>
-            <option value="AB+">AB+</option>
-            <option value="AB-">AB-</option>
+            <% 
+              // Array completo con TODAS las opciones
+              const opcionesSangre = [
+                { value: "", texto: "SELECCIONE SU TIPO" },
+                { value: "O+", texto: "O+" },
+                { value: "O-", texto: "O-" },
+                { value: "A+", texto: "A+" },
+                { value: "A-", texto: "A-" },
+                { value: "B+", texto: "B+" },
+                { value: "B-", texto: "B-" },
+                { value: "AB+", texto: "AB+" },
+                { value: "AB-", texto: "AB-" }
+              ];
+
+              // Valor actual normalizado (mayúsculas, sin espacios extras)
+              const sangreActual = user.sangre 
+                ? user.sangre.trim().toUpperCase() 
+                : '';
+            %>
+
+            <% 
+              // Generamos todas las opciones con el loop
+              opcionesSangre.forEach(opcion => { 
+            %>
+              <option 
+                value="<%= opcion.value %>" 
+                <%= sangreActual === opcion.value ? 'selected' : '' %>
+              >
+                <%= opcion.texto %>
+              </option>
+            <% }); %>
           </select>
         </div>
 
-        <!-- Discapacidad -->
+<!---------------------------------------------------- Discapacidad ------------------------------------>
         <div class="mb-3">
           <label class="block mb-1 font-bold text-gray-700"
             >¿Tienes alguna discapacidad?</label
@@ -1405,7 +1282,7 @@
             name="discapacidadTexto"
           />
         </div>
-
+<!-------------------------------------- Enfermedad Cronica ---------------------------------------->
         <div class="my-3">
           <label class="block mb-1 font-bold text-gray-700"
             >¿Padeces alguna enfermedad crónica o degenerativa?</label
