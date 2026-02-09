@@ -1,111 +1,150 @@
-const express = require('express'); //"Esto es como un import numpy as np en python"
-const app = express(); //"Se crea la aplicación, app llama a express para utilizarlo"
-"^"
-"l"
-"Es como abrir un documento nuevo de word para trabajar en el"
+const express = require("express");
+const path = require("path");
+const db = require("./config/db"); // Importamos tu conexión unificada
+const app = express();
 
+// Configuración de Middlewares
+app.use(express.json());
+app.use(express.urlencoded({ extended: true }));
+app.use(express.static(path.join(__dirname, "public")));
 
-const path = require('path'); //path es un modulo nativo de node.js para manejar rutas archivos
-/*
-const conexion = mysql.createConnection({
-  host: "localhost" ,
-  database: 'trabajadores_servicio',
-  user: 'root',
-  password: ''
-});*/
+// Configuración del motor de plantillas
+app.set("view engine", "ejs");
+app.set("views", path.join(__dirname, "views"));
 
-app.set('view engine', 'ejs');  //view engine es una opcion especial, ejf es Embedded JavaScript
-// Ruta inicial para probar el servidor
+/**
+ * RUTAS DE ACCESO (Login y Registro)
+ */
 
-
-app.use(express.static(path.join(__dirname, 'public')));
-
-//permite a express servir archivos estaticos desde la carpeta public. Es decir que el
-//servidor los envia directamente al navegador 
-//los archivos que no cambian dinamicamente cson el css, javascript, imagenes, fuentes, etc.
-
-//Servir significa enviar o entregar los archivos estaticos cuando los pida el navegador
-"__dirname es una variable especial de Node.js, "
-"la carpeta donde esta el archivo actual, se une a public"
-
-/*
-conexion.connect(function(error){
-  if(error){
-    console.log(error);
-  }
-  else{
-    console.log("Conexión exitosa");
-  }
+// Pantalla principal (Login)
+app.get("/", (req, res) => {
+  res.render("login");
 });
 
-conexion.end
-*/
+app.get("/login", (req, res) => {
+  res.render("login");
+});
 
-async function obtenerTrabajadores() {
+// Procesar Login y Cargar datos para Autocompletado
+app.post("/login", async (req, res) => {
+  const { curp, rfc } = req.body;
   try {
-    const conexion = await conectarDB();
-    
-    const [rows] = await conexion.execute('SELECT * FROM trabajador');
-    
-    console.log("📋 Lista de trabajadores:", [rows]); // 🔍 Imprime los resultados
+    // Buscamos si el trabajador ya existe en la base de datos
+    const [rows] = await db.query(
+      "SELECT * FROM trabajador WHERE curp = ? AND rfc = ?",
+      [curp, rfc],
+    );
 
-    console.log(rows[0]);
-    
-    await conexion.end();
+    if (rows && rows.length > 0) {
+      // Si existe, mandamos sus datos al formulario (index.ejs) para autocompletar
+      // Nota: index.ejs usa la variable "user" [cite: 10, 51]
+      res.render("index", { user: rows[0] });
+    } else {
+      res.render("login", {
+        error: "No se encontró el registro o los datos son incorrectos.",
+      });
+    }
   } catch (error) {
-    console.error("❌ Error al obtener trabajadores:", error);
+    console.error("Error en login:", error);
+    res.status(500).send("Error interno del servidor");
   }
-}
-
-
-
-
-
-
-"************************"
-//Define una ruta GET para la URL / la pagina principal
-
-//req manda una solicitud que hace el usuario, res es lo que va a responer el servidor
-app.get('/', (request, response) => {
-  //response.send('¡Hola, Isac! El servidor está funcionando correctamente.');
-    response.render('index')
 });
 
-//El segundo parametro de app.get es la funcion callback que se ejecuta cuando alguien visita la ruta
+/**
+ * RUTAS DEL FORMULARIO Y REGISTRO
+ */
 
-"app.get es para manejar las solicitudes get"
-"su primer parametro es la ruta GET, en este caso es la principal por eso no lleva nada más"
+// Guardar o Actualizar Datos
+app.post("/guardar", async (req, res) => {
+  try {
+    const datos = req.body;
 
+    // CORRECCIÓN DE FECHAS: Convertir DD-MM-YYYY a YYYY-MM-DD para SQL Server
+    const formatearFecha = (f) => (f ? f.split("-").reverse().join("-") : null);
 
+    const fechaIngresoSQL = formatearFecha(datos.fechaIngreso);
+    const fechaNacimientoSQL = formatearFecha(datos.fechaNacimiento);
 
+    // Aquí iría tu lógica de UPDATE o INSERT en la base de datos
+    // Ejemplo simplificado:
+    /*
+        await db.query('UPDATE trabajador SET fechaIngreso = ?, adscripcionActual = ? WHERE noTrabajador = ?', 
+        [fechaIngresoSQL, datos.adscripcionActual, datos.noTrabajador]);
+        */
 
+    res.render("success");
+  } catch (error) {
+    console.error("Error al guardar:", error);
+    res.status(500).send("Error al procesar el formulario");
+  }
+});
 
-// Iniciar el servidor en el puerto 3000
-app.listen(3000, () => console.log('Servidor corriendo en http://localhost:3000'));
+/**
+ * RUTAS DE REPORTES Y ACUSES
+ */
 
+// Generar Acuse (Ruta que te daba error 500)
+app.get("/acuse/:noTrabajador", async (req, res) => {
+  const { noTrabajador } = req.params;
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM trabajador WHERE noTrabajador = ?",
+      [noTrabajador],
+    );
 
-//app.listen(3000, function() {
-  //console.log('Servidor corriendo en http://localhost:3000');
-//});
+    if (rows && rows.length > 0) {
+      // Helper para formatear fechas en la vista del acuse
+      const formatearFecha = (f) =>
+        f ? new Date(f).toLocaleDateString("es-MX") : "N/A";
 
+      // acuse.ejs espera la variable "trabajador" [cite: 369, 370]
+      res.render("acuse", {
+        trabajador: rows[0],
+        formatearFecha,
+        escolaridad: [], // Debes consultar estas tablas también si las necesitas
+        actualizacion: [],
+        experienciaPJ: [],
+        hijos: [],
+      });
+    } else {
+      res.status(404).send("Trabajador no encontrado");
+    }
+  } catch (error) {
+    console.error("Error al generar acuse:", error);
+    res.status(500).send("Error interno al generar el acuse");
+  }
+});
 
+// Buscador de Reportes
+app.get("/buscador", (req, res) => {
+  res.render("buscador");
+});
 
-// app.listen(puerto , callback) el callback es opcional
+// Verificar existencia para el buscador [cite: 406, 407]
+app.get("/existe/:noTrabajador", async (req, res) => {
+  try {
+    const [rows] = await db.query(
+      "SELECT 1 FROM trabajador WHERE noTrabajador = ?",
+      [req.params.noTrabajador],
+    );
+    res.json({ existe: rows.length > 0 });
+  } catch (error) {
+    res.status(500).json({ error: true });
+  }
+});
 
-"El numero de puero es en donde quiero el servidor"
-"El callback es la funcion que quiero que se ejecute cuando el servidor empieza a funcionar"
+/**
+ * OTRAS VISTAS
+ */
+app.get("/registrar-password", (req, res) =>
+  res.render("registrarPassword", { error: null }),
+);
+app.get("/recuperar-password", (req, res) =>
+  res.render("recuperar-password", { error: null, mensaje: null }),
+);
 
-
-//npx tailwindcss-cli -i ./public/css/tailwind.css -o ./public/css/styles.css --watch"
-
-
-"node app.js para ejecutarlo"
-
-
-//npx tailwindcss -i ./public/css/tailwind.css -o ./public/css/styles.css --watch
-// .\ngrok.exe http 3000
-// node app.js
-
-
-
-obtenerTrabajadores();
+// Iniciar servidor
+const PORT = 3000;
+app.listen(PORT, () => {
+  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+});

@@ -456,8 +456,8 @@
         >
           <% 
             // Normalizamos el valor para comparar (por si viene con variaciones)
-            const generoActual = user.sexo 
-              ? user.sexo.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+            const generoActual = user.sexoTrabajador 
+              ? user.sexoTrabajador.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
               : '';
           %>
 
@@ -609,18 +609,66 @@
             >El número debe tener exactamente 10 dígitos.</span
           >
 
-          <label class="block mb-1 font-bold text-gray-700"
-            >Parentesco del familiar</label
-          >
-          <input
-            type="text"
-            oninput="this.value = this.value.replace(/[^a-zA-Z]/, '')"
-            class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
+          <div class="mb-4">
+          <label class="block mb-1 font-bold text-gray-700">Parentesco del familiar</label>
+          
+          <% 
+            // 1. Preparar el valor actual: Mayúsculas, sin espacios, sin acentos
+            const parentescoActual = user.parentescoFamiliar 
+              ? user.parentescoFamiliar.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+              : '';
+          %>
+
+          <select
             name="parentesco"
-            placeholder="parentesco"
+            class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
             required
-            value="<%= user.parentescoFamiliar ? user.parentescoFamiliar:'' %>"
-          />
+          >
+            <option value="" <%= parentescoActual === '' ? 'selected' : '' %>>
+              SELECCIONE UNA OPCIÓN
+            </option>
+
+            <option value="MADRE" <%= parentescoActual === 'MADRE' ? 'selected' : '' %>>
+              MADRE
+            </option>
+
+            <option value="PADRE" <%= parentescoActual === 'PADRE' ? 'selected' : '' %>>
+              PADRE
+            </option>
+
+            <option value="CONYUGE" <%= (parentescoActual === 'CONYUGE' || parentescoActual === 'ESPOSO' || parentescoActual === 'ESPOSA' || parentescoActual === 'PAREJA') ? 'selected' : '' %>>
+              CÓNYUGE / PAREJA
+            </option>
+
+            <option value="HIJO" <%= (parentescoActual === 'HIJO' || parentescoActual === 'HIJA') ? 'selected' : '' %>>
+              HIJO(A)
+            </option>
+
+            <option value="HERMANO" <%= (parentescoActual === 'HERMANO' || parentescoActual === 'HERMANA') ? 'selected' : '' %>>
+              HERMANO(A)
+            </option>
+
+            <option value="ABUELO" <%= (parentescoActual === 'ABUELO' || parentescoActual === 'ABUELA') ? 'selected' : '' %>>
+              ABUELO(A)
+            </option>
+
+            <option value="TIO" <%= (parentescoActual === 'TIO' || parentescoActual === 'TIA') ? 'selected' : '' %>>
+              TÍO(A)
+            </option>
+
+            <option value="PRIMO" <%= (parentescoActual === 'PRIMO' || parentescoActual === 'PRIMA') ? 'selected' : '' %>>
+              PRIMO(A)
+            </option>
+
+            <option value="SOBRINO" <%= (parentescoActual === 'SOBRINO' || parentescoActual === 'SOBRINA') ? 'selected' : '' %>>
+              SOBRINO(A)
+            </option>
+
+            <option value="OTRO" <%= (parentescoActual === 'OTRO' || (parentescoActual !== '' && !['MADRE','PADRE','CONYUGE','HIJO','HERMANO','ABUELO','TIO','PRIMO','SOBRINO'].includes(parentescoActual))) ? 'selected' : '' %>>
+              OTRO
+            </option>
+          </select>
+</div>
         </div>
 
         <div class="my-4">

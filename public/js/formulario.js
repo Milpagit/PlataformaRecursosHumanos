@@ -25,20 +25,6 @@ document.addEventListener("DOMContentLoaded", function () {
 
   const telefonoInput = document.getElementById("noTelefono");
 
-  function check(e) {
-    tecla = document.all ? e.keyCode : e.which;
-
-    //Tecla de retroceso para borrar, siempre la permite
-    if (tecla == 8) {
-      return true;
-    }
-
-    // Patrón de entrada, en este caso solo acepta numeros y letras
-    patron = /[A-Za-z0-9]/;
-    tecla_final = String.fromCharCode(tecla);
-    return patron.test(tecla_final);
-  }
-
   function actualizarPreguntaEmbarazo() {
     const sexo = sexocombo.value;
 
@@ -78,18 +64,6 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
-  function actualizarPreguntaCronica() {
-    const preguntaCronica = document.getElementById("preguntaCronica");
-    const textoCronica = document.getElementById("cronica-texto");
-    if (radioscronica[0].checked) {
-      preguntaCronica.classList.remove("hidden");
-      textoCronica.setAttribute("required", "true");
-    } else {
-      preguntaCronica.classList.add("hidden");
-      textoCronica.removeAttribute("required");
-    }
-  }
-
   function actualizarPreguntaHijos() {
     if (radiospapa[0].checked) {
       preguntaHijos.classList.remove("hidden");
@@ -120,8 +94,60 @@ document.addEventListener("DOMContentLoaded", function () {
     }
   }
 
+  /**
+   * Configura la visibilidad de un contenedor basada en la selección de un grupo de radio buttons.
+   * @param {string} radioName - El atributo 'name' del grupo de radio buttons.
+   * @param {string} containerId - El 'id' del contenedor a mostrar/ocultar.
+   * @param {string} showValue - El 'value' del radio button que debe mostrar el contenedor.
+   */
+  function configurarVisibilidadCondicional(radioName, containerId, showValue) {
+    const radios = document.querySelectorAll(`input[name="${radioName}"]`);
+    const container = document.getElementById(containerId);
+
+    // Salir si los elementos no existen para evitar errores.
+    if (!radios.length || !container) {
+      return;
+    }
+
+    const requiredElements = container.querySelectorAll("input, select");
+
+    const manejarVisibilidad = () => {
+      // Encontrar el radio que está actualmente seleccionado.
+      const radioSeleccionado = document.querySelector(
+        `input[name="${radioName}"]:checked`,
+      );
+
+      // Si por alguna razón ninguno está seleccionado, no hacer nada.
+      if (!radioSeleccionado) return;
+
+      if (radioSeleccionado.value === showValue) {
+        container.classList.remove("hidden");
+        requiredElements.forEach((el) => el.setAttribute("required", true));
+      } else {
+        container.classList.add("hidden");
+        requiredElements.forEach((el) => {
+          el.removeAttribute("required");
+          // Limpiar valor para diferentes tipos de input.
+          if (el.type === "checkbox" || el.type === "radio") {
+            el.checked = false;
+          } else {
+            el.value = "";
+          }
+        });
+      }
+    };
+
+    // Añadir el listener a cada radio del grupo.
+    radios.forEach((radio) => {
+      radio.addEventListener("change", manejarVisibilidad);
+    });
+
+    // Ejecutar la función una vez al cargar la página para establecer el estado inicial.
+    manejarVisibilidad();
+  }
+
   function agregarCamposHijos() {
-    noHijos = hijoscontador.value;
+    const noHijos = hijoscontador.value;
     const espacioHijos = document.getElementById("espacioHijos");
 
     while (espacioHijos.hasChildNodes()) {
@@ -508,15 +534,74 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
     radio.addEventListener("change", actualizarPreguntaHijos);
   });
 
-  radioscronica.forEach((radio) => {
-    radio.addEventListener("change", actualizarPreguntaCronica);
-  });
-
   hijoscontador.addEventListener("input", agregarCamposHijos);
+
+  // Lógica para precargar hijos si existen datos
+  if (window.hijosData && window.hijosData.length > 0) {
+    hijoscontador.value = window.hijosData.length;
+    agregarCamposHijos(); // Genera los campos vacíos
+
+    // Rellena los campos generados
+    window.hijosData.forEach((hijo, i) => {
+      const inicialesInput = document.querySelector(
+        `input[name="inicialesHijo${i}"]`,
+      );
+      const sexoSelect = document.querySelector(
+        `select[name="selectHijo${i}"]`,
+      );
+      const fechaInput = document.querySelector(
+        `input[name="fechaNacimientoHijo${i}"]`,
+      );
+
+      if (inicialesInput) inicialesInput.value = hijo.inicialesHijo || "";
+      if (sexoSelect) sexoSelect.value = hijo.sexoHijo || "Seleccione";
+
+      if (fechaInput && hijo.fechaNacimientoHijo) {
+        // Convertir fecha ISO (YYYY-MM-DD...) a DD-MM-YYYY
+        const date = new Date(hijo.fechaNacimientoHijo);
+        const day = String(date.getUTCDate()).padStart(2, "0");
+        const month = String(date.getUTCMonth() + 1).padStart(2, "0");
+        const year = date.getUTCFullYear();
+        fechaInput._flatpickr.setDate(`${day}-${month}-${year}`);
+      }
+    });
+  }
+
+  // Llamadas a la nueva función refactorizada
+  configurarVisibilidadCondicional("cronica", "preguntaCronica", "1");
+  configurarVisibilidadCondicional(
+    "coincideDomicilio",
+    "domicilioActualContainer",
+    "0",
+  );
+  configurarVisibilidadCondicional(
+    "indigena",
+    "comunidadIndigenaContainer",
+    "1",
+  );
+  configurarVisibilidadCondicional(
+    "hablaLenguaIndigena",
+    "familiaLingContainer",
+    "1",
+  );
+  configurarVisibilidadCondicional(
+    "discapacidad",
+    "tipoDiscapacidadContainer",
+    "1",
+  );
+  configurarVisibilidadCondicional("lenguaSenias", "nivelLSMContainer", "Sí");
+  configurarVisibilidadCondicional("tieneTecnica", "tecnicaContainer", "1");
+  configurarVisibilidadCondicional(
+    "tieneBachillerato",
+    "bachilleratoContainer",
+    "1",
+  );
+
   Inputmask("99-99-9999", { placeholder: "dd-mm-yyyy" }).mask(fechaConyuge);
   flatpickr(fechaConyuge, {
     dateFormat: "d-m-Y",
     allowInput: true,
+    maxDate: "today",
   });
 
   inputsFecha.forEach(function (input) {
@@ -524,6 +609,7 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
     flatpickr(input, {
       dateFormat: "d-m-Y",
       allowInput: true,
+      maxDate: "today",
     });
 
     // Inputmask
@@ -573,11 +659,13 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
   const otraComunidadContainer = document.getElementById(
     "otraComunidadContainer",
   );
-  const otraComunidadInput = document.getElementById("otraComunidadInput");
+  const otraComunidadInput = otraComunidadContainer.querySelector(
+    'input[name="otraComunidad"]',
+  );
 
   if (selectCom) {
     selectCom.addEventListener("change", function () {
-      if (selectCom.value == "OTRO") {
+      if (selectCom.value === "OTRO") {
         otraComunidadContainer.classList.remove("hidden");
         otraComunidadInput.setAttribute("required", true);
       } else {
@@ -590,11 +678,13 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
 
   const selectFam = document.getElementById("familiaLinguistica");
   const otraFamiliaContainer = document.getElementById("otraLenguaContainer");
-  const otraFamiliaInput = document.getElementById("otraLenguaInput");
+  const otraFamiliaInput = otraFamiliaContainer.querySelector(
+    'input[name="otraLengua"]',
+  );
 
   if (selectFam) {
     selectFam.addEventListener("change", function () {
-      if (selectFam.value == "OTRA") {
+      if (selectFam.value === "OTRA") {
         otraFamiliaContainer.classList.remove("hidden");
         otraFamiliaInput.setAttribute("required", true);
       } else {
@@ -604,106 +694,6 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
       }
     });
   }
-
-  const radios = document.querySelectorAll('input[name="coincideDomicilio"]');
-  const actualContainer = document.getElementById("domicilioActualContainer");
-
-  radios.forEach((radio) => {
-    radio.addEventListener("change", () => {
-      if (radio.value === "0") {
-        actualContainer.classList.remove("hidden");
-        actualContainer
-          .querySelectorAll("input")
-          .forEach((input) => input.setAttribute("required", true));
-      } else {
-        actualContainer.classList.add("hidden");
-        actualContainer.querySelectorAll("input").forEach((input) => {
-          input.removeAttribute("required");
-          input.value = "";
-        });
-      }
-    });
-  });
-
-  const radiosIndigena = document.querySelectorAll('input[name="indigena"]');
-  const comunidadContainer = document.getElementById(
-    "comunidadIndigenaContainer",
-  );
-  const comunidadSelect = document.querySelector(
-    'select[name="comunidadIndigena"]',
-  );
-
-  radiosIndigena.forEach((radio) => {
-    radio.addEventListener("change", () => {
-      if (radio.value === "1") {
-        comunidadContainer.classList.remove("hidden");
-        comunidadSelect.setAttribute("required", true);
-      } else {
-        comunidadContainer.classList.add("hidden");
-        comunidadSelect.removeAttribute("required");
-        comunidadSelect.value = "";
-      }
-    });
-  });
-
-  const radiosLengua = document.querySelectorAll(
-    'input[name="hablaLenguaIndigena"]',
-  );
-  const familiaContainer = document.getElementById("familiaLingContainer");
-  const familiaSelect = document.querySelector(
-    'select[name="familiaLinguistica"]',
-  );
-
-  radiosLengua.forEach((radio) => {
-    radio.addEventListener("change", () => {
-      if (radio.value === "1") {
-        familiaContainer.classList.remove("hidden");
-        familiaSelect.setAttribute("required", true);
-      } else {
-        familiaContainer.classList.add("hidden");
-        familiaSelect.removeAttribute("required");
-        familiaSelect.value = "";
-      }
-    });
-  });
-
-  const radiosDiscapacidad = document.querySelectorAll(
-    'input[name="discapacidad"]',
-  );
-  const discapacidadContainer = document.getElementById(
-    "tipoDiscapacidadContainer",
-  );
-  const discapacidadInput = document.getElementById("tipoDiscapacidadInput");
-
-  radiosDiscapacidad.forEach((radio) => {
-    radio.addEventListener("change", () => {
-      if (radio.value === "1") {
-        discapacidadContainer.classList.remove("hidden");
-        discapacidadInput.setAttribute("required", true);
-      } else {
-        discapacidadContainer.classList.add("hidden");
-        discapacidadInput.removeAttribute("required");
-        discapacidadInput.value = "";
-      }
-    });
-  });
-
-  const radiosLSM = document.getElementsByName("lenguaSenias");
-  const nivelContainer = document.getElementById("nivelLSMContainer");
-  const nivelSelect = document.getElementById("nivelLSM");
-
-  radiosLSM.forEach((radio) => {
-    radio.addEventListener("change", function () {
-      if (this.value === "Sí") {
-        nivelContainer.classList.remove("hidden");
-        nivelSelect.setAttribute("required", true);
-      } else {
-        nivelContainer.classList.add("hidden");
-        nivelSelect.value = "";
-        nivelSelect.removeAttribute("required");
-      }
-    });
-  });
 
   const niveles = [
     { key: "Licenciatura", max: 3 },
@@ -808,7 +798,7 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
           </select>
 
           <label class="block mb-1">Fecha de obtención del documento</label>
-          <input type="date"
+          <input type="text"
                  name="${key.toLowerCase()}_fecha${i}"
                  required
                 placeholder="${ph.fecha || ""}"
@@ -828,40 +818,6 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
       }
     });
   });
-
-  const rsTec = document.querySelectorAll('input[name="tieneTecnica"]');
-  const contTec = document.getElementById("tecnicaContainer");
-  const inpTec = contTec.querySelector('input[name="tecnica_institucion"]');
-  rsTec.forEach((r) =>
-    r.addEventListener("change", () => {
-      if (r.value === "1") {
-        contTec.classList.remove("hidden");
-        inpTec.setAttribute("required", true);
-      } else {
-        contTec.classList.add("hidden");
-        inpTec.removeAttribute("required");
-        inpTec.value = "";
-      }
-    }),
-  );
-  // Bachillerato
-  const rsPre = document.querySelectorAll('input[name="tieneBachillerato"]');
-  const contPre = document.getElementById("bachilleratoContainer");
-  const camposPre = contPre.querySelectorAll("input, select");
-  rsPre.forEach((r) =>
-    r.addEventListener("change", () => {
-      if (r.value === "1") {
-        contPre.classList.remove("hidden");
-        camposPre.forEach((el) => el.setAttribute("required", true));
-      } else {
-        contPre.classList.add("hidden");
-        camposPre.forEach((el) => {
-          el.removeAttribute("required");
-          el.value = "";
-        });
-      }
-    }),
-  );
 });
 
 function configurarFechaInput() {
@@ -872,6 +828,7 @@ function configurarFechaInput() {
       flatpickr(input, {
         dateFormat: "d-m-Y",
         allowInput: true,
+        maxDate: "today",
       });
 
       Inputmask("99-99-9999", { placeholder: "dd-mm-yyyy" }).mask(input);
@@ -1087,7 +1044,7 @@ function agregarActualizacion() {
     <input type="text" name="actualizacion_institucion${actualizacionIndex}" class="acentos border w-full p-2 rounded-md bg-white mb-2" required>
 
     <label class="block text-gray-700 font-semibold">Documento recibido</label>
-     <select  class="acentos border w-full p-2 rounded-md bg-white mb-2" id="adscripcionActual" name="actualizacion_documento${actualizacionIndex}" required>
+     <select  class="acentos border w-full p-2 rounded-md bg-white mb-2" name="actualizacion_documento${actualizacionIndex}" required>
       <option value="">Seleccione documento</option>
       <option value="CERTIFICADO">CERTIFICADO</option>
       <option value="DIPLOMA">DIPLOMA</option>
@@ -1106,6 +1063,7 @@ function agregarActualizacion() {
   flatpickr(inputFecha, {
     dateFormat: "d-m-Y", // Día-Mes-Año
     allowInput: true,
+    maxDate: "today",
   });
 
   Inputmask("99-99-9999", { placeholder: "dd-mm-yyyy" }).mask(inputFecha);
@@ -1126,124 +1084,6 @@ function quitarActualizacion() {
     document.getElementById("actualizacionTotal").value = actualizacionIndex;
   }
 }
-
-let licVisible = 1;
-
-document
-  .getElementById("mostrarMasLicenciaturas")
-  .addEventListener("click", () => {
-    licVisible++;
-    if (licVisible <= 3) {
-      document.getElementById(`lic${licVisible}`).classList.remove("hidden");
-
-      // aplicar flatpickr + inputmask
-      flatpickr(
-        document.querySelector(`[name="licenciatura_fecha${licVisible}"]`),
-        {
-          plugins: [
-            new monthSelectPlugin({ dateFormat: "m-Y", altFormat: "F Y" }),
-          ],
-          allowInput: true,
-        },
-      );
-
-      Inputmask("99-9999", { placeholder: "mm-yyyy" }).mask(
-        document.querySelector(`[name="licenciatura_fecha${licVisible}"]`),
-      );
-    }
-
-    if (licVisible === 3) {
-      document.getElementById("mostrarMasLicenciaturas").disabled = true;
-      document.getElementById("mostrarMasLicenciaturas").textContent =
-        "Límite de licenciatura alcanzado";
-    }
-  });
-
-let maeVisible = 1;
-document.getElementById("mostrarMasMaestrias").addEventListener("click", () => {
-  maeVisible++;
-  if (maeVisible <= 3) {
-    document.getElementById(`mae${maeVisible}`).classList.remove("hidden");
-
-    // aplicar flatpickr + inputmask
-    flatpickr(document.querySelector(`[name="maestria_fecha${maeVisible}"]`), {
-      plugins: [new monthSelectPlugin({ dateFormat: "m-Y", altFormat: "F Y" })],
-      allowInput: true,
-    });
-
-    Inputmask("99-9999", { placeholder: "mm-yyyy" }).mask(
-      document.querySelector(`[name="maestria_fecha${maeVisible}"]`),
-    );
-  }
-
-  if (maeVisible === 3) {
-    document.getElementById("mostrarMasMaestrias").disabled = true;
-    document.getElementById("mostrarMasMaestrias").textContent =
-      "Límite de maestrias alcanzado";
-  }
-});
-
-let espVisible = 1;
-document
-  .getElementById("mostrarMasEspecialidades")
-  .addEventListener("click", () => {
-    espVisible++;
-    if (espVisible <= 3) {
-      document.getElementById(`esp${espVisible}`).classList.remove("hidden");
-
-      // aplicar flatpickr + inputmask
-      flatpickr(
-        document.querySelector(`[name="especialidad_fecha${espVisible}"]`),
-        {
-          plugins: [
-            new monthSelectPlugin({ dateFormat: "m-Y", altFormat: "F Y" }),
-          ],
-          allowInput: true,
-        },
-      );
-
-      Inputmask("99-9999", { placeholder: "mm-yyyy" }).mask(
-        document.querySelector(`[name="especialidad_fecha${espVisible}"]`),
-      );
-    }
-
-    if (espVisible === 3) {
-      document.getElementById("mostrarMasEspecialidades").disabled = true;
-      document.getElementById("mostrarMasEspecialidades").textContent =
-        "Límite de especialidades alcanzado";
-    }
-  });
-
-let docVisible = 1;
-document
-  .getElementById("mostrarMasDoctorados")
-  .addEventListener("click", () => {
-    docVisible++;
-    if (docVisible <= 2) {
-      document.getElementById(`doc${docVisible}`).classList.remove("hidden");
-
-      // aplicar flatpickr + inputmask
-      flatpickr(
-        document.querySelector(`[name="doctorado_fecha${docVisible}"]`),
-        {
-          plugins: [
-            new monthSelectPlugin({ dateFormat: "m-Y", altFormat: "F Y" }),
-          ],
-          allowInput: true,
-        },
-      );
-
-      Inputmask("99-9999", { placeholder: "mm-yyyy" }).mask(
-        document.querySelector(`[name="doctorado_fecha${docVisible}"]`),
-      );
-    }
-
-    if (docVisible === 2) {
-      document.getElementById("mostrarMasDoctorados").disabled = true;
-      document.getElementById("mostrarMasDoctorados").textContent =
-        "Límite de doctorados alcanzado";
-    }
-  });
 
 function validarEscolaridad(prefix, cantidadMaxima, nombreVisible) {
   for (let i = 1; i <= cantidadMaxima; i++) {

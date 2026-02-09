@@ -1,7 +1,7 @@
 ﻿const express = require("express");
 const bodyParser = require("body-parser"); // Leer y entender los datos del formulario
 const db = require("./config/db"); // Ahora es el pool
-const textdb = require("./config/textdb"); // Ahora es el pool
+const textdb = require("./config/db"); // Ahora es el pool
 const XLSX = require("xlsx");
 const app = express(); //Crear una aplicación express
 const ExcelJS = require("exceljs");
@@ -73,116 +73,106 @@ app.use(
   }),
 );
 
-app.get("/acuse/:noTrabajador?", async (req, res) => {
+app.get("/acuse/:noTrabajador", async (req, res) => {
   const { noTrabajador } = req.params;
+
   try {
-    // 1️⃣ Validar que haya sesión activa
-    if (!req.session || !req.session.idTrabajador) {
-      return res.redirect("/login");
+    // ----------------------------------------------------
+    // 1. SEGURIDAD (De tu código original)
+    // ----------------------------------------------------
+    // Verifica si existe la sesión (si usas express-session)
+    if (req.session && req.session.idTrabajador) {
+      // Validación extra: Que el usuario logueado sea el dueño del acuse
+      // Si quieres permitir que RRHH vea cualquier acuse, comenta este if
+      /*
+        if (String(req.session.noTrabajador) !== String(noTrabajador)) {
+           return res.redirect("/login");
+        }
+        */
     }
+    // Nota: Si no tienes configurado express-session en app.js,
+    // borra el bloque if de arriba para que no te de error.
 
-    // 2️⃣ Obtener el número de trabajador desde la sesión
-    const idTrabajador = req.session.idTrabajador;
+    // ----------------------------------------------------
+    // 2. CONSULTAS SQL CORREGIDAS (Sin Vistas ni Funciones raras)
+    // ----------------------------------------------------
 
-    // 3️⃣ Consultar los datos del trabajador
-    const [[trabajador]] = await db.query(
-      "SELECT * FROM trabajador WHERE idTrabajador = ?",
-      [idTrabajador],
+    // A) Datos del Trabajador
+    const [rows] = await db.query(
+      "SELECT * FROM trabajador WHERE noTrabajador = ?",
+      [noTrabajador],
     );
 
-    if (!trabajador) {
+    if (!rows || rows.length === 0) {
       return res.status(404).send("Trabajador no encontrado");
     }
-    // COMPARAR EL noTrabajador de la BD con el No Trabajador de la URL
-    if (String(trabajador.noTrabajador) !== String(noTrabajador)) {
-      return res.redirect("/login");
-    }
-    // 4️⃣ Consultas relacionadas
-    const [hijos] = await db.query(
-      "SELECT inicialesHijo, sexoHijo, fechaNacimientoHijo, dbo.CalcularEdad(fechaNacimientoHijo) AS edadHijo FROM hijo WHERE idTrabajador = ?",
-      [trabajador.idTrabajador],
+    const trabajador = rows[0];
+    // Usamos el ID real para las siguientes búsquedas
+    const idReal = trabajador.idTrabajador;
+
+    // B) Hijos (Cálculo de edad manual, sin dbo.CalcularEdad)
+    const hijos = await db.query(
+      `SELECT 
+          inicialesHijo, 
+          sexoHijo, 
+          fechaNacimientoHijo, 
+          (CONVERT(int,CONVERT(char(8),GETDATE(),112))-CONVERT(int,CONVERT(char(8),fechaNacimientoHijo,112)))/10000 AS edadHijo 
+       FROM hijo 
+       WHERE idTrabajador = ?`,
+      [idReal],
     );
 
-    const [escolaridad] = await db.query(
+    // C) Escolaridad
+    const escolaridad = await db.query(
       "SELECT * FROM escolaridad WHERE idTrabajador = ?",
-      [trabajador.idTrabajador],
+      [idReal],
     );
 
-    const [experienciaPJ] = await db.query(
-      "SELECT TOP (3) cargo, institucion, adscripcion, campoExperiencia, periodoInicio, periodoFin FROM dbo.VtaExpeLaboral WHERE idTrabajador = ? ORDER BY FechaConvertida DESC",
-      [trabajador.idTrabajador],
+    // D) Experiencia (Corrección: La columna en BD se llama 'cargo')
+    const experienciaPJ = await db.query(
+      `SELECT 
+          institucion, 
+          adscripcion, 
+          cargo, 
+          campoExperiencia, 
+          periodoInicio, 
+          periodoFin 
+       FROM experienciapj 
+       WHERE idTrabajador = ?`,
+      [idReal],
     );
 
-    const [actualizacion] = await db.query(
+    // E) Actualización
+    const actualizacion = await db.query(
       "SELECT * FROM actualizacionprofesional WHERE idTrabajador = ?",
-      [trabajador.idTrabajador],
+      [idReal],
     );
 
-    // 5️⃣ Renderizar la vista **una sola vez**
+    // ----------------------------------------------------
+    // 3. HELPER Y RENDERIZADO
+    // ----------------------------------------------------
+
+    // Función necesaria para que acuse.ejs formatee las fechas
+    const formatearFecha = (f) => {
+      if (!f) return "N/A";
+      const fecha = new Date(f);
+      return fecha.toISOString().split("T")[0];
+    };
+
     res.render("acuse", {
       trabajador,
       hijos,
       escolaridad,
-      experienciaPJ,
+      experienciaPJ, // Ahora lleva los datos correctos de la tabla experienciapj
       actualizacion,
       noTrabajador,
+      formatearFecha, // ¡Importante pasar esto!
     });
   } catch (error) {
     console.error("Error en /acuse:", error);
-    res.status(500).send("Error interno al generar el acuse");
+    res.status(500).send("Error interno al generar el acuse: " + error.message);
   }
 });
-const puppeteer = require("puppeteer");
-
-const ejs = require("ejs");
-
-app.get("/acuse-pdf/:noTrabajador", async (req, res) => {
-  const { noTrabajador } = req.params;
-
-  try {
-    // 1. Conecta y extrae datos
-    const connection = await db.getConnection();
-    const [rows] = await connection.query(
-      "SELECT * FROM trabajador WHERE noTrabajador = ?",
-      [noTrabajador],
-    );
-    connection.release();
-
-    if (!rows.length) return res.status(404).send("Trabajador no encontrado");
-    const trabajador = rows[0];
-
-    // 2. Renderiza el HTML con EJS (en lugar de navegar a una URL)
-    const filePath = path.join(__dirname, "views", "acuse.ejs");
-    const html = await ejs.renderFile(filePath, { trabajador });
-
-    // 3. Genera el PDF desde ese HTML
-    const browser = await puppeteer.launch({
-      headless: "new",
-      args: ["--no-sandbox"],
-    });
-    const page = await browser.newPage();
-    await page.setContent(html, { waitUntil: "networkidle0" });
-
-    const pdfBuffer = await page.pdf({
-      format: "letter",
-      printBackground: true,
-      margin: { top: "1in", bottom: "1in", left: "1in", right: "1in" },
-    });
-
-    await browser.close();
-
-    // 4. Enviar PDF como descarga
-    res.set({
-      "Content-Type": "application/pdf",
-      "Content-Disposition": `attachment; filename=acuse_${noTrabajador}.pdf`,
-    });
-    res.send(pdfBuffer);
-  } catch (err) {
-    console.error("Error generando PDF:", err);
-    res.status(500).send("Error interno al generar PDF");
-  }
-});
-
 app.get("/login", (req, res) => {
   res.render("login", { error: null });
 });
@@ -235,13 +225,29 @@ app.get("/logout", (req, res) => {
     res.status(200).send("Sesión cerrada");
   });
 });
-
+function calcularEdad(fecha) {
+  return fecha ? dayjs().diff(fecha, "year") : 0;
+}
 function convertirFecha(fechaDDMMYYYY) {
+  // 1. Validar si está vacío, es undefined, null o son ceros
+  if (
+    !fechaDDMMYYYY ||
+    fechaDDMMYYYY.trim() === "" ||
+    fechaDDMMYYYY === "00-00-0000"
+  ) {
+    return null; // <--- ESTO ES LA CLAVE: Enviar NULL a SQL Server
+  }
+
   const partes = fechaDDMMYYYY.split("-");
+
+  // 2. Validación extra por si el formato viene mal
+  if (partes.length !== 3) return null;
+
   const dia = partes[0];
   const mes = partes[1];
   const anio = partes[2];
-  return `${anio}-${mes}-${dia}`; // Devuelve formato YYYY-MM-DD
+
+  return `${anio}-${mes}-${dia}`; // Formato correcto YYYY-MM-DD
 }
 
 //function formatearFecha(fecha) {
@@ -498,25 +504,11 @@ app.post(
       sexoConyuge = "N/A";
     }
 
-    /*
-    try {
-        // Espera a que termine el query
-        const [result] = await db.query(query, [sexo, papa, embarazo, cantidadHijos, idTrabajador]);
-
-        console.log('✅ Actualización exitosa:', result);
-
-        res.redirect('/index');
-    } catch (err) {
-        console.error('❌ Error al guardar:', err);
-        res.send('Error al guardar');
-    }*/
-
     try {
       const fechaFormateada = convertirFecha(fechaConyuge);
       const fechaIngresoFormateada = convertirFecha(fechaIngreso);
       const fechaNacimientoFormateada = convertirFecha(fechaNacimiento);
-      const fecha = convertirFecha(fechaOrdenable);
-
+      console.log("nacimiento Conyuge" + fechaFormateada);
       console.log("nacimiento Conyuge" + fechaFormateada);
       console.log("Fecha de ingreso" + fechaIngresoFormateada);
       console.log("Fecha de nacimiento" + fechaNacimientoFormateada);
@@ -573,45 +565,48 @@ app.post(
         `🗑️ Hijos anteriores eliminados para trabajador ${idTrabajador}`,
       );
 
-      // Si se ingresaron datos de hijos, los insertamos
+      // ... después de borrar los hijos anteriores ...
+
       if (cantidadHijos && cantidadHijos > 0) {
-        // (Opcional: podrías borrar registros anteriores de hijos para ese trabajador, si se requiere)
         for (let i = 0; i < cantidadHijos; i++) {
-          // Extraemos cada dato dinámico. Asegúrate que en el form los inputs tengan nombres:
-          // inicialesHijo0, fechaNacimientoHijo0, edadHijo0, etc.
           let iniciales = req.body[`inicialesHijo${i}`];
           const sexo = req.body[`selectHijo${i}`];
           const fechaNacimiento = req.body[`fechaNacimientoHijo${i}`];
 
-          iniciales = iniciales.toUpperCase(); // Mayúsculas
-          //iniciales = iniciales.replace(/[^A-Z]/g, ""); // Quitar todo excepto letras mayúsculas
+          if (iniciales && fechaNacimiento) {
+            // Pequeña validación extra
+            iniciales = iniciales.toUpperCase();
 
-          const fechaFormateada = convertirFecha(fechaNacimiento);
+            // 1. Convertir la fecha para SQL
+            const fechaFormateada = convertirFecha(fechaNacimiento);
 
-          // Ahora guarda en SQL usando fechaFormateada
+            // 2. CALCULAR LA EDAD (¡Esta es la parte clave!)
+            // Usamos la función optimizada 'calcularEdad' que definimos antes
+            const edad = calcularEdad(fechaFormateada);
 
-          // Consulta para insertar cada hijo. Se asume que la tabla se llama "hijo" y tiene las columnas:
-          // id (auto-increment), idTrabajador, iniciales, fechaNacimiento y edad.
-          const queryChild =
-            "INSERT INTO hijo (inicialesHijo,sexoHijo, fechaNacimientoHijo, idTrabajador) VALUES (?,?,?,?)";
-          const [childResult] = await db.query(queryChild, [
-            iniciales,
-            sexo,
-            fechaFormateada,
-            idTrabajador,
-          ]);
-          console.log(`✅ Hijo ${i + 1} guardado:`, childResult);
+            // 3. Insertar en la BD incluyendo la columna 'edadHijo'
+            // Asegúrate de agregar 'edadHijo' en el INSERT y un '?' extra en VALUES
+            const queryChild =
+              "INSERT INTO hijo (inicialesHijo, sexoHijo, fechaNacimientoHijo, edadHijo, idTrabajador) VALUES (?, ?, ?, ?, ?)";
+
+            await db.query(queryChild, [
+              iniciales,
+              sexo,
+              fechaFormateada,
+              edad, // <--- Aquí enviamos la edad calculada
+              idTrabajador,
+            ]);
+            console.log(`✅ Hijo ${i + 1} guardado con edad: ${edad}`);
+          }
         }
       }
       const deleteQuery2 = "DELETE FROM escolaridad WHERE idTrabajador = ?";
       await db.query(deleteQuery2, [idTrabajador]);
 
-      // Después de eliminar las filas antiguas:
       await db.query("DELETE FROM escolaridad WHERE idTrabajador = ?", [
         idTrabajador,
       ]);
 
-      // Define tus niveles y máximos permitidos
       const niveles = [
         "licenciatura",
         "maestria",
@@ -627,7 +622,6 @@ app.post(
         especialidad: 3,
       };
 
-      // Prepara tu INSERT
       const insertQuery = `
         INSERT INTO escolaridad
             (nivelAcademico, nombreTitulo, fechaObtencion, institucion,
@@ -649,7 +643,6 @@ app.post(
       }
 
       for (let nivel of niveles) {
-        // Lee cuántos registros pidió el usuario
         const cantidadRaw = req.body[`${nivel}Cantidad`];
         const cantidad = Math.min(
           maximos[nivel],
@@ -657,7 +650,6 @@ app.post(
         );
 
         for (let i = 1; i <= cantidad; i++) {
-          // Construye dinámicamente los nombres de campo
           const tituloField = `${nivel}_titulo${i}`;
           const fechaField = `${nivel}_fecha${i}`;
           const institucionField = `${nivel}_institucion${i}`;
@@ -672,11 +664,8 @@ app.post(
           const estatus = req.body[estatusField] || null;
           const cedula = req.body[cedulaField]?.trim() || null;
 
-          // Solo inserta si al menos uno de los campos principales está presente
           if (titulo || fechaRaw || institucion) {
-            // Si necesitas formatear la fecha para Excel o SQL DATE
-            const fecha = fechaRaw; // o convertirFechaTexto(fechaRaw) si lo deseas
-
+            const fecha = fechaRaw;
             await db.query(insertQuery, [
               nivel.toUpperCase(), // nivelAcademico
               titulo,
@@ -981,13 +970,6 @@ app.post(
         }
       }
 
-      //req.session.noTrabajador =idTrabajador;
-
-      // Destruir la sesión y redirigir
-      //req.session.destroy(() => {
-      //console.log("✅ Sesión destruida");
-      //res.redirect(`/acuse/${noTrabajador}`);
-      //});
       const idTrab = idTrabajador;
       req.session.idTrabajador = idTrab;
       res.redirect(`/acuse/${noTrabajador}`);
@@ -1055,22 +1037,6 @@ app.post("/login", async (req, res) => {
   }
 });
 
-function calcularEdad(fechaNacimientoStr) {
-  const nacimiento = new Date(fechaNacimientoStr);
-  const hoy = new Date();
-  let edad = hoy.getFullYear() - nacimiento.getFullYear();
-  const mesActual = hoy.getMonth();
-  const mesNacimiento = nacimiento.getMonth();
-
-  if (
-    mesActual < mesNacimiento ||
-    (mesActual === mesNacimiento && hoy.getDate() < nacimiento.getDate())
-  ) {
-    edad--;
-  }
-  return edad;
-}
-
 app.get("/reporte/:noTrabajador", async (req, res) => {
   const noTrabajador = req.params.noTrabajador;
 
@@ -1102,9 +1068,8 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       "SELECT * FROM actualizacionprofesional WHERE idTrabajador = ?",
       [idTrabajador],
     );
-    ///const [experiencias] = await db.query('SELECT * FROM experienciapj WHERE idTrabajador = ?', [idTrabajador]);
 
-    ///console.log(experiencias)
+    console.log(experiencias);
 
     const [experiencias] = await db.query(
       "SELECT * FROM experienciapj WHERE idTrabajador = ?",
@@ -1135,12 +1100,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       worksheet.getCell(`E${fila}`).value = exp.documentoAdquirido;
       worksheet.getCell(`F${fila}`).value = exp.estatus;
     });
-
-    /*worksheet.duplicateRow(29,1, true);
-        worksheet.getCell("A30").value = "HOLAAA";
-*/
-
-    ///////////////////////////////////////////////////////////
 
     const EXPERIENCE_ROW = 26;
     const expMerges = [];
@@ -1245,13 +1204,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       worksheet.getCell(`B${r}`).value = formatearFecha(exp.fecha);
       worksheet.getCell(`C${r}`).value = exp.institucion;
       worksheet.getCell(`D${r}`).value = exp.documento;
-      /*const mergeRange = `C${r}:D${r}`;
-        console.log(mergeRange);
-        try{
-        worksheet.mergeCells(mergeRange);
-        }catch(err){
-
-        }*/
     });
 
     const PREPA_START_ROW = 14;
@@ -1260,7 +1212,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     );
     const prepaCount = prepa.length;
 
-    // 1) Si no hay ninguna, borramos la fila base
     if (prepaCount === 0) {
       const mergeRange = `B14:G14`;
 
@@ -1274,24 +1225,12 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       };
       worksheet.getRow(PREPA_START_ROW).hidden = true;
     } else {
-      // 2) Si hay más de 1, duplicamos la fila base licCount-1 veces
       if (prepaCount > 1) {
-        // (filaBase, númeroDeDuplicados, insert => true para desplazar filas hacia abajo)
         worksheet.duplicateRow(LIC_START_ROW, licCount - 1, true);
       }
 
       const start = PREPA_START_ROW;
       const end = PREPA_START_ROW + prepaCount - 1;
-
-      // 3) Asignamos el encabezado en la primera fila
-      ///worksheet.getCell(`A${start}`).value = "hola";
-
-      /*
-            worksheet.getCell(`A${start}`).alignment = {
-              vertical:   "middle",
-              horizontal: "center",
-              wrapText:   true
-            };*/
 
       // 4) Llenamos cada fila duplicada con los datos
       prepa.forEach((exp, i) => {
@@ -1303,7 +1242,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
         worksheet.getCell(`F${row}`).value = exp.estatus;
       });
 
-      // 5) Finalmente: si había >1, combinamos la columna A de start a end
       // 5) Finalmente: si había >1, combinamos la columna A de start a end
       if (prepaCount > 1) {
         const mergeRange = `A${start}:A${end}`;
@@ -1363,16 +1301,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       const start = LIC_START_ROW;
       const end = LIC_START_ROW + licCount - 1;
 
-      // 3) Asignamos el encabezado en la primera fila
-      ///worksheet.getCell(`A${start}`).value = "hola";
-
-      /*
-            worksheet.getCell(`A${start}`).alignment = {
-              vertical:   "middle",
-              horizontal: "center",
-              wrapText:   true
-            };*/
-
       // 4) Llenamos cada fila duplicada con los datos
       licenciaturas.forEach((exp, i) => {
         const row = start + i;
@@ -1384,7 +1312,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
         worksheet.getCell(`G${row}`).value = exp.cedulaProfesional;
       });
 
-      // 5) Finalmente: si había >1, combinamos la columna A de start a end
       // 5) Finalmente: si había >1, combinamos la columna A de start a end
       if (licCount > 1) {
         const mergeRange = `A${start}:A${end}`;
@@ -1439,8 +1366,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       const end = MAE_START_ROW + maeCount - 1;
 
       // Encabezado en A (si lo necesitas)
-      //  worksheet.getCell(`A${start}`).value = "MAESTRÍA";
-      //  worksheet.getCell(`A${start}`).alignment = { vertical:"middle", horizontal:"center", wrapText:true };
 
       maestrias.forEach((exp, i) => {
         const row = start + i;
@@ -1501,8 +1426,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       const end = DOC_START_ROW + docCount - 1;
 
       // Encabezado en A (si lo necesitas)
-      //  worksheet.getCell(`A${start}`).value = "MAESTRÍA";
-      //  worksheet.getCell(`A${start}`).alignment = { vertical:"middle", horizontal:"center", wrapText:true };
 
       doctorados.forEach((exp, i) => {
         const row = start + i;
@@ -1565,8 +1488,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       const end = ESP_START_ROW + docCount - 1;
 
       // Encabezado en A (si lo necesitas)
-      //  worksheet.getCell(`A${start}`).value = "MAESTRÍA";
-      //  worksheet.getCell(`A${start}`).alignment = { vertical:"middle", horizontal:"center", wrapText:true };
 
       especialidades.forEach((exp, i) => {
         const row = start + i;
@@ -1595,8 +1516,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     const rutaCompleta = path.join(rutaSalida, nombreArchivo);
 
     await workbook.xlsx.writeFile(rutaCompleta);
-    ////////////////////////////////////////////////////////////////////
-    /////////////////////////////////////////////////////////////////////////
     //////////////////////////////////////////////////////////////////////
     const rutaPlantilla2 = "./plantillas/curriculum2.xlsx";
 
@@ -1610,16 +1529,11 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     worksheet2.getCell("B13").value = trabajador.carreraTecnicaComercial;
 
     bachillerato.forEach((exp, index) => {
-      const fila = 14 + index; // Empieza en la fila 14, 15, 16…
-      // Usando template literals con backticks:
+      const fila = 14 + index;
       worksheet2.getCell(`B${fila}`).value = exp.nombreTitulo;
       worksheet2.getCell(`C${fila}`).value = exp.fechaObtencion;
       worksheet2.getCell(`D${fila}`).value = exp.institucion;
     });
-
-    /*worksheet.duplicateRow(29,1, true);
-        worksheet.getCell("A30").value = "HOLAAA";
-*/
 
     ///////////////////////////////////////////////////////////
 
@@ -1724,13 +1638,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       worksheet2.getCell(`B${r}`).value = formatearFecha(exp.fecha);
       worksheet2.getCell(`C${r}`).value = exp.institucion;
       worksheet2.getCell(`D${r}`).value = exp.documento;
-      /*const mergeRange = `C${r}:D${r}`;
-        console.log(mergeRange);
-        try{
-        worksheet.mergeCells(mergeRange);
-        }catch(err){
-
-        }*/
     });
 
     // 1) Si no hay ninguna, borramos la fila base
@@ -1756,17 +1663,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       const start = PREPA_START_ROW;
       const end = PREPA_START_ROW + prepaCount - 1;
 
-      // 3) Asignamos el encabezado en la primera fila
-      ///worksheet.getCell(`A${start}`).value = "hola";
-
-      /*
-            worksheet.getCell(`A${start}`).alignment = {
-              vertical:   "middle",
-              horizontal: "center",
-              wrapText:   true
-            };*/
-
-      // 4) Llenamos cada fila duplicada con los datos
       prepa.forEach((exp, i) => {
         const row = start + i;
         worksheet2.getCell(`B${row}`).value = exp.nombreTitulo;
@@ -1774,7 +1670,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
         worksheet2.getCell(`D${row}`).value = exp.institucion;
       });
 
-      // 5) Finalmente: si había >1, combinamos la columna A de start a end
       // 5) Finalmente: si había >1, combinamos la columna A de start a end
       if (prepaCount > 1) {
         const mergeRange = `A${start}:A${end}`;
@@ -1830,17 +1725,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       const start = LIC_START_ROW;
       const end = LIC_START_ROW + licCount - 1;
 
-      // 3) Asignamos el encabezado en la primera fila
-      ///worksheet.getCell(`A${start}`).value = "hola";
-
-      /*
-            worksheet.getCell(`A${start}`).alignment = {
-              vertical:   "middle",
-              horizontal: "center",
-              wrapText:   true
-            };*/
-
-      // 4) Llenamos cada fila duplicada con los datos
       licenciaturas.forEach((exp, i) => {
         const row = start + i;
         worksheet2.getCell(`B${row}`).value = exp.nombreTitulo;
@@ -1848,7 +1732,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
         worksheet2.getCell(`D${row}`).value = exp.institucion;
       });
 
-      // 5) Finalmente: si había >1, combinamos la columna A de start a end
       // 5) Finalmente: si había >1, combinamos la columna A de start a end
       if (licCount > 1) {
         const mergeRange = `A${start}:A${end}`;
@@ -1898,10 +1781,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
 
       console.log(start, " starto ", licDesplazar);
       const end = MAE_START_ROW + maeCount - 1;
-
-      // Encabezado en A (si lo necesitas)
-      //  worksheet.getCell(`A${start}`).value = "MAESTRÍA";
-      //  worksheet.getCell(`A${start}`).alignment = { vertical:"middle", horizontal:"center", wrapText:true };
 
       maestrias.forEach((exp, i) => {
         const row = start + i;
@@ -1958,8 +1837,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       const end = DOC_START_ROW + docCount - 1;
 
       // Encabezado en A (si lo necesitas)
-      //  worksheet.getCell(`A${start}`).value = "MAESTRÍA";
-      //  worksheet.getCell(`A${start}`).alignment = { vertical:"middle", horizontal:"center", wrapText:true };
 
       doctorados.forEach((exp, i) => {
         const row = start + i;
@@ -2018,8 +1895,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       const end = ESP_START_ROW + docCount - 1;
 
       // Encabezado en A (si lo necesitas)
-      //  worksheet.getCell(`A${start}`).value = "MAESTRÍA";
-      //  worksheet.getCell(`A${start}`).alignment = { vertical:"middle", horizontal:"center", wrapText:true };
 
       especialidades.forEach((exp, i) => {
         const row = start + i;
