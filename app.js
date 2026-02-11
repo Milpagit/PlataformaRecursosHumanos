@@ -93,18 +93,42 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
     );
 
     if (rows && rows.length > 0) {
+      const trabajador = rows[0];
+      const idReal = trabajador.idTrabajador;
+
       // Helper para formatear fechas en la vista del acuse
       const formatearFecha = (f) =>
         f ? new Date(f).toLocaleDateString("es-MX") : "N/A";
 
+      // Consultas adicionales usando destructuring [ ] para obtener el recordset correctamente
+      const [hijos] = await db.query(
+        "SELECT inicialesHijo, sexoHijo, fechaNacimientoHijo, (CONVERT(int,CONVERT(char(8),GETDATE(),112))-CONVERT(int,CONVERT(char(8),fechaNacimientoHijo,112)))/10000 AS edadHijo FROM hijo WHERE idTrabajador = ?",
+        [idReal],
+      );
+
+      const [escolaridad] = await db.query(
+        "SELECT * FROM escolaridad WHERE idTrabajador = ?",
+        [idReal],
+      );
+
+      const [experienciaPJ] = await db.query(
+        "SELECT institucion, adscripcion, cargo, campoExperiencia, periodoInicio, periodoFin FROM experienciapj WHERE idTrabajador = ?",
+        [idReal],
+      );
+
+      const [actualizacion] = await db.query(
+        "SELECT * FROM actualizacionprofesional WHERE idTrabajador = ?",
+        [idReal],
+      );
+
       // acuse.ejs espera la variable "trabajador" [cite: 369, 370]
       res.render("acuse", {
-        trabajador: rows[0],
+        trabajador,
         formatearFecha,
-        escolaridad: [], // Debes consultar estas tablas también si las necesitas
-        actualizacion: [],
-        experienciaPJ: [],
-        hijos: [],
+        escolaridad,
+        actualizacion,
+        experienciaPJ,
+        hijos,
       });
     } else {
       res.status(404).send("Trabajador no encontrado");

@@ -1,6 +1,5 @@
 ﻿<!DOCTYPE html>
 <html lang="es">
-<div id="reporte">
 
   <head>
     <meta charset="UTF-8">
@@ -32,6 +31,9 @@
   </head>
 
   <body class="bg-gray-100 text-gray-900 p-6">
+    <pre style="background: #333; color: #fff; padding: 10px;">
+      DEBUG ESCOLARIDAD: <%= JSON.stringify(escolaridad, null, 2) %>
+    </pre>
 
     <div id="acuseContent" class="acuse-container">
 
@@ -156,17 +158,43 @@
         </li>
       </ul>
 
-      <% if (escolaridad.length> 0) { %>
+      <% if (escolaridad && escolaridad.length > 0) { %>
         <h2>Escolaridad</h2>
         <ul class="list-disc pl-6">
-          <% escolaridad.forEach(e=> { %>
+          <% escolaridad.forEach(e => { %>
             <li>
-              <%= e.nivelAcademico %>: <%= e.nombreTitulo %> — <%= e.institucion %> — <%= e.fechaObtencion %> — <%=
-                        e.estatus %> — Documento: <%= e.documentoAdquirido %> — Cédula: <%= e.cedulaProfesional %>
+              <strong><%= e.nivelAcademico || e.NivelAcademico %>:</strong> 
+              
+              <%= e.nombreTitulo || e.NombreTitulo || 'Sin Título' %> — 
+              
+              <% 
+                let fechaMostrar = 'Sin Fecha';
+                // Obtenemos el valor crudo
+                let fechaRaw = e.fechaObtencion || e.FechaObtencion;
+                
+                if (fechaRaw) {
+                    // Si es un texto tipo "2024-10-17", intentamos formatearlo
+                    if (fechaRaw.includes && fechaRaw.includes('-')) {
+                      // Tu helper formatearFecha
+                      fechaMostrar = formatearFecha(fechaRaw); 
+                    } else {
+                      // Si es texto raro ("MAYO 03"), lo mostramos tal cual para no romper nada
+                      fechaMostrar = fechaRaw;
+                    }
+                }
+              %>
+              <%= fechaMostrar %> — 
+
+              <%= e.institucion || e.Institucion || 'Sin Institución' %> — 
+              
+              <%= e.estatus || e.Estatus %> — 
+              
+              Documento: <%= e.documentoAdquirido || e.DocumentoAdquirido || 'N/A' %> — 
+              Cédula: <%= e.cedulaProfesional || e.CedulaProfesional || 'S/N' %>
             </li>
-            <% }) %>
+          <% }) %>
         </ul>
-        <% } %>
+      <% } %>
 
           <% if (actualizacion.length> 0) { %>
             <h2>Actualizaciones Profesionales</h2>
@@ -225,7 +253,6 @@
         class="noprint bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Descargar</button>
 
     </div>
-</div>
 
 <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -247,7 +274,7 @@
 
     // Espera a que se oculte antes de capturar
     await new Promise(resolve => setTimeout(resolve, 100)); // Pequeña espera
-    const elemento = document.getElementById("reporte");
+    const elemento = document.getElementById("acuseContent");
 
     // Captura en alta resolución
     const canvas = await html2canvas(elemento, {

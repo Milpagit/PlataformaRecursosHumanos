@@ -530,12 +530,17 @@
             >Acta de nacimiento
             <span class="text-red-500">(2025 - a la fecha) </span></label
           >
+          <% if (locals.existeActa) { %>
+            <div class="mb-2 text-green-600 font-bold text-sm">
+              Documento prieamente cargado <a href="/uploads/<%= user.nombreTrabajador %>_ACTA-NACIMIENTO.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+            </div>
+          <% } %>
           <input
             type="file"
             name="ACTA-NACIMIENTO"
             accept="application/pdf"
             class="mb-4"
-            required
+            <%= locals.existeActa ? '' : 'required' %>
           />
         </div>
         <div class="my-3">
@@ -702,12 +707,17 @@
             <label class="block font-semibold text-gray-800 mb-1"
               >Credencial para votar (INE) vigente</label
             >
+            <% if (locals.existeIne) { %>
+              <div class="mb-2 text-green-600 font-bold text-sm">
+                Documento previamente cargado <a href="/uploads/<%= user.nombreTrabajador %>_INE.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+              </div>
+            <% } %>
             <input
               type="file"
               name="INE"
               accept="application/pdf"
               class="mb-4"
-              required
+              <%= locals.existeIne ? '' : 'required' %>
             />
           </div>
 
@@ -881,12 +891,17 @@
           <label class="block font-semibold text-gray-800 mb-1"
             >Comprobante de domicilio vigente</label
           >
+          <% if (locals.existeDomicilio) { %>
+            <div class="mb-2 text-green-600 font-bold text-sm">
+              Documento previamente cargado <a href="/uploads/<%= user.nombreTrabajador %>_COMPROBANTE-DOMICILIO.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+            </div>
+          <% } %>
           <input
             type="file"
             name="COMPROBANTE-DOMICILIO"
             accept="application/pdf"
             class="mb-4"
-            required
+            <%= locals.existeDomicilio ? '' : 'required' %>
           />
         </div>
 
@@ -898,9 +913,8 @@
           <div class="flex gap-4">
             <% 
               // Lógica principal: inferir Sí/No mirando comunidadIndigena
-              const tieneComunidad = user.comunidadIndigena 
-              && user.comunidadIndigena.trim().toUpperCase() !== 'N/A'
-              && user.comunidadIndigena.trim() !== '';
+              const valComunidad = user.comunidadIndigena ? user.comunidadIndigena.trim().toUpperCase() : 'N/A';
+              const tieneComunidad = (valComunidad !== 'N/A' && valComunidad !== '');
 
               const esIndigena = tieneComunidad ? '1' : '0';
             %>
@@ -1003,7 +1017,6 @@
             name="otraComunidad"
             value="<%= user.otraComunidad && user.otraComunidad.toUpperCase() !== 'N/A' ? user.otraComunidad.trim() : '' %>"
             class="border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
-            <%= comunidadActual === 'OTRO' ? 'required' : '' %>
           />
         </div>
       </div>
@@ -1018,7 +1031,6 @@
               name="otraComunidad"
               value="<%= user.otraComunidad && user.otraComunidad.toUpperCase() !== 'N/A' ? user.otraComunidad : '' %>"
               class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
-              <%= comunidadActual === 'OTRO' ? 'required' : '' %>
             />
           </div>
         </div>
@@ -1029,10 +1041,9 @@
           >
           <div class="flex gap-4">
             <% 
-              // Lógica principal: inferir Sí/No mirando comunidadIndigena
-              const lenguaIndigena = user.hablaLenguaIndigena 
-              && user.hablaLenguaIndigena.trim().toUpperCase() !== 'N/A'
-              && user.hablaLenguaIndigena.trim() !== '';
+              // CORRECCIÓN: Usar familiaLinguistica que es el campo real de la BD
+              const valFamilia = user.familiaLinguistica ? user.familiaLinguistica.trim().toUpperCase() : 'N/A';
+              const lenguaIndigena = (valFamilia !== 'N/A' && valFamilia !== '');
 
               const leIndigena = lenguaIndigena ? '1' : '0';
             %>
@@ -1063,37 +1074,57 @@
         </div>
 
         <!-- Selector de familia lingüística -->
-        <div id="familiaLingContainer" class="hidden mb-3">
+        <div id="familiaLingContainer" class="<%= leIndigena === '1' ? '' : 'hidden' %> mb-3">
           <label class="block mb-1 font-bold text-gray-700"
             >Selecciona la familia lingüística</label
           >
+          <% 
+            const opcionesFamilia = [
+              { value: "", texto: "Selecciona una opción" },
+              { value: "HOKANA", texto: "HOKANA" },
+              { value: "CHINANTECA", texto: "CHINANTECA" },
+              { value: "OTOPAME", texto: "OTOPAME" },
+              { value: "OAXAQUEÑA", texto: "OAXAQUEÑA" },
+              { value: "HUAVE", texto: "HUAVE" },
+              { value: "TLAPANECA", texto: "TLAPANECA" },
+              { value: "TOTONACA", texto: "TOTONACA" },
+              { value: "MIXE-ZOQUE", texto: "MIXE-ZOQUE" },
+              { value: "MAYA", texto: "MAYA" },
+              { value: "YUTOAZTECA", texto: "YUTOAZTECA" },
+              { value: "TARASCA", texto: "TARASCA" },
+              { value: "ALGONQUINA", texto: "ALGONQUINA" },
+              { value: "FAMILIA LINGÜÍSTICA NO IDENTIFICADA", texto: "FAMILIA LINGÜÍSTICA NO IDENTIFICADA" },
+              { value: "OTRA", texto: "OTRA FAMILIA LINGÜÍSTICA (ESPECIFIQUE)" }
+            ];
+
+            let familiaSeleccionada = "";
+            let otraFamiliaTexto = "";
+
+            if (leIndigena === '1') {
+               const encontrada = opcionesFamilia.find(op => op.value === valFamilia);
+               if (encontrada) {
+                 familiaSeleccionada = valFamilia;
+               } else if (valFamilia !== 'N/A' && valFamilia !== '') {
+                 familiaSeleccionada = "OTRA";
+                 otraFamiliaTexto = valFamilia;
+               }
+            }
+          %>
           <select
             name="familiaLinguistica"
             class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
             id="familiaLinguistica"
+            <%= leIndigena === '1' ? 'required' : '' %>
           >
-            <option value="">Selecciona una opción</option>
-            <option value="HOKANA">HOKANA</option>
-            <option value="CHINANTECA">CHINANTECA</option>
-            <option value="OTOPAME">OTOPAME</option>
-            <option value="OAXAQUEÑA">OAXAQUEÑA</option>
-            <option value="HUAVE">HUAVE</option>
-            <option value="TLAPANECA">TLAPANECA</option>
-            <option value="TOTONACA">TOTONACA</option>
-            <option value="MIXE-ZOQUE">MIXE-ZOQUE</option>
-            <option value="MAYA">MAYA</option>
-            <option value="YUTOAZTECA">YUTOAZTECA</option>
-            <option value="TARASCA">TARASCA</option>
-            <option value="ALGONQUINA">ALGONQUINA</option>
-
-            <option value="FAMILIA LINGÜÍSTICA NO IDENTIFICADA">
-              FAMILIA LINGÜÍSTICA NO IDENTIFICADA
-            </option>
-            <option value="OTRA">OTRA FAMILIA LINGÜÍSTICA (ESPECIFIQUE)</option>
+            <% opcionesFamilia.forEach(op => { %>
+              <option value="<%= op.value %>" <%= familiaSeleccionada === op.value ? 'selected' : '' %>>
+                <%= op.texto %>
+              </option>
+            <% }) %>
           </select>
         </div>
 
-        <div id="otraLenguaContainer" class="hidden mt-2 mb-4">
+        <div id="otraLenguaContainer" class="<%= familiaSeleccionada === 'OTRA' ? '' : 'hidden' %> mt-2 mb-4">
           <label class="block text-gray-700"
             >Especifique la familia lingüística</label
           >
@@ -1102,6 +1133,8 @@
             name="otraLengua"
             id="otraLenguaInput"
             class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
+            value="<%= otraFamiliaTexto %>"
+            <%= familiaSeleccionada === 'OTRA' ? 'required' : '' %>
           />
         </div>
 <!------------------------Lengua de señas Mexicanas------------------------------------------------------------>
@@ -1111,9 +1144,9 @@
           </label>
           <div class="flex gap-4">
             <% 
-              // Usamos directamente el valor guardado (normalizado a string)
-              const respuestaLSM = user.lenguaSenias 
-                ? String(user.lenguaSenias).trim() 
+              // CORRECCIÓN: El campo en BD es lenguajeSenias (según app.js)
+              const respuestaLSM = user.lenguajeSenias 
+                ? String(user.lenguajeSenias).trim() 
                 : 'No';  // por defecto No si no existe
             %>
 
@@ -1165,8 +1198,8 @@
               ];
 
               // Valor actual normalizado
-              const nivelActual = user.nivelLSM 
-                ? user.nivelLSM.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
+              const nivelActual = user.dominioLSM 
+                ? user.dominioLSM.trim().toUpperCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "") 
                 : '';
             %>
 
@@ -1215,8 +1248,8 @@
               ];
 
               // Valor actual normalizado (mayúsculas, sin espacios extras)
-              const sangreActual = user.sangre 
-                ? user.sangre.trim().toUpperCase() 
+              const sangreActual = user.tipoSangre 
+                ? user.tipoSangre.trim().toUpperCase() 
                 : '';
             %>
 
@@ -1239,6 +1272,11 @@
           <label class="block mb-1 font-bold text-gray-700"
             >¿Tienes alguna discapacidad?</label
           >
+          <%
+             // Si tipoDiscapacidad es diferente de NO y N/A, entonces es Sí
+             const valDiscapacidad = user.tipoDiscapacidad ? user.tipoDiscapacidad.trim().toUpperCase() : 'NO';
+             const tieneDiscapacidad = (valDiscapacidad !== 'NO' && valDiscapacidad !== 'N/A') ? '1' : '0';
+          %>
           <div class="flex gap-4">
             <label
               ><input
@@ -1247,76 +1285,48 @@
                 value="1"
                 required
                 class="mr-2"
+                <%= tieneDiscapacidad === '1' ? 'checked' : '' %>
               />
               Sí</label
             >
             <label
-              ><input type="radio" name="discapacidad" value="0" class="mr-2" />
+              ><input type="radio" name="discapacidad" value="0" class="mr-2" 
+                <%= tieneDiscapacidad === '0' ? 'checked' : '' %>
+              />
               No</label
             >
           </div>
         </div>
 
         <!-- Input condicional -->
-        <div id="tipoDiscapacidadContainer" class="hidden mb-3">
+        <div id="tipoDiscapacidadContainer" class="<%= tieneDiscapacidad === '1' ? '' : 'hidden' %> mb-3">
           <label class="block mb-1 text-gray-700"
             >¿Qué tipo de discapacidad tienes?</label
           >
+          <% 
+            const opcionesDiscapacidad = [
+              "DIFICULTAD O IMPEDIMENTO PARA CAMINAR, SUBIR O BAJAR ESCALONES USANDO SUS PIERNAS",
+              "DIFICULTAD O IMPEDIMENTO PARA VER, AUN USANDO LENTES",
+              "DIFICULTAD O IMPEDIMENTO PARA MOVER O USAR SUS BRAZOS O MANOS",
+              "DIFICULTAD O IMPEDIMENTO PARA APRENDER, RECORDAR O CONCENTRARSE POR ALGUNA CONDICIÓN INTELECTUAL, POR EJEMPLO SÍNDROME DE DOWN",
+              "DIFICULTAD O IMPEDIMENTO PARA OÍR, AUN USANDO APARATO AUDITIVO",
+              "DIFICULTAD O IMPEDIMENTO PARA HABLAR O COMUNICARSE (ENTENDER O SER ENTENDIDO O ENTENDIDA POR OTRAS PERSONAS)",
+              "DIFICULTAD O IMPEDIMENTO PARA BAÑARSE, VESTIRSE O COMER",
+              "DIFICULTAD O IMPEDIMENTO PARA REALIZAR SUS ACTIVIDADES DIARIAS POR ALGUNA CONDICIÓN EMOCIONAL O MENTAL, POR EJEMPLO ESQUIZOFRENIA O DEPRESIÓN",
+              "OTRO TIPO",
+              "DISCAPACIDAD NO IDENTIFICADA"
+            ];
+          %>
           <select
             name="tipoDiscapacidad"
             id="tipoDiscapacidadInput"
             class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
+            <%= tieneDiscapacidad === '1' ? 'required' : '' %>
           >
             <option value="">Selecciona una opción</option>
-            <option
-              value="DIFICULTAD O IMPEDIMENTO PARA CAMINAR, SUBIR O BAJAR ESCALONES USANDO SUS PIERNAS"
-            >
-              DIFICULTAD O IMPEDIMENTO PARA CAMINAR, SUBIR O BAJAR ESCALONES
-              USANDO SUS PIERNAS
-            </option>
-            <option
-              value="DIFICULTAD O IMPEDIMENTO PARA VER, AUN USANDO LENTES"
-            >
-              DIFICULTAD O IMPEDIMENTO PARA VER, AUN USANDO LENTES
-            </option>
-            <option
-              value="DIFICULTAD O IMPEDIMENTO PARA MOVER O USAR SUS BRAZOS O MANOS"
-            >
-              DIFICULTAD O IMPEDIMENTO PARA MOVER O USAR SUS BRAZOS O MANOS
-            </option>
-            <option
-              value="DIFICULTAD O IMPEDIMENTO PARA APRENDER, RECORDAR O CONCENTRARSE POR ALGUNA CONDICIÓN INTELECTUAL, POR EJEMPLO SÍNDROME DE DOWN"
-            >
-              DIFICULTAD O IMPEDIMENTO PARA APRENDER, RECORDAR O CONCENTRARSE
-              POR ALGUNA CONDICIÓN INTELECTUAL, POR EJEMPLO SÍNDROME DE DOWN
-            </option>
-            <option
-              value="DIFICULTAD O IMPEDIMENTO PARA OÍR, AUN USANDO APARATO AUDITIVO"
-            >
-              DIFICULTAD O IMPEDIMENTO PARA OÍR, AUN USANDO APARATO AUDITIVO
-            </option>
-            <option
-              value="DIFICULTAD O IMPEDIMENTO PARA HABLAR O COMUNICARSE (ENTENDER O SER ENTENDIDO O ENTENDIDA POR OTRAS PERSONAS)"
-            >
-              DIFICULTAD O IMPEDIMENTO PARA HABLAR O COMUNICARSE (ENTENDER O SER
-              ENTENDIDO O ENTENDIDA POR OTRAS PERSONAS)
-            </option>
-            <option
-              value="DIFICULTAD O IMPEDIMENTO PARA BAÑARSE, VESTIRSE O COMER"
-            >
-              DIFICULTAD O IMPEDIMENTO PARA BAÑARSE, VESTIRSE O COMER
-            </option>
-            <option
-              value="DIFICULTAD O IMPEDIMENTO PARA REALIZAR SUS ACTIVIDADES DIARIAS POR ALGUNA CONDICIÓN EMOCIONAL O MENTAL, POR EJEMPLO ESQUIZOFRENIA O DEPRESIÓN"
-            >
-              DIFICULTAD O IMPEDIMENTO PARA REALIZAR SUS ACTIVIDADES DIARIAS POR
-              ALGUNA CONDICIÓN EMOCIONAL O MENTAL, POR EJEMPLO ESQUIZOFRENIA O
-              DEPRESIÓN
-            </option>
-            <option value="OTRO TIPO">OTRO TIPO</option>
-            <option value="DISCAPACIDAD NO IDENTIFICADA">
-              DISCAPACIDAD NO IDENTIFICADA
-            </option>
+            <% opcionesDiscapacidad.forEach(opcion => { %>
+              <option value="<%= opcion %>" <%= valDiscapacidad === opcion ? 'selected' : '' %>><%= opcion %></option>
+            <% }) %>
           </select>
 
           <label class="block mt-3 text-gray-700"
@@ -1328,6 +1338,7 @@
             id="discapacidad-texto"
             placeholder="EJ. CEGUERA PARCIAL"
             name="discapacidadTexto"
+            value="<%= user.discapacidadEspecificada && user.discapacidadEspecificada !== 'N/A' ? user.discapacidadEspecificada : '' %>"
           />
         </div>
 <!-------------------------------------- Enfermedad Cronica ---------------------------------------->
@@ -1335,6 +1346,11 @@
           <label class="block mb-1 font-bold text-gray-700"
             >¿Padeces alguna enfermedad crónica o degenerativa?</label
           >
+          <%
+             // La BD guarda "Si" o "No" en tieneEnfermedadCronica
+             const valCronica = user.tieneEnfermedadCronica ? user.tieneEnfermedadCronica.trim() : 'No';
+             const esCronica = valCronica === 'Si' ? '1' : '0';
+          %>
           <div class="flex gap-4">
             <label
               ><input
@@ -1343,12 +1359,15 @@
                 value="1"
                 class="mr-2"
                 id="radio-cronica"
+                <%= esCronica === '1' ? 'checked' : '' %>
                 required
               />
               Sí</label
             >
             <label
-              ><input type="radio" name="cronica" value="0" class="mr-2" />
+              ><input type="radio" name="cronica" value="0" class="mr-2" 
+                <%= esCronica === '0' ? 'checked' : '' %>
+              />
               No</label
             >
           </div>
@@ -1372,6 +1391,11 @@
           <label class="block mb-1 font-bold text-gray-700"
             >¿Estás embarazada?</label
           >
+          <%
+             // La BD guarda "Embarazada", "No", "No aplica"
+             const valEmbarazo = user.embarazada ? user.embarazada.trim() : 'No';
+             const estaEmbarazada = valEmbarazo === 'Embarazada' ? '1' : '0';
+          %>
           <div class="flex gap-4">
             <label
               ><input
@@ -1380,11 +1404,14 @@
                 name="embarazo"
                 value="1"
                 class="mr-2"
+                <%= estaEmbarazada === '1' ? 'checked' : '' %>
               />
               Sí</label
             >
             <label
-              ><input type="radio" name="embarazo" value="0" class="mr-2" />
+              ><input type="radio" name="embarazo" value="0" class="mr-2" 
+                <%= estaEmbarazada === '0' ? 'checked' : '' %>
+              />
               No</label
             >
           </div>
@@ -1395,6 +1422,12 @@
           <label class="block mb-1 font-bold my-4 text-gray-700"
             >¿Eres padre/madre?</label
           >
+          <%
+             // La BD guarda "Padre", "Madre" o "No"
+             const tieneHijos = (locals.hijos && locals.hijos.length > 0);
+             const valPadre = user.es_padre_madre ? user.es_padre_madre.trim() : 'No';
+             const esPadre = (valPadre === 'Padre' || valPadre === 'Madre' || tieneHijos) ? '1' : '0';
+          %>
           <div class="flex gap-4">
             <label
               ><input
@@ -1403,12 +1436,15 @@
                 value="1"
                 class="mr-2"
                 id="padre"
+                <%= esPadre === '1' ? 'checked' : '' %>
                 required
               />
               Sí</label
             >
             <label
-              ><input type="radio" name="papa" value="0" class="mr-2" />
+              ><input type="radio" name="papa" value="0" class="mr-2" 
+                <%= esPadre === '0' ? 'checked' : '' %>
+              />
               No</label
             >
           </div>
@@ -1426,15 +1462,61 @@
             name="cantidadHijos"
             min="1"
             max="10"
+            value="<%= typeof hijos !== 'undefined' && hijos && hijos.length > 0 ? hijos.length : '' %>"
+            <%= (typeof hijos !== 'undefined' && hijos && hijos.length > 0) ? 'required' : '' %>
           />
         </div>
 
-        <div id="espacioHijos"></div>
+        <div id="espacioHijos">
+          <% if (typeof hijos !== 'undefined' && hijos && hijos.length > 0) { %>
+            <% hijos.forEach((hijo, index) => { %>
+              <div class="mb-3 p-4 rounded border border-gray-300 hijo-item">
+                <h3 class="font-bold text-lg mb-4 text-gray-800">Datos del Hijo <%= index + 1 %></h3>
+                
+                <label class="block font-medium mb-1 text-gray-700">
+                  <span style="color: red;">Nombre completo</span> empezando por apellidos de la hija o hijo (sin acentos):
+                </label>
+                <input 
+                  type="text" 
+                  name="inicialesHijo<%= index %>" 
+                  value="<%= hijo.inicialesHijo %>"
+                  class="border rounded-full bg-gray-50 m-2 p-3 uppercase acentos" 
+                  required
+                >
+
+                <label class="block font-medium mb-1 text-gray-700 mt-4">Género de la hija o hijo:</label>
+                <select 
+                  name="selectHijo<%= index %>" 
+                  class="border rounded-full bg-gray-50 m-2 p-3" 
+                  required
+                >
+                  <option value="Seleccione">Seleccione el género</option>
+                  <option value="Masculino" <%= hijo.sexoHijo === 'Masculino' ? 'selected' : '' %>>Masculino</option>
+                  <option value="Femenino" <%= hijo.sexoHijo === 'Femenino' ? 'selected' : '' %>>Femenino</option>
+                </select>
+
+                <label class="block font-medium mb-1 text-gray-700 mt-4">Fecha de nacimiento de la hija o hijo:</label>
+                <input 
+                  type="text" 
+                  name="fechaNacimientoHijo<%= index %>" 
+                  placeholder="dd-mm-yyyy" 
+                  value="<%= hijo.fechaNacimientoHijo ? new Date(hijo.fechaNacimientoHijo).toISOString().split('T')[0] : '' %>"
+                  class="border rounded-full bg-gray-50 m-2 p-3 datepicker" 
+                  required
+                  data-format="dd-mm-yyyy"
+                >
+              </div>
+            <% }) %>
+          <% } %>
+        </div>
 
         <div class="my-4 mb-8">
           <label class="block mb-2 mt-3 font-bold text-gray-700"
             >Estado civil del trabajador</label
           >
+          <% 
+             const estadoCivil = user.estadoCivil ? user.estadoCivil.trim() : '';
+          %>
           <select
             class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
             name="civil"
@@ -1442,16 +1524,20 @@
             required
           >
             <option value="">Seleccione su estado civil</option>
-            <option value="Soltero/a">Soltero/a</option>
-            <option value="Casado/a">Casado/a</option>
-            <option value="Divorciado/a">Divorciado/a</option>
-            <option value="Unionlibre">Unión libre</option>
-            <option value="Viudo/a">Viudo/a</option>
+            <option value="Soltero/a" <%= estadoCivil === 'Soltero/a' ? 'selected' : '' %>>Soltero/a</option>
+            <option value="Casado/a" <%= estadoCivil === 'Casado/a' ? 'selected' : '' %>>Casado/a</option>
+            <option value="Divorciado/a" <%= estadoCivil === 'Divorciado/a' ? 'selected' : '' %>>Divorciado/a</option>
+            <option value="Unionlibre" <%= estadoCivil === 'Unionlibre' ? 'selected' : '' %>>Unión libre</option>
+            <option value="Viudo/a" <%= estadoCivil === 'Viudo/a' ? 'selected' : '' %>>Viudo/a</option>
           </select>
         </div>
 
+        <% 
+           // Lógica para mostrar/ocultar contenedor automáticamente
+           const mostrarConyuge = (estadoCivil === 'Casado/a' || estadoCivil === 'Unionlibre');
+        %>
         <div
-          class="border my-4 mb-8 border-gray-150 rounded-sm hidden"
+          class="border my-4 mb-8 border-gray-150 rounded-sm <%= mostrarConyuge ? '' : 'hidden' %>"
           id="datosConyuge"
         >
           <label class="block mb-1 text-gray-700 font-bold"
@@ -1470,18 +1556,31 @@
               class="conyuge acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
               name="nombreConyuge"
               placeholder="AP PATERNO MATERNO NOMBRE(S)"
+              value="<%= (user.nombreConyuge && user.nombreConyuge !== 'N/A') ? user.nombreConyuge : '' %>"
+              <%= mostrarConyuge ? 'required' : '' %>
             />
           </div>
           <div class="mb-3">
             <label class="block mb-1 text-gray-700"
               >Fecha de nacimiento de pareja o cónyuge</label
             >
+            <% 
+               let fechaConyugeVal = '';
+               if (user.fechaNacimientoConyuge && user.fechaNacimientoConyuge !== '00-00-0000') {
+                 try {
+                   // Convertimos a DD-MM-YYYY para que coincida con el inputmask/flatpickr del formulario
+                   fechaConyugeVal = new Date(user.fechaNacimientoConyuge).toISOString().split('T')[0].split('-').reverse().join('-');
+                 } catch(e) {}
+               }
+            %>
             <input
               type="text"
               class="conyuge border border-gray-300 w-full p-3 rounded-md bg-gray-50"
               id="fechaConyuge"
               name="fechaConyuge"
               placeholder="dd-mm-yyyy"
+              value="<%= fechaConyugeVal %>"
+              <%= mostrarConyuge ? 'required' : '' %>
             />
           </div>
 
@@ -1489,15 +1588,18 @@
             <label class="block mb-1 text-gray-700"
               >Género de pareja o cónyuge</label
             >
+            <% 
+               const sexoConyuge = user.sexoConyuge ? user.sexoConyuge.trim() : '';
+            %>
             <select
               class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
               name="sexoConyuge"
               id="sexoConyuge-opciones"
-              required
+              <%= mostrarConyuge ? 'required' : '' %>
             >
               <option value="Seleccione">Seleccione el género</option>
-              <option value="Masculino">Masculino</option>
-              <option value="Femenino">Femenino</option>
+              <option value="Masculino" <%= sexoConyuge === 'Masculino' ? 'selected' : '' %>>Masculino</option>
+              <option value="Femenino" <%= sexoConyuge === 'Femenino' ? 'selected' : '' %>>Femenino</option>
             </select>
           </div>
         </div>
@@ -1697,6 +1799,12 @@
           </div>
           <div class="mb-4 mt-4">
             <p class="font-semibold text-gray-800 mb-1">Licenciatura</p>
+            <%
+              // Filtrar licenciaturas desde la BD
+              const licenciaturasBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'LICENCIATURA');
+              const numLicenciaturas = licenciaturasBD.length;
+              const tieneLic = numLicenciaturas > 0 ? '1' : '0';
+            %>
             <label class="text-gray-800 mb-1">¿Cuentas con licenciatura?</label>
             <div class="flex gap-4">
               <label
@@ -1704,6 +1812,7 @@
                   type="radio"
                   name="tieneLicenciatura"
                   value="1"
+                  <%= tieneLic === '1' ? 'checked' : '' %>
                   required
                   class="mr-2"
                 />
@@ -1714,16 +1823,18 @@
                   type="radio"
                   name="tieneLicenciatura"
                   value="0"
+                  <%= tieneLic === '0' ? 'checked' : '' %>
                   class="mr-2"
                 />
                 No</label
               >
             </div>
           </div>
-          <div id="licenciaturaCantidadContainer" class="hidden mb-4">
+          <div id="licenciaturaCantidadContainer" class="<%= tieneLic === '1' ? '' : 'hidden' %> mb-4">
             <label class="block mb-1 text-gray-700"
               >¿Cuántas licenciaturas tienes? (máx. 3)</label
             >
+            <input type="hidden" id="contadorLicenciaturasBD" value="<%= numLicenciaturas %>">
             <input
               type="number"
               id="licenciaturaCantidad"
@@ -1731,12 +1842,92 @@
               class="border border-gray-300 w-24 p-2 rounded-md mb-2"
               min="1"
               max="3"
+              value="<%= numLicenciaturas > 0 ? numLicenciaturas : '' %>"
+              <%= numLicenciaturas > 0 ? 'required' : '' %>
             />
-            <div id="licenciaturaLista"></div>
+            <div id="licenciaturaLista">
+              <% if (numLicenciaturas > 0) { %>
+                <% licenciaturasBD.forEach((lic, index) => { 
+                     const i = index + 1;
+                     let fechaVal = '';
+                     if (lic.fechaObtencion) {
+                       try {
+                         fechaVal = new Date(lic.fechaObtencion).toISOString().split('T')[0];
+                       } catch(e) {}
+                     }
+                %>
+                  <div class="border p-3 mt-4 mb-3">
+                    <p class="font-semibold mb-2">Licenciatura <%= i %></p>
+
+                    <label class="block mb-1">Nombre</label>
+                    <label class="block mb-1 text-red-500">Si te encuentras cursando colocar el semestre, cuatrimestre o bimestre</label>
+                    <input type="text"
+                           name="licenciatura_titulo<%= i %>"
+                           placeholder="Ej. DERECHO, PSICOLOGIA, ADMINISTRACIÓN"
+                           required
+                           value="<%= lic.nombreTitulo %>"
+                           class="border p-2 w-full rounded mb-2 acentos">
+
+                    <label class="block mb-1">Institución que expidió el documento</label>
+                    <input type="text"
+                           name="licenciatura_institucion<%= i %>"
+                           placeholder="Ej. UNIVERSIDAD AUTONOMA DEL ESTADO DE HIDALGO"
+                           required
+                           value="<%= lic.institucion %>"
+                           class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Estatus</label>
+                    <select name="licenciatura_estatus<%= i %>"
+                            required
+                            class="border p-2 w-full rounded mb-2">
+                      <option value="">Selecciona estatus</option>
+                      <option value="INCONCLUSO" <%= lic.estatus === 'INCONCLUSO' ? 'selected' : '' %>>INCONCLUSO</option>
+                      <option value="CURSANDO" <%= lic.estatus === 'CURSANDO' ? 'selected' : '' %>>CURSANDO</option>
+                      <option value="CONCLUIDO" <%= lic.estatus === 'CONCLUIDO' ? 'selected' : '' %>>CONCLUIDO</option>
+                      <option value="TITULADO" <%= lic.estatus === 'TITULADO' ? 'selected' : '' %>>TITULADO</option>
+                    </select>
+
+                    <label class="block mb-1">Documento adquirido</label>
+                    <select name="licenciatura_documento<%= i %>"
+                            required
+                            class="border p-2 w-full rounded mb-2">
+                      <option value=""> Selecciona documento</option>
+                      <option value="DIPLOMA" <%= lic.documentoAdquirido === 'DIPLOMA' ? 'selected' : '' %>>DIPLOMA</option>
+                      <option value="CONSTANCIA" <%= lic.documentoAdquirido === 'CONSTANCIA' ? 'selected' : '' %>>CONSTANCIA</option>
+                      <option value="CERTIFICADO" <%= lic.documentoAdquirido === 'CERTIFICADO' ? 'selected' : '' %>>CERTIFICADO</option>
+                      <option value="TITULO" <%= lic.documentoAdquirido === 'TITULO' ? 'selected' : '' %>>TÍTULO</option>
+                      <option value="CEDULA" <%= lic.documentoAdquirido === 'CEDULA' ? 'selected' : '' %>>CÉDULA</option>
+                      <option value="TITULO Y CEDULA" <%= lic.documentoAdquirido === 'TITULO Y CEDULA' ? 'selected' : '' %>>TÍTULO Y CÉDULA</option>
+                    </select>
+
+                    <label class="block mb-1">Fecha de obtención del documento</label>
+                    <input type="text"
+                           name="licenciatura_fecha<%= i %>"
+                           required
+                           value="<%= fechaVal %>"
+                           placeholder="dd-mm-yyyy"
+                           data-format="dd-mm-yyyy"
+                           class="border p-2 w-full rounded mb-2">
+           
+                    <label class="block mb-1">Cédula profesional (Si no cuenta con una deje el campo vacio)</label>
+                    <input type="number"
+                           name="licenciatura_cedula<%= i %>"
+                           value="<%= lic.cedulaProfesional %>"
+                           placeholder="Ej. 1234567"
+                           class="border p-2 w-full rounded mb-2">
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
           </div>
 
           <div class="mb-4 mt-4">
             <p class="font-semibold text-gray-800 mb-1">Maestría</p>
+            <%
+              const maestriasBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'MAESTRIA');
+              const numMaestrias = maestriasBD.length;
+              const tieneMae = numMaestrias > 0 ? '1' : '0';
+            %>
             <label class="text-gray-800 mb-1">¿Cuentas con maestría?</label>
             <div class="flex gap-4">
               <label
@@ -1744,6 +1935,7 @@
                   type="radio"
                   name="tieneMaestria"
                   value="1"
+                  <%= tieneMae === '1' ? 'checked' : '' %>
                   required
                   class="mr-2"
                 />
@@ -1754,16 +1946,18 @@
                   type="radio"
                   name="tieneMaestria"
                   value="0"
+                  <%= tieneMae === '0' ? 'checked' : '' %>
                   class="mr-2"
                 />
                 No</label
               >
             </div>
           </div>
-          <div id="maestriaCantidadContainer" class="hidden mb-4">
+          <div id="maestriaCantidadContainer" class="<%= tieneMae === '1' ? '' : 'hidden' %> mb-4">
             <label class="block mb-1 text-gray-700"
               >¿Cuántas maestrías tienes? (máx. 3)</label
             >
+            <input type="hidden" id="contadorMaestriaBD" value="<%= numMaestrias %>">
             <input
               type="number"
               id="maestriaCantidad"
@@ -1771,12 +1965,64 @@
               class="border border-gray-300 w-24 p-2 rounded-md mb-2"
               min="1"
               max="3"
+              value="<%= numMaestrias > 0 ? numMaestrias : '' %>"
+              <%= numMaestrias > 0 ? 'required' : '' %>
             />
-            <div id="maestriaLista"></div>
+            <div id="maestriaLista">
+              <% if (numMaestrias > 0) { %>
+                <% maestriasBD.forEach((item, index) => { 
+                     const i = index + 1;
+                     let fechaVal = '';
+                     if (item.fechaObtencion) {
+                       try { fechaVal = new Date(item.fechaObtencion).toISOString().split('T')[0]; } catch(e) {}
+                     }
+                %>
+                  <div class="border p-3 mt-4 mb-3">
+                    <p class="font-semibold mb-2">Maestría <%= i %></p>
+                    <label class="block mb-1">Nombre</label>
+                    <input type="text" name="maestria_titulo<%= i %>" placeholder="Ej. DERECHO CONSTITUCIONAL" required value="<%= item.nombreTitulo %>" class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Institución que expidió el documento</label>
+                    <input type="text" name="maestria_institucion<%= i %>" placeholder="Ej. UNIVERSIDAD AUTONOMA DEL ESTADO DE HIDALGO" required value="<%= item.institucion %>" class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Estatus</label>
+                    <select name="maestria_estatus<%= i %>" required class="border p-2 w-full rounded mb-2">
+                      <option value="">Selecciona estatus</option>
+                      <option value="INCONCLUSO" <%= item.estatus === 'INCONCLUSO' ? 'selected' : '' %>>INCONCLUSO</option>
+                      <option value="CURSANDO" <%= item.estatus === 'CURSANDO' ? 'selected' : '' %>>CURSANDO</option>
+                      <option value="CONCLUIDO" <%= item.estatus === 'CONCLUIDO' ? 'selected' : '' %>>CONCLUIDO</option>
+                      <option value="TITULADO" <%= item.estatus === 'TITULADO' ? 'selected' : '' %>>TITULADO</option>
+                    </select>
+
+                    <label class="block mb-1">Documento adquirido</label>
+                    <select name="maestria_documento<%= i %>" required class="border p-2 w-full rounded mb-2">
+                      <option value=""> Selecciona documento</option>
+                      <option value="DIPLOMA" <%= item.documentoAdquirido === 'DIPLOMA' ? 'selected' : '' %>>DIPLOMA</option>
+                      <option value="CONSTANCIA" <%= item.documentoAdquirido === 'CONSTANCIA' ? 'selected' : '' %>>CONSTANCIA</option>
+                      <option value="CERTIFICADO" <%= item.documentoAdquirido === 'CERTIFICADO' ? 'selected' : '' %>>CERTIFICADO</option>
+                      <option value="TITULO" <%= item.documentoAdquirido === 'TITULO' ? 'selected' : '' %>>TÍTULO</option>
+                      <option value="CEDULA" <%= item.documentoAdquirido === 'CEDULA' ? 'selected' : '' %>>CÉDULA</option>
+                      <option value="TITULO Y CEDULA" <%= item.documentoAdquirido === 'TITULO Y CEDULA' ? 'selected' : '' %>>TÍTULO Y CÉDULA</option>
+                    </select>
+
+                    <label class="block mb-1">Fecha de obtención del documento</label>
+                    <input type="text" name="maestria_fecha<%= i %>" required value="<%= fechaVal %>" placeholder="dd-mm-yyyy" data-format="dd-mm-yyyy" class="border p-2 w-full rounded mb-2">
+                    
+                    <label class="block mb-1">Cédula profesional (Si no cuenta con una deje el campo vacio)</label>
+                    <input type="number" name="maestria_cedula<%= i %>" value="<%= item.cedulaProfesional %>" placeholder="Ej. 1234567" class="border p-2 w-full rounded mb-2">
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
           </div>
 
           <div class="mb-4 mt-4">
             <p class="font-semibold text-gray-800 mb-1">Doctorado</p>
+            <%
+              const doctoradosBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'DOCTORADO');
+              const numDoctorados = doctoradosBD.length;
+              const tieneDoc = numDoctorados > 0 ? '1' : '0';
+            %>
             <label class="text-gray-800 mb-1">¿Cuentas con doctorado?</label>
             <div class="flex gap-4">
               <label
@@ -1784,6 +2030,7 @@
                   type="radio"
                   name="tieneDoctorado"
                   value="1"
+                  <%= tieneDoc === '1' ? 'checked' : '' %>
                   required
                   class="mr-2"
                 />
@@ -1794,6 +2041,7 @@
                   type="radio"
                   name="tieneDoctorado"
                   value="0"
+                  <%= tieneDoc === '0' ? 'checked' : '' %>
                   class="mr-2"
                 />
                 No</label
@@ -1801,10 +2049,11 @@
             </div>
           </div>
 
-          <div id="doctoradoCantidadContainer" class="hidden mb-4">
+          <div id="doctoradoCantidadContainer" class="<%= tieneDoc === '1' ? '' : 'hidden' %> mb-4">
             <label class="block mb-1 text-gray-700"
               >¿Cuántos doctorados tienes? (máx. 2)</label
             >
+            <input type="hidden" id="contadorDoctoradoBD" value="<%= numDoctorados %>">
             <input
               type="number"
               id="doctoradoCantidad"
@@ -1812,11 +2061,63 @@
               class="border border-gray-300 w-24 p-2 rounded-md mb-2"
               min="1"
               max="2"
+              value="<%= numDoctorados > 0 ? numDoctorados : '' %>"
+              <%= numDoctorados > 0 ? 'required' : '' %>
             />
-            <div id="doctoradoLista"></div>
+            <div id="doctoradoLista">
+              <% if (numDoctorados > 0) { %>
+                <% doctoradosBD.forEach((item, index) => { 
+                     const i = index + 1;
+                     let fechaVal = '';
+                     if (item.fechaObtencion) {
+                       try { fechaVal = new Date(item.fechaObtencion).toISOString().split('T')[0]; } catch(e) {}
+                     }
+                %>
+                  <div class="border p-3 mt-4 mb-3">
+                    <p class="font-semibold mb-2">Doctorado <%= i %></p>
+                    <label class="block mb-1">Nombre</label>
+                    <input type="text" name="doctorado_titulo<%= i %>" required value="<%= item.nombreTitulo %>" class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Institución que expidió el documento</label>
+                    <input type="text" name="doctorado_institucion<%= i %>" required value="<%= item.institucion %>" class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Estatus</label>
+                    <select name="doctorado_estatus<%= i %>" required class="border p-2 w-full rounded mb-2">
+                      <option value="">Selecciona estatus</option>
+                      <option value="INCONCLUSO" <%= item.estatus === 'INCONCLUSO' ? 'selected' : '' %>>INCONCLUSO</option>
+                      <option value="CURSANDO" <%= item.estatus === 'CURSANDO' ? 'selected' : '' %>>CURSANDO</option>
+                      <option value="CONCLUIDO" <%= item.estatus === 'CONCLUIDO' ? 'selected' : '' %>>CONCLUIDO</option>
+                      <option value="TITULADO" <%= item.estatus === 'TITULADO' ? 'selected' : '' %>>TITULADO</option>
+                    </select>
+
+                    <label class="block mb-1">Documento adquirido</label>
+                    <select name="doctorado_documento<%= i %>" required class="border p-2 w-full rounded mb-2">
+                      <option value=""> Selecciona documento</option>
+                      <option value="DIPLOMA" <%= item.documentoAdquirido === 'DIPLOMA' ? 'selected' : '' %>>DIPLOMA</option>
+                      <option value="CONSTANCIA" <%= item.documentoAdquirido === 'CONSTANCIA' ? 'selected' : '' %>>CONSTANCIA</option>
+                      <option value="CERTIFICADO" <%= item.documentoAdquirido === 'CERTIFICADO' ? 'selected' : '' %>>CERTIFICADO</option>
+                      <option value="TITULO" <%= item.documentoAdquirido === 'TITULO' ? 'selected' : '' %>>TÍTULO</option>
+                      <option value="CEDULA" <%= item.documentoAdquirido === 'CEDULA' ? 'selected' : '' %>>CÉDULA</option>
+                      <option value="TITULO Y CEDULA" <%= item.documentoAdquirido === 'TITULO Y CEDULA' ? 'selected' : '' %>>TÍTULO Y CÉDULA</option>
+                    </select>
+
+                    <label class="block mb-1">Fecha de obtención del documento</label>
+                    <input type="text" name="doctorado_fecha<%= i %>" required value="<%= fechaVal %>" placeholder="dd-mm-yyyy" data-format="dd-mm-yyyy" class="border p-2 w-full rounded mb-2">
+                    
+                    <label class="block mb-1">Cédula profesional (Si no cuenta con una deje el campo vacio)</label>
+                    <input type="number" name="doctorado_cedula<%= i %>" value="<%= item.cedulaProfesional %>" placeholder="Ej. 1234567" class="border p-2 w-full rounded mb-2">
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
           </div>
           <div class="mb-4 mt-4">
             <p class="font-semibold text-gray-800 mb-1">Posdoctorado</p>
+            <%
+              const posdoctoradosBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'POSDOCTORADO');
+              const numPosdoctorados = posdoctoradosBD.length;
+              const tienePos = numPosdoctorados > 0 ? '1' : '0';
+            %>
             <label class="text-gray-800 mb-1">¿Cuentas con posdoctorado?</label>
             <div class="flex gap-4">
               <label
@@ -1824,6 +2125,7 @@
                   type="radio"
                   name="tienePosdoctorado"
                   value="1"
+                  <%= tienePos === '1' ? 'checked' : '' %>
                   required
                   class="mr-2"
                 />
@@ -1834,16 +2136,18 @@
                   type="radio"
                   name="tienePosdoctorado"
                   value="0"
+                  <%= tienePos === '0' ? 'checked' : '' %>
                   class="mr-2"
                 />
                 No</label
               >
             </div>
           </div>
-          <div id="posdoctoradoCantidadContainer" class="hidden mb-4">
+          <div id="posdoctoradoCantidadContainer" class="<%= tienePos === '1' ? '' : 'hidden' %> mb-4">
             <label class="block mb-1 text-gray-700"
               >¿Cuántos Posdoctorados tienes? (máx. 2)</label
             >
+            <input type="hidden" id="contadorPosdoctoradoBD" value="<%= numPosdoctorados %>">
             <input
               type="number"
               id="posdoctoradoCantidad"
@@ -1851,12 +2155,64 @@
               class="border border-gray-300 w-24 p-2 rounded-md mb-2"
               min="1"
               max="2"
+              value="<%= numPosdoctorados > 0 ? numPosdoctorados : '' %>"
+              <%= numPosdoctorados > 0 ? 'required' : '' %>
             />
-            <div id="posdoctoradoLista"></div>
+            <div id="posdoctoradoLista">
+              <% if (numPosdoctorados > 0) { %>
+                <% posdoctoradosBD.forEach((item, index) => { 
+                     const i = index + 1;
+                     let fechaVal = '';
+                     if (item.fechaObtencion) {
+                       try { fechaVal = new Date(item.fechaObtencion).toISOString().split('T')[0]; } catch(e) {}
+                     }
+                %>
+                  <div class="border p-3 mt-4 mb-3">
+                    <p class="font-semibold mb-2">Posdoctorado <%= i %></p>
+                    <label class="block mb-1">Nombre</label>
+                    <input type="text" name="posdoctorado_titulo<%= i %>" required value="<%= item.nombreTitulo %>" class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Institución que expidió el documento</label>
+                    <input type="text" name="posdoctorado_institucion<%= i %>" required value="<%= item.institucion %>" class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Estatus</label>
+                    <select name="posdoctorado_estatus<%= i %>" required class="border p-2 w-full rounded mb-2">
+                      <option value="">Selecciona estatus</option>
+                      <option value="INCONCLUSO" <%= item.estatus === 'INCONCLUSO' ? 'selected' : '' %>>INCONCLUSO</option>
+                      <option value="CURSANDO" <%= item.estatus === 'CURSANDO' ? 'selected' : '' %>>CURSANDO</option>
+                      <option value="CONCLUIDO" <%= item.estatus === 'CONCLUIDO' ? 'selected' : '' %>>CONCLUIDO</option>
+                      <option value="TITULADO" <%= item.estatus === 'TITULADO' ? 'selected' : '' %>>TITULADO</option>
+                    </select>
+
+                    <label class="block mb-1">Documento adquirido</label>
+                    <select name="posdoctorado_documento<%= i %>" required class="border p-2 w-full rounded mb-2">
+                      <option value=""> Selecciona documento</option>
+                      <option value="DIPLOMA" <%= item.documentoAdquirido === 'DIPLOMA' ? 'selected' : '' %>>DIPLOMA</option>
+                      <option value="CONSTANCIA" <%= item.documentoAdquirido === 'CONSTANCIA' ? 'selected' : '' %>>CONSTANCIA</option>
+                      <option value="CERTIFICADO" <%= item.documentoAdquirido === 'CERTIFICADO' ? 'selected' : '' %>>CERTIFICADO</option>
+                      <option value="TITULO" <%= item.documentoAdquirido === 'TITULO' ? 'selected' : '' %>>TÍTULO</option>
+                      <option value="CEDULA" <%= item.documentoAdquirido === 'CEDULA' ? 'selected' : '' %>>CÉDULA</option>
+                      <option value="TITULO Y CEDULA" <%= item.documentoAdquirido === 'TITULO Y CEDULA' ? 'selected' : '' %>>TÍTULO Y CÉDULA</option>
+                    </select>
+
+                    <label class="block mb-1">Fecha de obtención del documento</label>
+                    <input type="text" name="posdoctorado_fecha<%= i %>" required value="<%= fechaVal %>" placeholder="dd-mm-yyyy" data-format="dd-mm-yyyy" class="border p-2 w-full rounded mb-2">
+                    
+                    <label class="block mb-1">Cédula profesional (Si no cuenta con una deje el campo vacio)</label>
+                    <input type="number" name="posdoctorado_cedula<%= i %>" value="<%= item.cedulaProfesional %>" placeholder="Ej. 1234567" class="border p-2 w-full rounded mb-2">
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
           </div>
 
           <div class="mb-4 mt-4">
             <p class="font-semibold text-gray-800 mb-1">Especialidad</p>
+            <%
+              const especialidadesBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'ESPECIALIDAD');
+              const numEspecialidades = especialidadesBD.length;
+              const tieneEsp = numEspecialidades > 0 ? '1' : '0';
+            %>
             <label class="text-gray-800 mb-1">¿Cuentas con especialidad?</label>
             <div class="flex gap-4">
               <label
@@ -1864,6 +2220,7 @@
                   type="radio"
                   name="tieneEspecialidad"
                   value="1"
+                  <%= tieneEsp === '1' ? 'checked' : '' %>
                   required
                   class="mr-2"
                 />
@@ -1874,16 +2231,18 @@
                   type="radio"
                   name="tieneEspecialidad"
                   value="0"
+                  <%= tieneEsp === '0' ? 'checked' : '' %>
                   class="mr-2"
                 />
                 No</label
               >
             </div>
           </div>
-          <div id="especialidadCantidadContainer" class="hidden mb-4">
+          <div id="especialidadCantidadContainer" class="<%= tieneEsp === '1' ? '' : 'hidden' %> mb-4">
             <label class="block mb-1 text-gray-700"
               >¿Cuántas especialidades tienes? (máx. 3)</label
             >
+            <input type="hidden" id="contadorEspecialidadBD" value="<%= numEspecialidades %>">
             <input
               type="number"
               id="especialidadCantidad"
@@ -1891,8 +2250,55 @@
               class="border border-gray-300 w-24 p-2 rounded-md mb-2"
               min="1"
               max="3"
+              value="<%= numEspecialidades > 0 ? numEspecialidades : '' %>"
+              <%= numEspecialidades > 0 ? 'required' : '' %>
             />
-            <div id="especialidadLista"></div>
+            <div id="especialidadLista">
+              <% if (numEspecialidades > 0) { %>
+                <% especialidadesBD.forEach((item, index) => { 
+                     const i = index + 1;
+                     let fechaVal = '';
+                     if (item.fechaObtencion) {
+                       try { fechaVal = new Date(item.fechaObtencion).toISOString().split('T')[0]; } catch(e) {}
+                     }
+                %>
+                  <div class="border p-3 mt-4 mb-3">
+                    <p class="font-semibold mb-2">Especialidad <%= i %></p>
+                    <label class="block mb-1">Nombre</label>
+                    <input type="text" name="especialidad_titulo<%= i %>" required value="<%= item.nombreTitulo %>" class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Institución que expidió el documento</label>
+                    <input type="text" name="especialidad_institucion<%= i %>" required value="<%= item.institucion %>" class="border p-2 w-full rounded mb-2 acentos">
+                    
+                    <label class="block mb-1">Estatus</label>
+                    <select name="especialidad_estatus<%= i %>" required class="border p-2 w-full rounded mb-2">
+                      <option value="">Selecciona estatus</option>
+                      <option value="INCONCLUSO" <%= item.estatus === 'INCONCLUSO' ? 'selected' : '' %>>INCONCLUSO</option>
+                      <option value="CURSANDO" <%= item.estatus === 'CURSANDO' ? 'selected' : '' %>>CURSANDO</option>
+                      <option value="CONCLUIDO" <%= item.estatus === 'CONCLUIDO' ? 'selected' : '' %>>CONCLUIDO</option>
+                      <option value="TITULADO" <%= item.estatus === 'TITULADO' ? 'selected' : '' %>>TITULADO</option>
+                    </select>
+
+                    <label class="block mb-1">Documento adquirido</label>
+                    <select name="especialidad_documento<%= i %>" required class="border p-2 w-full rounded mb-2">
+                      <option value=""> Selecciona documento</option>
+                      <option value="DIPLOMA" <%= item.documentoAdquirido === 'DIPLOMA' ? 'selected' : '' %>>DIPLOMA</option>
+                      <option value="CONSTANCIA" <%= item.documentoAdquirido === 'CONSTANCIA' ? 'selected' : '' %>>CONSTANCIA</option>
+                      <option value="CERTIFICADO" <%= item.documentoAdquirido === 'CERTIFICADO' ? 'selected' : '' %>>CERTIFICADO</option>
+                      <option value="TITULO" <%= item.documentoAdquirido === 'TITULO' ? 'selected' : '' %>>TÍTULO</option>
+                      <option value="CEDULA" <%= item.documentoAdquirido === 'CEDULA' ? 'selected' : '' %>>CÉDULA</option>
+                      <option value="TITULO Y CEDULA" <%= item.documentoAdquirido === 'TITULO Y CEDULA' ? 'selected' : '' %>>TÍTULO Y CÉDULA</option>
+                    </select>
+
+                    <label class="block mb-1">Fecha de obtención del documento</label>
+                    <input type="text" name="especialidad_fecha<%= i %>" required value="<%= fechaVal %>" placeholder="dd-mm-yyyy" data-format="dd-mm-yyyy" class="border p-2 w-full rounded mb-2">
+                    
+                    <label class="block mb-1">Cédula profesional (Si no cuenta con una deje el campo vacio)</label>
+                    <input type="number" name="especialidad_cedula<%= i %>" value="<%= item.cedulaProfesional %>" placeholder="Ej. 1234567" class="border p-2 w-full rounded mb-2">
+                  </div>
+                <% }) %>
+              <% } %>
+            </div>
           </div>
         </div>
         <div class="flex justify-center">
@@ -1908,7 +2314,46 @@
           <label class="block text-xl font-bold text-gray-700 mb-2"
             >(Máximo 10)</label
           >
-          <div id="espacioActualizacion" class="mt-6"></div>
+          <div id="espacioActualizacion" class="mt-6">
+            <% if (locals.actualizacion && actualizacion.length > 0) { %>
+              <% actualizacion.forEach((act, i) => { %>
+                <div class="mb-4 p-4 rounded border border-gray-300 bg-gray-50">
+                  <p class="font-semibold text-gray-800 mb-2">Actualización <%= i + 1 %></p>
+      
+                  <label class="block text-gray-700 font-semibold">Tema</label>
+                  <input type="text" name="actualizacion_tema<%= i %>" value="<%= act.tema %>" class="acentos border w-full p-2 rounded-md bg-white mb-2" required>
+      
+                  <label class="block text-gray-700 font-semibold">Fecha (día/mes/año)</label>
+                  <% 
+                     let fechaVal = '';
+                     if (act.fecha) {
+                       try {
+                         // Formato YYYY-MM-DD para input date o para flatpickr
+                         fechaVal = new Date(act.fecha).toISOString().split('T')[0];
+                         // Convertimos a dd-mm-yyyy para el value visual (flatpickr)
+                         const [y, m, d] = fechaVal.split('-');
+                         fechaVal = `${d}-${m}-${y}`;
+                       } catch(e) {}
+                     }
+                  %>
+                  <input type="text" name="actualizacion_fecha<%= i %>" value="<%= fechaVal %>" data-format="dd-mm-yyyy" class="border w-full p-2 rounded-md bg-white mb-2" placeholder="DD-MM-AAAA" required>
+      
+                  <label class="block text-gray-700 font-semibold">Institución</label>
+                  <input type="text" name="actualizacion_institucion<%= i %>" value="<%= act.institucion %>" class="acentos border w-full p-2 rounded-md bg-white mb-2" required>
+      
+                  <label class="block text-gray-700 font-semibold">Documento recibido</label>
+                  <select class="acentos border w-full p-2 rounded-md bg-white mb-2" name="actualizacion_documento<%= i %>" required>
+                    <option value="">Seleccione documento</option>
+                    <option value="CERTIFICADO" <%= act.documento === 'CERTIFICADO' ? 'selected' : '' %>>CERTIFICADO</option>
+                    <option value="DIPLOMA" <%= act.documento === 'DIPLOMA' ? 'selected' : '' %>>DIPLOMA</option>
+                    <option value="CONSTANCIA" <%= act.documento === 'CONSTANCIA' ? 'selected' : '' %>>CONSTANCIA</option>
+                    <option value="RECONOCIMIENTO" <%= act.documento === 'RECONOCIMIENTO' ? 'selected' : '' %>>RECONOCIMIENTO</option>
+                  </select>
+                </div>
+              <% }) %>
+            <% } %>
+          </div>
+          <input type="hidden" id="contadorActualizacionBD" value="<%= (locals.actualizacion || []).length %>">
 
           <input
             type="hidden"
@@ -1947,12 +2392,17 @@
             talleres, etc.) (Título, cédula, carta de pasante, certificado,
             constancia, etc.)</label
           >
+          <% if (locals.existeGrado) { %>
+            <div class="mb-2 text-green-600 font-bold text-sm">
+              Documento previamente cargado <a href="/uploads/<%= user.nombreTrabajador %>_GRADO-ESTUDIOS.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+            </div>
+          <% } %>
           <input
             type="file"
             name="GRADO-ESTUDIOS"
             accept="application/pdf"
             class="mb-4"
-            required
+            <%= locals.existeGrado ? '' : 'required' %>
           />
         </div>
 
@@ -1964,7 +2414,65 @@
               >(empezando por el cargo actual)</span
             ></label
           >
-          <div id="espacioExperiencia"></div>
+          <div id="espacioExperiencia">
+            <% if (locals.experienciaPJ && experienciaPJ.length > 0) { %>
+              <% experienciaPJ.forEach((exp, i) => { 
+                  // Helper para convertir "ENERO 2023" -> "01-2023" para el input
+                  const meses = ["ENERO", "FEBRERO", "MARZO", "ABRIL", "MAYO", "JUNIO", "JULIO", "AGOSTO", "SEPTIEMBRE", "OCTUBRE", "NOVIEMBRE", "DICIEMBRE"];
+                  const formatMesAnio = (str) => {
+                     if(!str) return "";
+                     const parts = str.split(" "); 
+                     if(parts.length < 2) return str;
+                     const m = meses.indexOf(parts[0].toUpperCase());
+                     if(m === -1) return str;
+                     return `${String(m+1).padStart(2,'0')}-${parts[parts.length-1]}`;
+                  };
+                  
+                  const inicio = formatMesAnio(exp.periodoInicio);
+                  const esActual = (exp.periodoFin === "A LA FECHA");
+                  const fin = esActual ? "" : formatMesAnio(exp.periodoFin);
+                  
+                  const esPJ = (exp.institucion === "PODER JUDICIAL DEL ESTADO DE HIDALGO");
+                  const instValue = esPJ ? "PJ" : "OTRA";
+                  const otraInstValue = esPJ ? "" : exp.institucion;
+              %>
+                <div class="mb-3 p-4 rounded border border-gray-300 experiencia-item">
+                  <p class="font-semibold text-gray-800 mb-1">Experiencia <%= i + 1 %></p>
+                  
+                  <label class="block text-gray-700 font-semibold">Periodo: Mes/Año de inicio</label>
+                  <input type="text" name="experiencia_inicio<%= i %>" value="<%= inicio %>" data-format="mm-yyyy" required class="border w-full p-2 rounded-md bg-gray-50 mb-2" placeholder="MM-AAAA">
+
+                  <label class="block text-gray-700 font-semibold"> Periodo: Mes/Año de fin</label>
+                  <input type="text" name="experiencia_fin<%= i %>" id="experiencia_fin<%= i %>" value="<%= fin %>" data-format="mm-yyyy" class="border w-full p-2 rounded-md bg-gray-50 <%= esActual ? 'hidden' : '' %>" placeholder="MM-AAAA" <%= esActual ? '' : 'required' %>>
+
+                  <input type="checkbox" name="experiencia_actual<%= i %>" id="experiencia_actual<%= i %>" <%= esActual ? 'checked' : '' %>> <span class="text-red-500"> A LA FECHA </span>
+
+                  <label class="block text-gray-700 font-semibold">Institución</label>
+                  <select name="experiencia_institucion<%= i %>" class="border w-full p-2 rounded-md bg-gray-50 mb-2">
+                    <option value="PJ" <%= instValue === 'PJ' ? 'selected' : '' %>>Poder Judicial del Estado de Hidalgo</option>
+                    <option value="OTRA" <%= instValue === 'OTRA' ? 'selected' : '' %>>Otra</option>
+                  </select>
+
+                  <div id="adscripcion-container-<%= i %>" class="mb-2 <%= instValue === 'PJ' ? '' : 'hidden' %>">
+                    <label class="block text-gray-700 font-semibold">Adscripción</label>
+                    <input type="text" name="experiencia_adscripcion<%= i %>" value="<%= exp.adscripcion %>" placeholder="EJ. PRIMERA SALA CIVIL Y FAMILIAR" class="acentos border w-full p-2 rounded-md bg-gray-50">
+                  </div>
+
+                  <div id="otra-inst-container-<%= i %>" class="mb-2 <%= instValue === 'OTRA' ? '' : 'hidden' %>">
+                    <label class="block text-gray-700 font-semibold">Nombre de la institución</label>
+                    <input type="text" name="experiencia_otrainst<%= i %>" value="<%= otraInstValue %>" placeholder="EJ. BANCO AZTECA, S.A." class="acentos border w-full p-2 rounded-md bg-gray-50">
+                  </div>
+
+                  <label class="block text-gray-700 font-semibold">Cargo ó Puesto desempeñado</label>
+                  <input type="text" name="experiencia_puesto<%= i %>" value="<%= exp.cargo %>" placeholder="Ej. SECRETARIA DE ESTUDIO Y CUENTA" required class="acentos border w-full p-2 rounded-md bg-gray-50 mb-2">
+
+                  <label class="block text-gray-700 font-semibold">Campo de experiencia</label>
+                  <input type="text" name="experiencia_campo<%= i %>" value="<%= exp.campoExperiencia %>" placeholder="Ej. ELABORACION DE PROYECTOS DE SENTENCIA DE SEGUNDA INSTANCIA" required class="acentos border w-full p-2 rounded-md bg-gray-50 mb-2">
+                </div>
+              <% }) %>
+            <% } %>
+          </div>
+          <input type="hidden" id="contadorExperienciaBD" value="<%= (locals.experienciaPJ || []).length %>">
           <button
             type="button"
             onclick="agregarExperiencia()"
@@ -1999,12 +2507,17 @@
               e Ingresos Asimilados a Salarios)</span
             ></label
           >
+          <% if (locals.existeRfc) { %>
+            <div class="mb-2 text-green-600 font-bold text-sm">
+              ✅ Documento cargado <a href="/uploads/<%= user.nombreTrabajador %>_RFC.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+            </div>
+          <% } %>
           <input
             type="file"
             name="RFC"
             accept="application/pdf"
             class="mb-4"
-            required
+            <%= locals.existeRfc ? '' : 'required' %>
           />
         </div>
         <!-- Botón -->
@@ -2028,7 +2541,7 @@
     <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
     <script src="https://cdn.jsdelivr.net/npm/flatpickr/dist/plugins/monthSelect/index.js"></script>
 
-    <!-- JS -->
+    
     <script src="/js/formulario.js"></script>
   </body>
 </html>

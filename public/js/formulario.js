@@ -147,14 +147,17 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function agregarCamposHijos() {
-    const noHijos = hijoscontador.value;
+    const noHijos = parseInt(hijoscontador.value) || 0;
     const espacioHijos = document.getElementById("espacioHijos");
+    const hijosActuales = espacioHijos.children.length;
 
-    while (espacioHijos.hasChildNodes()) {
+    // Si hay menos hijos de los deseados, eliminamos los sobrantes del final
+    while (espacioHijos.children.length > noHijos) {
       espacioHijos.removeChild(espacioHijos.lastChild);
     }
 
-    for (let i = 0; i < noHijos; i++) {
+    // Si hay más hijos deseados que actuales, agregamos los que faltan
+    for (let i = hijosActuales; i < noHijos; i++) {
       const divHijo = document.createElement("div");
       divHijo.classList.add(
         "mb-3",
@@ -162,6 +165,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "rounded",
         "border",
         "border-gray-300",
+        "hijo-item",
       );
 
       // Título del hijo
@@ -536,33 +540,51 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
 
   hijoscontador.addEventListener("input", agregarCamposHijos);
 
-  // Lógica para precargar hijos si existen datos
-  if (window.hijosData && window.hijosData.length > 0) {
-    hijoscontador.value = window.hijosData.length;
-    agregarCamposHijos(); // Genera los campos vacíos
+  // Sincronización con HTML generado por EJS
+  const hijosExistentes = document.querySelectorAll(".hijo-item");
+  if (hijosExistentes.length > 0) {
+    // 1. Actualizar el contador visual si no vino lleno
+    if (!hijoscontador.value) {
+      hijoscontador.value = hijosExistentes.length;
+    }
 
-    // Rellena los campos generados
-    window.hijosData.forEach((hijo, i) => {
-      const inicialesInput = document.querySelector(
-        `input[name="inicialesHijo${i}"]`,
-      );
-      const sexoSelect = document.querySelector(
-        `select[name="selectHijo${i}"]`,
-      );
-      const fechaInput = document.querySelector(
-        `input[name="fechaNacimientoHijo${i}"]`,
-      );
+    // 2. Mostrar la sección de hijos
+    preguntaHijos.classList.remove("hidden");
+    hijoscontador.setAttribute("required", "true");
 
-      if (inicialesInput) inicialesInput.value = hijo.inicialesHijo || "";
-      if (sexoSelect) sexoSelect.value = hijo.sexoHijo || "Seleccione";
+    // 3. Inicializar listeners en los elementos ya existentes
+    hijosExistentes.forEach((div) => {
+      // Inicializar Flatpickr y Inputmask
+      const dateInput = div.querySelector(".datepicker");
+      if (dateInput) {
+        flatpickr(dateInput, {
+          dateFormat: "d-m-Y",
+          allowInput: true,
+          maxDate: "today",
+          defaultDate: dateInput.value, // Toma el valor ISO del HTML
+        });
+        Inputmask("99-99-9999", { placeholder: "dd-mm-yyyy" }).mask(dateInput);
+      }
 
-      if (fechaInput && hijo.fechaNacimientoHijo) {
-        // Convertir fecha ISO (YYYY-MM-DD...) a DD-MM-YYYY
-        const date = new Date(hijo.fechaNacimientoHijo);
-        const day = String(date.getUTCDate()).padStart(2, "0");
-        const month = String(date.getUTCMonth() + 1).padStart(2, "0");
-        const year = date.getUTCFullYear();
-        fechaInput._flatpickr.setDate(`${day}-${month}-${year}`);
+      // Inicializar validación de selects
+      const select = div.querySelector("select");
+      if (select) {
+        select.addEventListener("change", function () {
+          if (select.value !== "Seleccione") {
+            select.setCustomValidity("");
+          } else {
+            select.setCustomValidity("Seleccione el género del hijo");
+          }
+          select.reportValidity();
+        });
+      }
+
+      // Inicializar validación de acentos
+      const textInput = div.querySelector(
+        'input[type="text"]:not(.datepicker)',
+      );
+      if (textInput) {
+        reemplazarAcentos(textInput);
       }
     });
   }
@@ -596,6 +618,89 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
     "bachilleratoContainer",
     "1",
   );
+
+  // Sincronización de Estudios Superiores desde BD
+  const contadoresEstudios = [
+    "contadorLicenciaturasBD",
+    "contadorMaestriaBD",
+    "contadorDoctoradoBD",
+    "contadorPosdoctoradoBD",
+    "contadorEspecialidadBD",
+  ];
+  const hayEstudiosCargados = contadoresEstudios.some((id) => {
+    const el = document.getElementById(id);
+    return el && parseInt(el.value) > 0;
+  });
+
+  if (hayEstudiosCargados) {
+    configurarFechaInput();
+    procesarCamposAcentos();
+  }
+
+  // Sincronización de Actualizaciones Profesionales desde BD
+  const contadorActBD = document.getElementById("contadorActualizacionBD");
+  if (contadorActBD && parseInt(contadorActBD.value) > 0) {
+    actualizacionIndex = parseInt(contadorActBD.value);
+    document.getElementById("actualizacionTotal").value = actualizacionIndex;
+    configurarFechaInput();
+    procesarCamposAcentos();
+  }
+
+  // Sincronización de Experiencia Laboral desde BD
+  const contadorExpBD = document.getElementById("contadorExperienciaBD");
+  if (contadorExpBD && parseInt(contadorExpBD.value) > 0) {
+    experienciaIndex = parseInt(contadorExpBD.value);
+    document.getElementById("experienciaTotal").value = experienciaIndex;
+
+    // Reactivar listeners para elementos precargados
+    for (let i = 0; i < experienciaIndex; i++) {
+      // Lógica Institución (PJ vs OTRA)
+      const selectInst = document.querySelector(
+        `select[name="experiencia_institucion${i}"]`,
+      );
+      const adscripContainer = document.getElementById(
+        `adscripcion-container-${i}`,
+      );
+      const otraContainer = document.getElementById(`otra-inst-container-${i}`);
+
+      if (selectInst) {
+        selectInst.addEventListener("change", function (e) {
+          if (e.target.value === "PJ") {
+            adscripContainer.classList.remove("hidden");
+            otraContainer.classList.add("hidden");
+          } else {
+            adscripContainer.classList.add("hidden");
+            otraContainer.classList.remove("hidden");
+          }
+        });
+      }
+
+      // Lógica Checkbox "A la fecha"
+      const finInput = document.getElementById(`experiencia_fin${i}`);
+      const actualCb = document.getElementById(`experiencia_actual${i}`);
+
+      if (actualCb) {
+        actualCb.addEventListener("change", () => {
+          if (actualCb.checked) {
+            finInput.classList.add("hidden");
+            finInput.removeAttribute("required");
+            finInput.value = "";
+          } else {
+            finInput.classList.remove("hidden");
+            finInput.setAttribute("required", "true");
+          }
+        });
+      }
+    }
+
+    configurarFechaInput();
+    procesarCamposAcentos();
+  }
+
+  // Ejecutar validaciones de visibilidad iniciales para secciones manuales
+  actualizarPreguntaHijos();
+  actualizarPreguntaEmbarazo();
+  actualizarPreguntaConyuge();
 
   Inputmask("99-99-9999", { placeholder: "dd-mm-yyyy" }).mask(fechaConyuge);
   flatpickr(fechaConyuge, {

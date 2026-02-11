@@ -60,6 +60,7 @@ const storage = multer.diskStorage({
 
 const upload = multer({ storage });
 app.use(express.static("public")); // Es donde esta guardado mi CSS, imágenes, etc.
+app.use("/uploads", express.static(path.join(__dirname, "uploads"))); // Acceso a documentos cargados
 app.use(bodyParser.urlencoded({ extended: false })); //decodificar la url de como llegan los datos
 app.use(bodyParser.json()); //permitir decodificar archivos json
 
@@ -111,7 +112,7 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
     const idReal = trabajador.idTrabajador;
 
     // B) Hijos (Cálculo de edad manual, sin dbo.CalcularEdad)
-    const hijos = await db.query(
+    const [hijos] = await db.query(
       `SELECT 
           inicialesHijo, 
           sexoHijo, 
@@ -123,13 +124,13 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
     );
 
     // C) Escolaridad
-    const escolaridad = await db.query(
+    const [escolaridad] = await db.query(
       "SELECT * FROM escolaridad WHERE idTrabajador = ?",
       [idReal],
     );
 
     // D) Experiencia (Corrección: La columna en BD se llama 'cargo')
-    const experienciaPJ = await db.query(
+    const [experienciaPJ] = await db.query(
       `SELECT 
           institucion, 
           adscripcion, 
@@ -143,7 +144,7 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
     );
 
     // E) Actualización
-    const actualizacion = await db.query(
+    const [actualizacion] = await db.query(
       "SELECT * FROM actualizacionprofesional WHERE idTrabajador = ?",
       [idReal],
     );
@@ -177,11 +178,39 @@ app.get("/login", (req, res) => {
   res.render("login", { error: null });
 });
 
-app.get("/index", (req, res) => {
+app.get("/index", async (req, res) => {
   if (!req.session.user) {
     return res.redirect("/login");
   }
-  res.render("index", { user: req.session.user });
+
+  const nombreTrabajador = req.session.user.nombreTrabajador;
+  const uploadDir = path.join(__dirname, "uploads");
+
+  // Función helper para verificar si existe el PDF
+  const checkFile = (suffix) =>
+    fs.existsSync(path.join(uploadDir, `${nombreTrabajador}_${suffix}.pdf`));
+
+  // Consultar experiencia laboral existente
+  const [experienciaPJ] = await db.query(
+    "SELECT * FROM experienciapj WHERE idTrabajador = ?",
+    [req.session.user.idTrabajador],
+  );
+
+  // Consultar hijos existentes
+  const [hijos] = await db.query("SELECT * FROM hijo WHERE idTrabajador = ?", [
+    req.session.user.idTrabajador,
+  ]);
+
+  res.render("index", {
+    user: req.session.user,
+    experienciaPJ,
+    hijos,
+    existeIne: checkFile("INE"),
+    existeActa: checkFile("ACTA-NACIMIENTO"),
+    existeDomicilio: checkFile("COMPROBANTE-DOMICILIO"),
+    existeRfc: checkFile("RFC"),
+    existeGrado: checkFile("GRADO-ESTUDIOS"),
+  });
 });
 
 app.get("/success", (req, res) => {
@@ -264,9 +293,21 @@ function convertirFecha(fechaDDMMYYYY) {
 //}
 
 function convertirFechaTexto(fechaInput) {
-  if (!fechaInput) return null; // Si está vacío, no hagas nada
+  if (!fechaInput) return null;
 
-  const [mes, anio] = fechaInput.split("-");
+  let anio, mes;
+  const partes = fechaInput.split("-");
+
+  // Caso 1: Formato YYYY-MM (El que envía tu formulario nuevo)
+  if (partes[0].length === 4) {
+    anio = partes[0];
+    mes = partes[1];
+  }
+  // Caso 2: Formato MM-YYYY (Por si acaso llega al revés)
+  else {
+    mes = partes[0];
+    anio = partes[1];
+  }
 
   const nombresMeses = [
     "ENERO",
@@ -283,10 +324,13 @@ function convertirFechaTexto(fechaInput) {
     "DICIEMBRE",
   ];
 
-  const mesIndex = parseInt(mes, 10) - 1; // Porque los arrays empiezan en 0
-  if (mesIndex < 0 || mesIndex > 11) return null; // Validación simple
+  const mesIndex = parseInt(mes, 10) - 1;
 
-  return `${nombresMeses[mesIndex]} ${anio}`;
+  if (mesIndex >= 0 && mesIndex < 12) {
+    return `${nombresMeses[mesIndex]} ${anio}`;
+  }
+
+  return null;
 }
 
 function mesAnioAFechaOrdenable(fechaMMYYYY) {
