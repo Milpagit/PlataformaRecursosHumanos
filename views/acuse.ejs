@@ -173,13 +173,16 @@
                 let fechaRaw = e.fechaObtencion || e.FechaObtencion;
                 
                 if (fechaRaw) {
+                    // Convertir a string si es un objeto Date u otro tipo
+                    let fechaStr = typeof fechaRaw === 'string' ? fechaRaw : String(fechaRaw);
+                    
                     // Si es un texto tipo "2024-10-17", intentamos formatearlo
-                    if (fechaRaw.includes && fechaRaw.includes('-')) {
+                    if (fechaStr.includes('-')) {
                       // Tu helper formatearFecha
                       fechaMostrar = formatearFecha(fechaRaw); 
                     } else {
                       // Si es texto raro ("MAYO 03"), lo mostramos tal cual para no romper nada
-                      fechaMostrar = fechaRaw;
+                      fechaMostrar = fechaStr;
                     }
                 }
               %>

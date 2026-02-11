@@ -1,4 +1,4 @@
-﻿const express = require("express");
+﻿﻿const express = require("express");
 const bodyParser = require("body-parser"); // Leer y entender los datos del formulario
 const db = require("./config/db"); // Ahora es el pool
 const textdb = require("./config/db"); // Ahora es el pool
@@ -464,8 +464,14 @@ app.post(
         : "N/A";
 
     if (comunidadIndigena === "OTRO") {
+      // Manejo seguro por si llega como array (duplicado) o undefined
+      const otraComunidadVal = Array.isArray(req.body.otraComunidad)
+        ? req.body.otraComunidad[0]
+        : req.body.otraComunidad;
       comunidadIndigena =
-        req.body.otraComunidad?.trim().toUpperCase() || "OTRO";
+        String(otraComunidadVal || "")
+          .trim()
+          .toUpperCase() || "OTRO";
     }
 
     let familiaLinguistica =
@@ -474,7 +480,14 @@ app.post(
         : "N/A";
 
     if (familiaLinguistica === "OTRA") {
-      familiaLinguistica = req.body.otraLengua?.trim().toUpperCase() || "OTRO";
+      // Manejo seguro por si llega como array
+      const otraLenguaVal = Array.isArray(req.body.otraLengua)
+        ? req.body.otraLengua[0]
+        : req.body.otraLengua;
+      familiaLinguistica =
+        String(otraLenguaVal || "")
+          .trim()
+          .toUpperCase() || "OTRO";
     }
 
     let tipoDiscapacidad =
