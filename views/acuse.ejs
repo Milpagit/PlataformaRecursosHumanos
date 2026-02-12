@@ -6,40 +6,129 @@
     <title>Acuse de Registro</title>
     <link href="/css/styles.css" rel="stylesheet">
     <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
       @media print {
         .noprint {
           display: none !important;
         }
+        
+        * {
+          margin: 0;
+          padding: 0;
+        }
+
+        body {
+          background: white !important;
+          padding: 0.5in !important;
+          margin: 0 !important;
+        }
+
+        .acuse-container {
+          max-width: 100%;
+          margin: 0 !important;
+          padding: 0 !important;
+          box-shadow: none !important;
+          border: none !important;
+          background: white !important;
+        }
+
+        h1, h2 {
+          page-break-after: avoid;
+          orphans: 3;
+          widows: 3;
+        }
+
+        ul, ol {
+          orphans: 2;
+          widows: 2;
+        }
+
+        li {
+          orphans: 2;
+          widows: 2;
+          line-height: 1.6;
+        }
+
+        img {
+          max-width: 100%;
+        }
+
+        .flex {
+          display: flex !important;
+        }
+
+        .justify-center {
+          justify-content: center !important;
+        }
+
+        .items-center {
+          align-items: center !important;
+        }
+      }
+
+      body {
+        background-color: #f3f4f6;
+        padding: 20px;
       }
 
       .acuse-container {
-        max-width: 850px;
-        margin: auto;
+        max-width: 900px;
+        margin: 0 auto;
         background-color: white;
-        padding: 40px;
-        border: 2px solid #ccc;
-        border-radius: 10px;
+        padding: 30px;
+        border: 1px solid #d1d5db;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
       }
 
       h2 {
-        margin-top: 30px;
-        font-size: 1.5rem;
+        margin-top: 25px;
+        margin-bottom: 12px;
+        font-size: 1.3rem;
         font-weight: bold;
         color: #1a202c;
+        page-break-after: avoid;
+      }
+
+      ul {
+        list-style-position: outside;
+        padding-left: 20px;
+        margin-bottom: 15px;
+      }
+
+      li {
+        margin-bottom: 8px;
+        line-height: 1.6;
+        word-wrap: break-word;
+      }
+
+      p {
+        line-height: 1.6;
+        margin-bottom: 10px;
+      }
+
+      .encabezado-pj {
+        line-height: 1.1;
+      }
+
+      .encabezado-pj p {
+        margin-bottom: 2px;
+        line-height: 1.1;
       }
     </style>
   </head>
 
   <body class="bg-gray-100 text-gray-900 p-6">
-    <pre style="background: #333; color: #fff; padding: 10px;">
-      DEBUG ESCOLARIDAD: <%= JSON.stringify(escolaridad, null, 2) %>
-    </pre>
-
     <div id="acuseContent" class="acuse-container">
 
       <div class="flex justify-center items-center mb-6">
         <img src="/images/pj-logo-verde.png" alt="Logo" class="h-28 w-24 mr-4">
-        <div aling="text-center">
+        <div class="encabezado-pj" aling="text-center">
           <p class="text-center font-bold text-grisTexto tracking-normal">Poder Judicial del Estado de Hidalgo</p>
           <p class="text-center font-bold text-grisTexto tracking-normal">Consejo de la Judicatura </p>
           <p class="text-center font-bold text-grisTexto tracking-normal">Comisión de Administración</p>
@@ -250,7 +339,7 @@
     </div>
 
     <div class="text-center mt-10 noprint">
-      <button onclick="window.print()"
+      <button onclick="imprimirAcuse()"
         class="noprint bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Imprimir</button>
       <button onclick="descargarPDF()"
         class="noprint bg-blue-600 text-white px-6 py-3 rounded hover:bg-blue-700">Descargar</button>
@@ -266,71 +355,131 @@
   async function descargarPDF() {
     const { jsPDF } = window.jspdf;
 
+    // Ocultar botones de impresión/descarga
     const elementos = document.querySelectorAll('.noprint');
-  const estilosOriginales = [];
-
-  elementos.forEach(el => {
-    estilosOriginales.push(el.style.display);
-    el.style.display = 'none';
-  });
-
-
-    // Espera a que se oculte antes de capturar
-    await new Promise(resolve => setTimeout(resolve, 100)); // Pequeña espera
-    const elemento = document.getElementById("acuseContent");
-
-    // Captura en alta resolución
-    const canvas = await html2canvas(elemento, {
-      scale: 2, // Mejor calidad
-      useCORS: true
+    const estilosOriginales = [];
+    elementos.forEach(el => {
+      estilosOriginales.push(el.style.display);
+      el.style.display = 'none';
     });
 
-    const imgData = canvas.toDataURL("image/jpeg", 1.0);
+    await new Promise(resolve => setTimeout(resolve, 100));
 
-    const pdf = new jsPDF("p", "pt", "letter"); // 612x792 puntos aprox.
+    const elemento = document.getElementById("acuseContent");
+    
+    // Capturar con resolución más alta para mejor calidad
+    const canvas = await html2canvas(elemento, {
+      scale: 3,
+      useCORS: true,
+      logging: false,
+      allowTaint: true,
+      backgroundColor: '#ffffff'
+    });
+
+    // Configurar PDF con márgenes estándar
+    const pdf = new jsPDF({
+      orientation: 'p',
+      unit: 'pt',
+      format: 'letter' // 8.5" x 11" = 612pt x 792pt
+    });
+
     const pageWidth = pdf.internal.pageSize.getWidth();
     const pageHeight = pdf.internal.pageSize.getHeight();
+    
+    // Márgenes en puntos (0.5 pulgadas = 36 puntos)
+    const marginLeft = 36;
+    const marginRight = 36;
+    const marginTop = 36;
+    const marginBottom = 36;
+    
+    const usableWidth = pageWidth - marginLeft - marginRight;
+    const usableHeight = pageHeight - marginTop - marginBottom;
 
+    // Calcular dimensiones de la imagen
     const imgWidth = canvas.width;
     const imgHeight = canvas.height;
-
-    const ratio = pageWidth / imgWidth;
+    
+    // Escalar imagen para ajustarse al ancho usable
+    const ratio = usableWidth / imgWidth;
     const scaledHeight = imgHeight * ratio;
 
-    const canvasPerPageHeight = pageHeight / ratio;
+    let yPosition = marginTop;
+    let pageNum = 1;
+    const totalHeight = scaledHeight;
+    let remainingHeight = scaledHeight;
 
-    let position = 0;
-
-    while (position < imgHeight) {
-      const tempCanvas = document.createElement("canvas");
+    // Procesar página por página
+    while (remainingHeight > 0) {
+      // Crear un canvas temporal para la sección actual de la página
+      const tempCanvas = document.createElement('canvas');
+      const sourceHeight = Math.min(usableHeight / ratio, imgHeight - (totalHeight - remainingHeight) / ratio);
+      
       tempCanvas.width = imgWidth;
-      tempCanvas.height = Math.min(canvasPerPageHeight, imgHeight - position);
+      tempCanvas.height = sourceHeight;
 
-      const ctx = tempCanvas.getContext("2d");
+      const ctx = tempCanvas.getContext('2d');
       ctx.drawImage(
         canvas,
         0,
-        position,
+        (totalHeight - remainingHeight) / ratio,
         imgWidth,
-        tempCanvas.height,
+        sourceHeight,
         0,
         0,
         imgWidth,
-        tempCanvas.height
+        sourceHeight
       );
 
-      const pageImage = tempCanvas.toDataURL("image/jpeg", 1.0);
-      if (position > 0) pdf.addPage();
-      pdf.addImage(pageImage, "JPEG", 0, 0, pageWidth, (tempCanvas.height * ratio));
+      const pageImage = tempCanvas.toDataURL('image/jpeg', 0.95);
+      
+      if (pageNum > 1) {
+        pdf.addPage();
+      }
+      
+      pdf.addImage(
+        pageImage,
+        'JPEG',
+        marginLeft,
+        marginTop,
+        usableWidth,
+        sourceHeight * ratio
+      );
 
-      position += canvasPerPageHeight;
+      remainingHeight -= usableHeight;
+      pageNum++;
     }
 
-     elementos.forEach((el, i) => {
-    el.style.display = estilosOriginales[i];
-  });
+    // Restaurar estilos originales
+    elementos.forEach((el, i) => {
+      el.style.display = estilosOriginales[i];
+    });
 
-    pdf.save("reporte_paginas.pdf");
+    // Descargar el PDF
+    pdf.save(`acuse_${new Date().getTime()}.pdf`);
+  }
+
+  function imprimirAcuse() {
+    // Ocultar botones
+    const elementos = document.querySelectorAll('.noprint');
+    const estilosOriginales = [];
+    
+    elementos.forEach(el => {
+      estilosOriginales.push(el.style.display);
+      el.style.display = 'none';
+    });
+
+    // Esperar a que se renderice
+    setTimeout(() => {
+      // Usar window.print()
+      window.print();
+      
+      // Restaurar estilos después de la impresión
+      setTimeout(() => {
+        elementos.forEach((el, i) => {
+          el.style.display = estilosOriginales[i];
+        });
+      }, 100);
+    }, 100);
   }
 </script>
 

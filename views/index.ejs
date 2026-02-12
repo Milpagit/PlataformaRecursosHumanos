@@ -1359,7 +1359,7 @@
           </div>
         </div>
 
-        <div id="preguntaCronica" class="my-3 hidden">
+        <div id="preguntaCronica" class="my-3 <%= locals.tieneEnfermedadCronica === '1' ? '' : 'hidden' %>">
           <label class="block mb-1 font-bold text-gray-700"
             >¿Qué enfermedad padeces?</label
           >
@@ -1369,6 +1369,7 @@
             id="cronica-texto"
             placeholder="Enfermedad cronica"
             name="cronicaTexto"
+            value="<%= locals.tipoCronica || '' %>"
           />
         </div>
 
@@ -1664,12 +1665,16 @@
             <label class="text-gray-800 mb-1"
               >¿Cursaste carrera técnica o comercial?</label
             >
+            <%
+              const tieneTecnicaDB = (locals.tecnica) ? '1' : '0';
+            %>
             <div class="flex gap-4">
               <label
                 ><input
                   type="radio"
                   name="tieneTecnica"
                   value="1"
+                  <%= tieneTecnicaDB === '1' ? 'checked' : '' %>
                   required
                   class="mr-2"
                 />
@@ -1680,18 +1685,20 @@
                   type="radio"
                   name="tieneTecnica"
                   value="0"
+                  <%= tieneTecnicaDB === '0' ? 'checked' : '' %>
                   class="mr-2"
                 />
                 No</label
               >
             </div>
           </div>
-          <div id="tecnicaContainer" class="hidden mb-4">
+          <div id="tecnicaContainer" class="<%= tieneTecnicaDB === '1' ? '' : 'hidden' %> mb-4">
             <p class="text-gray-800 mb-1">Nombre de la carrera</p>
             <input
               type="text"
               name="tecnica_institucion"
               placeholder="Nombre de la carrera"
+              value="<%= locals.tecnica ? locals.tecnica.nombreTitulo : '' %>"
               class="acentos border p-2 rounded-md bg-gray-50 w-full mb-2"
             />
           </div>
@@ -1700,12 +1707,16 @@
           <div class="mb-4 mt-4">
             <p class="font-semibold text-gray-800 mb-1">Bachillerato</p>
             <label class="text-gray-800 mb-1">¿Cursaste bachillerato?</label>
+            <%
+              const tieneBachilleratoDB = (locals.bachillerato) ? '1' : '0';
+            %>
             <div class="flex gap-4">
               <label
                 ><input
                   type="radio"
                   name="tieneBachillerato"
                   value="1"
+                  <%= tieneBachilleratoDB === '1' ? 'checked' : '' %>
                   required
                   class="mr-2"
                 />
@@ -1716,13 +1727,14 @@
                   type="radio"
                   name="tieneBachillerato"
                   value="0"
+                  <%= tieneBachilleratoDB === '0' ? 'checked' : '' %>
                   class="mr-2"
                 />
                 No</label
               >
             </div>
           </div>
-          <div id="bachilleratoContainer" class="hidden mb-4">
+          <div id="bachilleratoContainer" class="<%= tieneBachilleratoDB === '1' ? '' : 'hidden' %> mb-4">
             <label class="block mb-1 text-gray-700">Tipo de bachillerato</label>
 
             <select
@@ -1730,12 +1742,12 @@
               class="border p-2 rounded-md bg-gray-50 w-full mb-2"
             >
               <option value="">SELECCIONE</option>
-              <option value="BACHILLERATO GENERAL">BACHILLERATO GENERAL</option>
-              <option value="BACHILLERATO TECNOLOGICO">
+              <option value="BACHILLERATO GENERAL" <%= locals.bachillerato && locals.bachillerato.nombreTitulo === 'BACHILLERATO GENERAL' ? 'selected' : '' %>>BACHILLERATO GENERAL</option>
+              <option value="BACHILLERATO TECNOLOGICO" <%= locals.bachillerato && locals.bachillerato.nombreTitulo === 'BACHILLERATO TECNOLOGICO' ? 'selected' : '' %>>
                 BACHILLERATO TECNOLÓGICO
               </option>
-              <option value="PROFESIONAL TECNICO">PROFESIONAL TÉCNICO</option>
-              <option value="BACHILLERATO INTERCULTURAL">
+              <option value="PROFESIONAL TECNICO" <%= locals.bachillerato && locals.bachillerato.nombreTitulo === 'PROFESIONAL TECNICO' ? 'selected' : '' %>>PROFESIONAL TÉCNICO</option>
+              <option value="BACHILLERATO INTERCULTURAL" <%= locals.bachillerato && locals.bachillerato.nombreTitulo === 'BACHILLERATO INTERCULTURAL' ? 'selected' : '' %>>
                 BACHILLERATO INTERCULTURAL
               </option>
             </select>
@@ -1747,9 +1759,9 @@
               class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
             >
               <option value="">Selecciona estatus</option>
-              <option value="INCONCLUSO">INCONCLUSO</option>
-              <option value="CURSANDO">CURSANDO</option>
-              <option value="CONCLUIDO">CONCLUIDO</option>
+              <option value="INCONCLUSO" <%= locals.bachillerato && locals.bachillerato.estatus === 'INCONCLUSO' ? 'selected' : '' %>>INCONCLUSO</option>
+              <option value="CURSANDO" <%= locals.bachillerato && locals.bachillerato.estatus === 'CURSANDO' ? 'selected' : '' %>>CURSANDO</option>
+              <option value="CONCLUIDO" <%= locals.bachillerato && locals.bachillerato.estatus === 'CONCLUIDO' ? 'selected' : '' %>>CONCLUIDO</option>
             </select>
 
             <label class="block mb-1 text-gray-700">Documento adquirido</label>
@@ -1759,9 +1771,9 @@
               class="border border-gray-300 w-full p-3 rounded-md bg-gray-50 mb-2"
             >
               <option value="">Seleccione según el caso</option>
-              <option value="DIPLOMA">DIPLOMA</option>
-              <option value="CONSTANCIA">CONSTANCIA</option>
-              <option value="CERTIFICADO">CERTIFICADO</option>
+              <option value="DIPLOMA" <%= locals.bachillerato && locals.bachillerato.documentoAdquirido === 'DIPLOMA' ? 'selected' : '' %>>DIPLOMA</option>
+              <option value="CONSTANCIA" <%= locals.bachillerato && locals.bachillerato.documentoAdquirido === 'CONSTANCIA' ? 'selected' : '' %>>CONSTANCIA</option>
+              <option value="CERTIFICADO" <%= locals.bachillerato && locals.bachillerato.documentoAdquirido === 'CERTIFICADO' ? 'selected' : '' %>>CERTIFICADO</option>
             </select>
 
             <label class="block mb-1 text-gray-700"
@@ -1771,6 +1783,7 @@
               type="text"
               name="prepa_institucion"
               class="acentos border p-2 rounded-md bg-gray-50 w-full mb-2"
+              value="<%= locals.bachillerato ? locals.bachillerato.institucion : '' %>"
             />
 
             <label class="block mb-1 text-gray-700"
@@ -1781,6 +1794,7 @@
               name="prepa_fecha"
               placeholder="dd-mm-yyyy"
               class="border p-2 rounded-md bg-gray-50 w-full mb-2"
+              value="<% if (locals.bachillerato && locals.bachillerato.fechaObtencion) { %><%- new Date(locals.bachillerato.fechaObtencion).toISOString().split('T')[0] %><% } %>"
             />
           </div>
           <div class="mb-4 mt-4">

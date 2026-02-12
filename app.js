@@ -12,6 +12,42 @@ app.use(express.static(path.join(__dirname, "public")));
 app.set("view engine", "ejs");
 app.set("views", path.join(__dirname, "views"));
 
+// Funciones globales disponibles en todas las vistas EJS
+app.locals.formatearFecha = function (fecha) {
+  if (!fecha) return "N/A";
+  
+  // Si es un string tipo "2024-10-17", formatearlo
+  if (typeof fecha === "string" && fecha.includes("-")) {
+    const partes = fecha.split("-");
+    if (partes[0].length === 4) {
+      // Formato YYYY-MM-DD
+      const [anio, mes, dia] = partes;
+      const meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
+                     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      return `${dia} de ${meses[parseInt(mes)]} de ${anio}`;
+    }
+  }
+  
+  // Si es un objeto Date
+  if (fecha instanceof Date) {
+    const opciones = { day: "2-digit", month: "long", year: "numeric" };
+    return fecha.toLocaleDateString("es-MX", opciones);
+  }
+  
+  // Intentar crear un Date si es string de otro formato
+  try {
+    const d = new Date(fecha);
+    if (!isNaN(d.getTime())) {
+      const opciones = { day: "2-digit", month: "long", year: "numeric" };
+      return d.toLocaleDateString("es-MX", opciones);
+    }
+  } catch (e) {
+    // Ignorar error
+  }
+  
+  return String(fecha); // Devolver como string al final
+};
+
 /**
  * RUTAS DE ACCESO (Login y Registro)
  */

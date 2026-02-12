@@ -149,25 +149,14 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
       [idReal],
     );
 
-    // ----------------------------------------------------
-    // 3. HELPER Y RENDERIZADO
-    // ----------------------------------------------------
-
-    // Función necesaria para que acuse.ejs formatee las fechas
-    const formatearFecha = (f) => {
-      if (!f) return "N/A";
-      const fecha = new Date(f);
-      return fecha.toISOString().split("T")[0];
-    };
-
+    // Renderizar la vista (formatearFecha ahora viene de app.locals)
     res.render("acuse", {
       trabajador,
       hijos,
       escolaridad,
-      experienciaPJ, // Ahora lleva los datos correctos de la tabla experienciapj
+      experienciaPJ,
       actualizacion,
       noTrabajador,
-      formatearFecha, // ¡Importante pasar esto!
     });
   } catch (error) {
     console.error("Error en /acuse:", error);
@@ -201,10 +190,35 @@ app.get("/index", async (req, res) => {
     req.session.user.idTrabajador,
   ]);
 
+  // Consultar escolaridad (primaria, secundaria, técnica, bachillerato)
+  const [escolaridad] = await db.query(
+    "SELECT * FROM escolaridad WHERE idTrabajador = ?",
+    [req.session.user.idTrabajador],
+  );
+
+  // Filtrar por nivel académico
+  const tecnica = escolaridad.filter(e => 
+    e.nivelAcademico && e.nivelAcademico.toUpperCase().includes('TECNICA')
+  )[0] || null;
+  
+  const bachillerato = escolaridad.filter(e => 
+    e.nivelAcademico && e.nivelAcademico.toUpperCase() === 'BACHILLERATO'
+  )[0] || null;
+
+  // Obtener datos de enfermedad crónica del usuario logueado
+  const usuarioActual = req.session.user;
+  const tieneEnfermedadCronica = usuarioActual.tieneEnfermedadCronica === 'Si' ? '1' : '0';
+  const tipoCronica = usuarioActual.tipoCronica || '';
+
   res.render("index", {
     user: req.session.user,
     experienciaPJ,
     hijos,
+    escolaridad,
+    tecnica,
+    bachillerato,
+    tieneEnfermedadCronica,
+    tipoCronica,
     existeIne: checkFile("INE"),
     existeActa: checkFile("ACTA-NACIMIENTO"),
     existeDomicilio: checkFile("COMPROBANTE-DOMICILIO"),
@@ -664,78 +678,8 @@ app.post(
         idTrabajador,
       ]);
 
-      const niveles = [
-        "licenciatura",
-        "maestria",
-        "doctorado",
-        "posdoctorado",
-        "especialidad",
-      ];
-      const maximos = {
-        licenciatura: 3,
-        maestria: 3,
-        doctorado: 2,
-        posdoctorado: 2,
-        especialidad: 3,
-      };
-
-      const insertQuery = `
-        INSERT INTO escolaridad
-            (nivelAcademico, nombreTitulo, fechaObtencion, institucion,
-            documentoAdquirido, estatus, cedulaProfesional, idTrabajador)
-        VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-        `;
-
-      if (req.body.tieneBachillerato === "1") {
-        await db.query(insertQuery, [
-          "BACHILLERATO",
-          req.body.prepa_titulo.trim().toUpperCase(),
-          req.body.prepa_fecha,
-          req.body.prepa_institucion.trim().toUpperCase(),
-          req.body.prepa_documento,
-          req.body.prepa_estatus,
-          null, // cedula
-          idTrabajador,
-        ]);
-      }
-
-      for (let nivel of niveles) {
-        const cantidadRaw = req.body[`${nivel}Cantidad`];
-        const cantidad = Math.min(
-          maximos[nivel],
-          Math.max(0, parseInt(cantidadRaw, 10) || 0),
-        );
-
-        for (let i = 1; i <= cantidad; i++) {
-          const tituloField = `${nivel}_titulo${i}`;
-          const fechaField = `${nivel}_fecha${i}`;
-          const institucionField = `${nivel}_institucion${i}`;
-          const documentoField = `${nivel}_documento${i}`;
-          const estatusField = `${nivel}_estatus${i}`;
-          const cedulaField = `${nivel}_cedula${i}`;
-
-          const titulo = req.body[tituloField]?.trim() || null;
-          const fechaRaw = req.body[fechaField] || null; // yyyy-mm-dd
-          const institucion = req.body[institucionField]?.trim() || null;
-          const documento = req.body[documentoField] || null;
-          const estatus = req.body[estatusField] || null;
-          const cedula = req.body[cedulaField]?.trim() || null;
-
-          if (titulo || fechaRaw || institucion) {
-            const fecha = fechaRaw;
-            await db.query(insertQuery, [
-              nivel.toUpperCase(), // nivelAcademico
-              titulo,
-              fecha,
-              institucion,
-              documento,
-              estatus,
-              cedula,
-              idTrabajador,
-            ]);
-          }
-        }
-      }
+      // NOTA: El INSERT de escolaridad se realiza después con el array escolaridades
+      // para evitar duplicados. Ver línea ~900 donde se procesa el array completo.
 
       console.log(`Escolaridad eliminada para trabajador ${idTrabajador}`);
 

@@ -769,7 +769,8 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
   );
 
   if (selectCom) {
-    selectCom.addEventListener("change", function () {
+    // Función para sincronizar la visibilidad
+    function sincronizarVisibilidadComunidad() {
       if (selectCom.value === "OTRO") {
         otraComunidadContainer.classList.remove("hidden");
         otraComunidadInput.setAttribute("required", true);
@@ -778,6 +779,14 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
         otraComunidadInput.value = ""; // limpiar campo si cambia
         otraComunidadInput.removeAttribute("required");
       }
+    }
+
+    // Sincronizar estado inicial al cargar la página
+    sincronizarVisibilidadComunidad();
+
+    // Sincronizar cuando el usuario cambia la opción
+    selectCom.addEventListener("change", function () {
+      sincronizarVisibilidadComunidad();
     });
   }
 
@@ -788,7 +797,8 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
   );
 
   if (selectFam) {
-    selectFam.addEventListener("change", function () {
+    // Función para sincronizar la visibilidad
+    function sincronizarVisibilidadLengua() {
       if (selectFam.value === "OTRA") {
         otraFamiliaContainer.classList.remove("hidden");
         otraFamiliaInput.setAttribute("required", true);
@@ -797,6 +807,14 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
         otraFamiliaInput.value = ""; // limpiar campo si cambia
         otraFamiliaInput.removeAttribute("required");
       }
+    }
+
+    // Sincronizar estado inicial al cargar la página
+    sincronizarVisibilidadLengua();
+
+    // Sincronizar cuando el usuario cambia la opción
+    selectFam.addEventListener("change", function () {
+      sincronizarVisibilidadLengua();
     });
   }
 
