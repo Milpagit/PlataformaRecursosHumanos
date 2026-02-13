@@ -10,6 +10,7 @@ const path = require("path");
 const sql = require("mssql");
 const nodemailer = require("nodemailer");
 const session = require("express-session");
+const puppeteer = require("puppeteer");
 //////////////////////////////////////////////////////////////////
 const dayjs = require("dayjs");
 const utc = require("dayjs/plugin/utc");
@@ -32,8 +33,6 @@ app.locals.formatearFecha = function (fecha) {
 
   return f.format("D [de] MMMM [de] YYYY"); // Ejemplo: 29 de marzo de 1984
 };
-
-////////////////////////////////////////////////////////////////////////////////
 
 const multer = require("multer");
 const uploadPath = path.join(__dirname, "uploads");
@@ -78,27 +77,21 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
   const { noTrabajador } = req.params;
 
   try {
-    // ----------------------------------------------------
-    // 1. SEGURIDAD (De tu código original)
-    // ----------------------------------------------------
-    // Verifica si existe la sesión (si usas express-session)
-    if (req.session && req.session.idTrabajador) {
-      // Validación extra: Que el usuario logueado sea el dueño del acuse
-      // Si quieres permitir que RRHH vea cualquier acuse, comenta este if
-      /*
-        if (String(req.session.noTrabajador) !== String(noTrabajador)) {
-           return res.redirect("/login");
-        }
-        */
+    // Seguridad: solo el propio trabajador logueado o un administrador pueden ver el acuse
+    const esAdmin = !!req.session.admin;
+    const usuarioSesion = req.session.user;
+
+    if (!esAdmin) {
+      // Si no es admin, debe estar logueado como trabajador
+      if (!usuarioSesion) {
+        return res.redirect("/login");
+      }
+
+      // El trabajador solo puede ver su propio acuse
+      if (usuarioSesion.noTrabajador !== noTrabajador) {
+        return res.status(403).send("No tienes permiso para ver este acuse.");
+      }
     }
-    // Nota: Si no tienes configurado express-session en app.js,
-    // borra el bloque if de arriba para que no te de error.
-
-    // ----------------------------------------------------
-    // 2. CONSULTAS SQL CORREGIDAS (Sin Vistas ni Funciones raras)
-    // ----------------------------------------------------
-
-    // A) Datos del Trabajador
     const [rows] = await db.query(
       "SELECT * FROM trabajador WHERE noTrabajador = ?",
       [noTrabajador],
@@ -108,10 +101,8 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
       return res.status(404).send("Trabajador no encontrado");
     }
     const trabajador = rows[0];
-    // Usamos el ID real para las siguientes búsquedas
     const idReal = trabajador.idTrabajador;
 
-    // B) Hijos (Cálculo de edad manual, sin dbo.CalcularEdad)
     const [hijos] = await db.query(
       `SELECT 
           inicialesHijo, 
@@ -197,18 +188,23 @@ app.get("/index", async (req, res) => {
   );
 
   // Filtrar por nivel académico
-  const tecnica = escolaridad.filter(e => 
-    e.nivelAcademico && e.nivelAcademico.toUpperCase().includes('TECNICA')
-  )[0] || null;
-  
-  const bachillerato = escolaridad.filter(e => 
-    e.nivelAcademico && e.nivelAcademico.toUpperCase() === 'BACHILLERATO'
-  )[0] || null;
+  const tecnica =
+    escolaridad.filter(
+      (e) =>
+        e.nivelAcademico && e.nivelAcademico.toUpperCase().includes("TECNICA"),
+    )[0] || null;
+
+  const bachillerato =
+    escolaridad.filter(
+      (e) =>
+        e.nivelAcademico && e.nivelAcademico.toUpperCase() === "BACHILLERATO",
+    )[0] || null;
 
   // Obtener datos de enfermedad crónica del usuario logueado
   const usuarioActual = req.session.user;
-  const tieneEnfermedadCronica = usuarioActual.tieneEnfermedadCronica === 'Si' ? '1' : '0';
-  const tipoCronica = usuarioActual.tipoCronica || '';
+  const tieneEnfermedadCronica =
+    usuarioActual.tieneEnfermedadCronica === "Si" ? "1" : "0";
+  const tipoCronica = usuarioActual.tipoCronica || "";
 
   res.render("index", {
     user: req.session.user,
@@ -3135,6 +3131,305 @@ app.get("/generar-reportes-todos", async (req, res) => {
     console.error("Error general en el endpoint:", error);
     res.status(500).send("Error interno del servidor");
   }
+});
+
+/**
+ * ================================
+ * RUTAS DE ADMINISTRADOR
+ * ================================
+ */
+
+// GET - Mostrar login de administrador
+app.get("/admin/login", (req, res) => {
+  res.render("admin/login", { error: null });
+});
+
+// POST - Procesar login de administrador
+app.post("/admin/login", async (req, res) => {
+  const { usuario, password } = req.body;
+
+  if (!usuario || !password) {
+    return res.render("admin/login", {
+      error: "Usuario y contraseña requeridos",
+    });
+  }
+
+  try {
+    const [rows] = await db.query(
+      "SELECT * FROM administrador WHERE usuario = ? AND password = ? AND activo = 1",
+      [usuario, password],
+    );
+
+    if (rows && rows.length > 0) {
+      // Guardar admin en sesión
+      req.session.admin = rows[0];
+      return res.redirect("/admin/dashboard");
+    } else {
+      return res.render("admin/login", {
+        error: "Usuario o contraseña incorrectos",
+      });
+    }
+  } catch (error) {
+    console.error("Error en login admin:", error);
+    return res.render("admin/login", { error: "Error interno del servidor" });
+  }
+});
+
+// Middleware para verificar si es admin
+const verificarAdmin = (req, res, next) => {
+  if (!req.session.admin) {
+    return res.redirect("/admin/login");
+  }
+  next();
+};
+
+// GET - Dashboard del administrador (Unificado: crear + buscar + últimos)
+app.get("/admin/dashboard", verificarAdmin, async (req, res) => {
+  let ultimosTrabajadores = [];
+
+  try {
+    // Obtener los 5 trabajadores más recientes (por ID más alto)
+    const [resultados] = await db.query(
+      "SELECT TOP 5 idTrabajador, nombreTrabajador, curp, noTrabajador FROM trabajador ORDER BY idTrabajador DESC",
+      [],
+    );
+    ultimosTrabajadores = resultados || [];
+  } catch (error) {
+    console.error("Error al obtener últimos trabajadores:", error);
+    ultimosTrabajadores = [];
+  }
+
+  return res.render("admin/dashboard", {
+    admin: req.session.admin,
+    ultimosTrabajadores: ultimosTrabajadores,
+    usuariosBuscados: [],
+    error: null,
+    mensaje: null,
+    busqueda: "",
+  });
+});
+
+// POST - Crear nuevo trabajador (AJAX)
+app.post("/admin/crear-usuario", verificarAdmin, async (req, res) => {
+  const {
+    nombre,
+    rfc,
+    curp,
+    claveTrabjador,
+    esAdmin,
+    usuarioAdmin,
+    correoAdmin,
+    passwordAdmin,
+    adminPasswordActual,
+  } = req.body;
+
+  const perfilAdmin =
+    esAdmin === true || esAdmin === "true" || esAdmin === "on";
+
+  try {
+    if (perfilAdmin) {
+      // Crear solo administrador (no trabajador)
+      if (
+        !usuarioAdmin ||
+        !correoAdmin ||
+        !passwordAdmin ||
+        !adminPasswordActual
+      ) {
+        return res.status(400).json({
+          success: false,
+          error:
+            "Para crear un administrador debes llenar usuario, correo, contraseña y confirmar tu contraseña actual.",
+        });
+      }
+
+      const idAdminActual = req.session.admin?.idAdmin;
+
+      const [adminValido] = await db.query(
+        "SELECT * FROM administrador WHERE idAdmin = ? AND password = ? AND activo = 1",
+        [idAdminActual, adminPasswordActual],
+      );
+
+      if (!adminValido || adminValido.length === 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Tu contraseña de administrador no es correcta.",
+        });
+      }
+
+      const [adminExistente] = await db.query(
+        "SELECT * FROM administrador WHERE usuario = ?",
+        [usuarioAdmin],
+      );
+
+      if (adminExistente && adminExistente.length > 0) {
+        return res.status(400).json({
+          success: false,
+          error: "Ya existe un administrador con ese usuario.",
+        });
+      }
+      await db.query(
+        "INSERT INTO administrador (usuario, password, correo, activo) VALUES (?, ?, ?, 1)",
+        [usuarioAdmin, passwordAdmin, correoAdmin],
+      );
+      return res.json({
+        success: true,
+        mensaje: `Administrador ${usuarioAdmin} creado exitosamente`,
+      });
+    }
+
+    // Perfil de trabajador: validar datos básicos
+    if (!nombre || !rfc || !curp || !claveTrabjador) {
+      return res.status(400).json({
+        success: false,
+        error: "Todos los campos son obligatorios",
+      });
+    }
+
+    // Verificar que CURP y RFC no existan para el trabajador
+    const [existe] = await db.query(
+      "SELECT * FROM trabajador WHERE curp = ? OR rfc = ?",
+      [curp.toUpperCase(), rfc.toUpperCase()],
+    );
+
+    if (existe && existe.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: "El CURP o RFC ya existe en el sistema",
+      });
+    }
+
+    await db.query(
+      "INSERT INTO trabajador (nombreTrabajador, rfc, curp, noTrabajador) VALUES (?, ?, ?, ?)",
+      [nombre, rfc.toUpperCase(), curp.toUpperCase(), claveTrabjador],
+    );
+
+    return res.json({
+      success: true,
+      mensaje: `Trabajador ${nombre} creado exitosamente`,
+    });
+  } catch (error) {
+    console.error("Error al crear trabajador:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error al crear el trabajador. Intenta de nuevo.",
+    });
+  }
+});
+
+// POST - Buscar trabajadores (AJAX)
+app.post("/admin/buscar-trabajadores", verificarAdmin, async (req, res) => {
+  const { busqueda } = req.body;
+
+  if (!busqueda || busqueda.trim() === "") {
+    return res.json({
+      success: true,
+      usuarios: [],
+      error: "Ingresa un nombre o CURP para buscar",
+    });
+  }
+
+  try {
+    const [usuarios] = await db.query(
+      "SELECT idTrabajador, noTrabajador, nombreTrabajador, curp, rfc, correoElectronico, cargoActual FROM trabajador WHERE nombreTrabajador LIKE ? OR curp LIKE ? ORDER BY nombreTrabajador",
+      [`%${busqueda}%`, `%${busqueda}%`],
+    );
+
+    return res.json({
+      success: true,
+      usuarios: usuarios || [],
+      error:
+        usuarios && usuarios.length === 0
+          ? "No se encontraron resultados"
+          : null,
+    });
+  } catch (error) {
+    console.error("Error al buscar trabajadores:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error al buscar trabajadores",
+      usuarios: [],
+    });
+  }
+});
+
+// GET - Ver detalles del trabajador
+app.get("/admin/usuario/:idTrabajador", verificarAdmin, async (req, res) => {
+  const { idTrabajador } = req.params;
+
+  try {
+    const [trabajador] = await db.query(
+      "SELECT * FROM trabajador WHERE idTrabajador = ?",
+      [idTrabajador],
+    );
+
+    if (!trabajador || trabajador.length === 0) {
+      return res.status(404).render("admin/usuario-detalle", {
+        trabajador: null,
+        error: "Trabajador no encontrado",
+      });
+    }
+
+    const [hijos] = await db.query(
+      "SELECT inicialesHijo, sexoHijo, fechaNacimientoHijo FROM hijo WHERE idTrabajador = ?",
+      [idTrabajador],
+    );
+
+    const [escolaridad] = await db.query(
+      "SELECT * FROM escolaridad WHERE idTrabajador = ?",
+      [idTrabajador],
+    );
+
+    const [experienciaPJ] = await db.query(
+      "SELECT * FROM experienciapj WHERE idTrabajador = ?",
+      [idTrabajador],
+    );
+
+    return res.render("admin/usuario-detalle", {
+      trabajador: trabajador[0],
+      hijos,
+      escolaridad,
+      experienciaPJ,
+      error: null,
+    });
+  } catch (error) {
+    console.error("Error al obtener detalles del trabajador:", error);
+    return res.status(500).render("admin/usuario-detalle", {
+      trabajador: null,
+      error: "Error al cargar los detalles del trabajador",
+    });
+  }
+});
+
+// POST - Generar acuse desde admin (redirige al acuse HTML por noTrabajador)
+app.post("/admin/generar-acuse", verificarAdmin, async (req, res) => {
+  const { idTrabajador } = req.body;
+
+  if (!idTrabajador) {
+    return res.status(400).json({ error: "ID de trabajador requerido" });
+  }
+
+  try {
+    const [trabajador] = await db.query(
+      "SELECT noTrabajador FROM trabajador WHERE idTrabajador = ?",
+      [idTrabajador],
+    );
+
+    if (!trabajador || trabajador.length === 0) {
+      return res.status(404).json({ error: "Trabajador no encontrado" });
+    }
+
+    const { noTrabajador } = trabajador[0];
+    return res.redirect(`/acuse/${noTrabajador}`);
+  } catch (error) {
+    console.error("Error al redirigir al acuse desde admin:", error);
+    return res.status(500).json({ error: "Error al generar el acuse" });
+  }
+});
+
+// GET - Logout de administrador
+app.get("/admin/logout", (req, res) => {
+  req.session.admin = null;
+  res.redirect("/admin/login");
 });
 
 // Puerto

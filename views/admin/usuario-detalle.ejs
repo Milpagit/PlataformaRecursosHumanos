@@ -1,0 +1,176 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>Detalles del Trabajador</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link href="/css/styles.css" rel="stylesheet" />
+  <script>
+    function generarAcuse() {
+      const noTrabajador = document.getElementById('noTrabajador').value;
+      // Abrir el mismo acuse HTML que ve el trabajador
+      window.open(`/acuse/${noTrabajador}`, '_blank');
+    }
+  </script>
+</head>
+<body class="bg-gray-100 font-sans text-grisTexto flex flex-col min-h-screen">
+
+  <!-- ENCABEZADO PRINCIPAL -->
+  <header class="w-full bg-verdegris text-white py-6 shadow-md">
+    <div class="container mx-auto flex items-center justify-between">
+      <div class="flex items-center">
+        <img src="/images/pj-logo.png" alt="Logo PJ" class="w-20 h-auto mr-4" />
+        <h1 class="text-2xl font-bold uppercase">Detalles del Trabajador</h1>
+      </div>
+      <a href="/admin/buscar-usuarios" class="bg-white text-verdegris px-4 py-2 rounded font-semibold hover:bg-gray-100">
+        ← Volver
+      </a>
+    </div>
+  </header>
+
+  <!-- CONTENIDO PRINCIPAL -->
+  <main class="flex-grow container mx-auto py-8 px-4">
+
+    <% if (error) { %>
+      <div class="max-w-4xl mx-auto bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
+        <%= error %>
+      </div>
+    <% } %>
+
+    <% if (trabajador) { %>
+      <input type="hidden" id="idTrabajador" value="<%= trabajador.idTrabajador %>" />
+      <input type="hidden" id="noTrabajador" value="<%= trabajador.noTrabajador %>" />
+
+      <div class="max-w-4xl mx-auto">
+
+        <!-- INFORMACIÓN PRINCIPAL -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <div class="flex justify-between items-start mb-6">
+            <div>
+              <h2 class="text-3xl font-bold text-verdegris"><%= trabajador.nombreTrabajador %></h2>
+              <p class="text-gray-600 mt-1">Clave: <%= trabajador.noTrabajador %></p>
+            </div>
+            <div class="text-right">
+              <p class="text-sm text-gray-600">ID: <%= trabajador.idTrabajador %></p>
+            </div>
+          </div>
+
+          <!-- DATOS PRINCIPALES -->
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <p class="text-sm text-gray-600">CURP</p>
+              <p class="text-lg font-semibold"><%= trabajador.curp || 'N/A' %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">RFC</p>
+              <p class="text-lg font-semibold"><%= trabajador.rfc || 'N/A' %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Correo Electrónico</p>
+              <p class="text-lg font-semibold"><%= trabajador.correoElectronico || 'N/A' %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Puesto Actual</p>
+              <p class="text-lg font-semibold"><%= trabajador.cargoActual || 'N/A' %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Adscripción</p>
+              <p class="text-lg font-semibold"><%= trabajador.adscripcionActual || 'N/A' %></p>
+            </div>
+            <div>
+              <p class="text-sm text-gray-600">Fecha de Ingreso</p>
+              <p class="text-lg font-semibold"><%= trabajador.fechaIngreso ? new Date(trabajador.fechaIngreso).toLocaleDateString('es-MX') : 'N/A' %></p>
+            </div>
+          </div>
+        </div>
+
+        <!-- BOTONES DE ACCIONES -->
+        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
+          <h3 class="text-xl font-bold text-verdegris mb-4">Acciones</h3>
+          <div class="flex flex-col md:flex-row gap-4">
+            <button onclick="generarAcuse()" class="flex-1 bg-verdegris hover:bg-[#0b6451] text-white font-semibold py-3 rounded-md transition">
+              📄 Generar Acuse
+            </button>
+            <a href="#documentos" class="flex-1 text-center bg-yellow-500 hover:bg-yellow-600 text-white font-semibold py-3 rounded-md transition">
+              📎 Ver Documentos
+            </a>
+          </div>
+        </div>
+
+        <!-- INFORMACIÓN ADICIONAL -->
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+
+          <!-- HIJOS -->
+          <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-verdegris mb-4">Hijos</h3>
+            <% if (hijos && hijos.length > 0) { %>
+              <ul class="space-y-2">
+                <% hijos.forEach(hijo => { %>
+                  <li class="text-sm border-b pb-2">
+                    <strong><%= hijo.inicialesHijo %>.</strong> - <%= hijo.sexoHijo %>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } else { %>
+              <p class="text-gray-500 text-sm">Sin información</p>
+            <% } %>
+          </div>
+
+          <!-- ESCOLARIDAD -->
+          <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-verdegris mb-4">Escolaridad</h3>
+            <% if (escolaridad && escolaridad.length > 0) { %>
+              <ul class="space-y-3">
+                <% escolaridad.forEach(esc => { %>
+                  <li class="text-sm border-b pb-2">
+                    <div class="font-semibold text-verdegris"><%= esc.nivelAcademico || 'N/A' %></div>
+                    <div class="text-gray-700"><%= esc.nombreTitulo || 'Sin Título' %></div>
+                    <% if (esc.institucion) { %>
+                      <div class="text-gray-600 text-xs"><%= esc.institucion %></div>
+                    <% } %>
+                    <% if (esc.fechaObtencion) { %>
+                      <div class="text-gray-500 text-xs"><%= new Date(esc.fechaObtencion).toLocaleDateString('es-MX') %></div>
+                    <% } %>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } else { %>
+              <p class="text-gray-500 text-sm">Sin información</p>
+            <% } %>
+          </div>
+
+          <!-- EXPERIENCIA EN PJ -->
+          <div class="bg-white rounded-lg shadow-lg p-6">
+            <h3 class="text-lg font-bold text-verdegris mb-4">Experiencia PJ</h3>
+            <% if (experienciaPJ && experienciaPJ.length > 0) { %>
+              <ul class="space-y-2">
+                <% experienciaPJ.forEach(exp => { %>
+                  <li class="text-sm border-b pb-2">
+                    <strong><%= exp.cargo || 'N/A' %></strong>
+                    <br/>
+                    <span class="text-gray-600"><%= exp.adscripcion || 'N/A' %></span>
+                  </li>
+                <% }); %>
+              </ul>
+            <% } else { %>
+              <p class="text-gray-500 text-sm">Sin información</p>
+            <% } %>
+          </div>
+
+        </div>
+
+      </div>
+
+    <% } else { %>
+      <div class="max-w-4xl mx-auto text-center py-16">
+        <p class="text-2xl text-gray-500">Trabajador no encontrado</p>
+        <a href="/admin/dashboard" class="mt-4 inline-block bg-verdegris hover:bg-[#0b6451] text-white font-semibold px-6 py-3 rounded">
+          Volver a dashboard
+        </a>
+      </div>
+    <% } %>
+
+  </main>
+
+</body>
+</html>
