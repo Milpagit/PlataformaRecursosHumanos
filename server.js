@@ -87,8 +87,11 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
         return res.redirect("/login");
       }
 
-      // El trabajador solo puede ver su propio acuse
-      if (usuarioSesion.noTrabajador !== noTrabajador) {
+      // El trabajador solo puede ver su propio acuse (normalizamos a string para evitar problemas de tipo)
+      const noTrabajadorSesion = String(usuarioSesion.noTrabajador);
+      const noTrabajadorParam = String(noTrabajador);
+
+      if (noTrabajadorSesion !== noTrabajadorParam) {
         return res.status(403).send("No tienes permiso para ver este acuse.");
       }
     }
@@ -3789,7 +3792,7 @@ app.post("/recuperar-password", async (req, res) => {
   const { correoe, curp, action } = req.body;
 
   try {
-    // Recuperar por correo
+    // Recuperar CLAVE por CORREO directamente desde trabajador
     if (action === "recuperar-clave") {
       if (!correoe) {
         return res.render("recuperar-password", {
@@ -3798,45 +3801,43 @@ app.post("/recuperar-password", async (req, res) => {
         });
       }
 
-      const result = await textdb.query(
-        "EXEC sp_RecuperarClavePorCorreo @Correo",
-        {
-          Correo: { type: sql.VarChar(200), value: correoe.trim() },
-        },
+      const correoTrim = correoe.trim();
+
+      const [rows] = await db.query(
+        "SELECT TOP 1 password, correoElectronico FROM trabajador WHERE LTRIM(RTRIM(correoElectronico)) = ?",
+        [correoTrim],
       );
 
-      const row = result[0]; // db.query devuelve recordset directamente
-
-      if (!row || row.Estado === "NO_ENCONTRADO") {
+      if (!rows || rows.length === 0) {
         return res.render("recuperar-password", {
           error: "No se encontró trabajador con ese correo",
           mensaje: null,
         });
       }
-      if (row.Estado === "SIN_CORREO") {
+
+      const trabajador = rows[0];
+
+      if (!trabajador.correoElectronico) {
         return res.render("recuperar-password", {
           error: "El trabajador existe pero no tiene correo registrado",
           mensaje: null,
         });
       }
 
-      if (row.Estado === "OK") {
-        await transporter.sendMail({
-          from: '"Soporte Recursos Humanos" <desarrollo.sistemas@pjhidalgo.gob.mx>',
-          to: correoe.trim(),
-          subject: "Recuperación de clave",
-          html: `<p>Su clave de acceso al módulo de actualización de datos personales de los Trabajadores del Poder Judicial de Hidalgo es: <b>${row.Clave}</b></p>`,
-        });
+      await transporter.sendMail({
+        from: '"Soporte Recursos Humanos" <desarrollo.sistemas@pjhidalgo.gob.mx>',
+        to: correoTrim,
+        subject: "Recuperación de clave",
+        html: `<p>Su clave de acceso al módulo de actualización de datos personales de los Trabajadores del Poder Judicial de Hidalgo es: <b>${trabajador.password}</b></p>`,
+      });
 
-        return res.render("recuperar-password", {
-          error: null,
-          mensaje: `La clave fue enviada al correo ${correoe.trim()}`,
-        });
-        //return res.send(`<script>alert('La clave fue enviada al correo: ${correoe.trim()}.');</script>`);
-      }
+      return res.render("recuperar-password", {
+        error: null,
+        mensaje: `La clave fue enviada al correo ${correoTrim}`,
+      });
     }
 
-    // Recuperar por CURP
+    // Recuperar CORREO por CURP directamente desde trabajador
     else if (action === "recuperar-correo") {
       if (!curp) {
         return res.render("recuperar-password", {
@@ -3845,34 +3846,33 @@ app.post("/recuperar-password", async (req, res) => {
         });
       }
 
-      const result = await textdb.query(
-        "EXEC sp_RecuperarCorreoPorCurp @Curp",
-        {
-          Curp: { type: sql.VarChar(18), value: curp.trim() },
-        },
+      const curpTrim = curp.trim().toUpperCase();
+
+      const [rows] = await db.query(
+        "SELECT TOP 1 correoElectronico FROM trabajador WHERE LTRIM(RTRIM(curp)) = ?",
+        [curpTrim],
       );
 
-      const row = result[0];
-
-      if (!row || row.Estado === "NO_ENCONTRADO") {
+      if (!rows || rows.length === 0) {
         return res.render("recuperar-password", {
           error: "No se encontró usuario con esa CURP",
           mensaje: null,
         });
       }
-      if (row.Estado === "SIN_CORREO") {
+
+      const trabajador = rows[0];
+
+      if (!trabajador.correoElectronico) {
         return res.render("recuperar-password", {
           error: "El trabajador existe pero no tiene correo registrado",
           mensaje: null,
         });
       }
 
-      if (row.Estado === "OK") {
-        return res.render("recuperar-password", {
-          error: null,
-          mensaje: `El correo registrado para la CURP ${curp.trim()} es ${row.Correo}`,
-        });
-      }
+      return res.render("recuperar-password", {
+        error: null,
+        mensaje: `El correo registrado para la CURP ${curpTrim} es ${trabajador.correoElectronico}`,
+      });
     }
 
     // Acción desconocida
