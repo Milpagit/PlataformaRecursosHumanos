@@ -1,5 +1,4 @@
 document.addEventListener("DOMContentLoaded", function () {
-  console.log("El DOM se ha cargado");
   const sexocombo = document.getElementById("sexo-opciones");
   const sexoconyugecombo = document.getElementById("sexoConyuge-opciones");
   const civilcombo = document.getElementById("civil-opciones");
@@ -32,15 +31,12 @@ document.addEventListener("DOMContentLoaded", function () {
       preguntaEmbarazo.classList.remove("hidden");
       // Requiere al menos uno seleccionado
       radiosEmbarazo.forEach((radio) => (radio.required = true));
-      console.log("se ha agregado el required");
     } else {
       preguntaEmbarazo.classList.add("hidden");
       radiosEmbarazo.forEach((radio) => (radio.required = false));
 
       // Opcional: deseleccionar
       // radiosEmbarazo.forEach(radio => radio.checked = false);
-
-      console.log("required removido");
     }
   }
 
@@ -48,8 +44,6 @@ document.addEventListener("DOMContentLoaded", function () {
     const estadoCivil = document.getElementById("civil-opciones").value;
     const datosConyuge = document.getElementById("datosConyuge");
     const camposConyuge = document.getElementsByClassName("conyuge");
-
-    console.log(estadoCivil);
 
     if (estadoCivil === "Casado/a" || estadoCivil === "Unionlibre") {
       datosConyuge.classList.remove("hidden");

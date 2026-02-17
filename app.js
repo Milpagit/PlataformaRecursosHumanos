@@ -15,25 +15,38 @@ app.set("views", path.join(__dirname, "views"));
 // Funciones globales disponibles en todas las vistas EJS
 app.locals.formatearFecha = function (fecha) {
   if (!fecha) return "N/A";
-  
+
   // Si es un string tipo "2024-10-17", formatearlo
   if (typeof fecha === "string" && fecha.includes("-")) {
     const partes = fecha.split("-");
     if (partes[0].length === 4) {
       // Formato YYYY-MM-DD
       const [anio, mes, dia] = partes;
-      const meses = ["", "Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", 
-                     "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
+      const meses = [
+        "",
+        "Enero",
+        "Febrero",
+        "Marzo",
+        "Abril",
+        "Mayo",
+        "Junio",
+        "Julio",
+        "Agosto",
+        "Septiembre",
+        "Octubre",
+        "Noviembre",
+        "Diciembre",
+      ];
       return `${dia} de ${meses[parseInt(mes)]} de ${anio}`;
     }
   }
-  
+
   // Si es un objeto Date
   if (fecha instanceof Date) {
     const opciones = { day: "2-digit", month: "long", year: "numeric" };
     return fecha.toLocaleDateString("es-MX", opciones);
   }
-  
+
   // Intentar crear un Date si es string de otro formato
   try {
     const d = new Date(fecha);
@@ -44,7 +57,7 @@ app.locals.formatearFecha = function (fecha) {
   } catch (e) {
     // Ignorar error
   }
-  
+
   return String(fecha); // Devolver como string al final
 };
 
@@ -203,7 +216,7 @@ app.get("/recuperar-password", (req, res) =>
   res.render("recuperar-password", { error: null, mensaje: null }),
 );
 
-// Iniciar servidor
+// Iniciar servidor (solo para entorno de pruebas; en producción se usa server.js)
 const PORT = 3000;
 app.listen(PORT, () => {
   console.log(`Servidor corriendo en http://localhost:${PORT}`);

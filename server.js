@@ -461,7 +461,7 @@ app.post(
     let actualEstado = req.body.actual_estado || estado;
     let actualCP = req.body.actual_codigopostal || codigopostal;
 
-    console.log("Papa: " + papa + " y " + sexo);
+    // console.log("Papa: " + papa + " y " + sexo); // Log de apoyo para validar bandera de padre/madre
     let cronicaTexto = req.body.cronicaTexto;
     let nombreConyuge = req.body.nombreConyuge;
     let fechaConyuge = req.body.fechaConyuge;
@@ -578,10 +578,10 @@ app.post(
       const fechaFormateada = convertirFecha(fechaConyuge);
       const fechaIngresoFormateada = convertirFecha(fechaIngreso);
       const fechaNacimientoFormateada = convertirFecha(fechaNacimiento);
-      console.log("nacimiento Conyuge" + fechaFormateada);
-      console.log("nacimiento Conyuge" + fechaFormateada);
-      console.log("Fecha de ingreso" + fechaIngresoFormateada);
-      console.log("Fecha de nacimiento" + fechaNacimientoFormateada);
+      // Logs de depuración de fechas (mantener comentados para pruebas puntuales)
+      // console.log("nacimiento Conyuge" + fechaFormateada);
+      // console.log("Fecha de ingreso" + fechaIngresoFormateada);
+      // console.log("Fecha de nacimiento" + fechaNacimientoFormateada);
 
       const [result] = await db.query(query, [
         fechaIngresoFormateada,
@@ -627,13 +627,10 @@ app.post(
         carreraTecnicaComercial,
         idTrabajador,
       ]);
-      console.log("✅ Actualización exitosa:", result);
+      // console.log("✅ Actualización exitosa:", result); // Log de seguimiento general de actualización
 
       const deleteQuery = "DELETE FROM hijo WHERE idTrabajador = ?";
       await db.query(deleteQuery, [idTrabajador]);
-      console.log(
-        `🗑️ Hijos anteriores eliminados para trabajador ${idTrabajador}`,
-      );
 
       // ... después de borrar los hijos anteriores ...
 
@@ -666,7 +663,7 @@ app.post(
               edad, // <--- Aquí enviamos la edad calculada
               idTrabajador,
             ]);
-            console.log(`✅ Hijo ${i + 1} guardado con edad: ${edad}`);
+            // console.log(`✅ Hijo ${i + 1} guardado con edad: ${edad}`); // Útil solo en pruebas de registro de hijos
           }
         }
       }
@@ -680,7 +677,7 @@ app.post(
       // NOTA: El INSERT de escolaridad se realiza después con el array escolaridades
       // para evitar duplicados. Ver línea ~900 donde se procesa el array completo.
 
-      console.log(`Escolaridad eliminada para trabajador ${idTrabajador}`);
+      // console.log(`Escolaridad eliminada para trabajador ${idTrabajador}`); // Log informativo, mantener comentado
 
       const escolaridades = [
         // BACHILLERATO
@@ -828,7 +825,7 @@ app.post(
 
       // Recorremos cada escolaridad y guardamos solo si tienen algún dato real
       for (let escolaridad of escolaridades) {
-        console.log(escolaridad.fecha);
+        // console.log(escolaridad.fecha); // Depuración de fechas de escolaridad
         const hayDatos =
           escolaridad.titulo || escolaridad.fecha || escolaridad.institucion;
 
@@ -852,7 +849,7 @@ app.post(
             idTrabajador,
           ]);
 
-          console.log(`✅ Escolaridad ${escolaridad.nivel} guardada`);
+          // console.log(`✅ Escolaridad ${escolaridad.nivel} guardada`); // Log de seguimiento por registro
         }
       }
 
@@ -966,7 +963,7 @@ app.post(
               idTrabajador,
             ],
           );
-          console.log(`✅ Experiencia insertada: ${exp.puesto}`);
+          // console.log(`✅ Experiencia insertada: ${exp.puesto}`); // Solo necesario en pruebas de carga de experiencia
         }
       }
 
@@ -981,41 +978,32 @@ app.post(
 );
 
 app.post("/login", async (req, res) => {
-  console.log("🚀 Entró al POST /login");
-
   const curp = req.body.curp?.toUpperCase();
   const rfc = req.body.rfc?.toUpperCase();
   const password = req.body.password;
 
   try {
-    console.log("🔍 Antes del query");
-
     const [results] = await db.query(
       "SELECT * FROM trabajador WHERE curp = ? AND rfc = ?",
       [curp, rfc],
     );
 
-    console.log("✅ Después del query");
-    console.log("Resultado de la consulta:", results);
-
     if (results.length === 0) {
-      return res.send(`
-              <script>
-                alert('CURP o RFC no encontrado. Verifica los datos.');
-                window.location.href = '/login';
-              </script>
-            `);
+      return res.status(401).render("login", {
+        error: "CURP o RFC no encontrado. Verifica los datos.",
+        curp,
+        rfc,
+      });
     }
 
     const usuario = results[0];
 
     if (usuario.password !== password) {
-      return res.send(`
-                <script>
-                    alert('Contraseña incorrecta. Intenta nuevamente.');
-                    window.location.href = '/login';
-                </script>
-            `);
+      return res.status(401).render("login", {
+        error: "Contraseña incorrecta. Intenta nuevamente.",
+        curp,
+        rfc,
+      });
     }
 
     // 🔹 Destruir sesión previa antes de asignar nueva
@@ -1033,7 +1021,12 @@ app.post("/login", async (req, res) => {
     });
   } catch (err) {
     console.error("❌ Error en el query:", err);
-    return res.send("Error consultando la base");
+    return res.status(500).render("login", {
+      error:
+        "Ocurrió un error al consultar la base de datos. Intenta nuevamente más tarde.",
+      curp,
+      rfc,
+    });
   }
 });
 
@@ -1069,16 +1062,12 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       [idTrabajador],
     );
 
-    console.log(experiencias);
-
     const [experiencias] = await db.query(
       "SELECT * FROM experienciapj WHERE idTrabajador = ?",
       [idTrabajador],
     );
 
-    console.log("Resultados:", experiencias);
-    console.log("Total:", experiencias.length);
-    console.log("ID del trabajador recibido:", idTrabajador);
+    // console.log("Experiencias obtenidas:", experiencias.length); // Log opcional para validar conteo
 
     const workbook = new ExcelJS.Workbook();
     await workbook.xlsx.readFile(rutaPlantilla);
@@ -1263,10 +1252,8 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       (e) => e.nivelAcademico.toUpperCase() === "LICENCIATURA",
     );
     let licCount = licenciaturas.length;
-    console.log("lenght lic:", licCount);
+    // console.log("length lic:", licCount); // Depuración conteo de licenciaturas
     let acarreo = licCount;
-
-    console.log("acarreo lic: ", acarreo);
     let licDesplazar = 15 + acarreo;
 
     // 1) Si no hay ninguna, borramos la fila base
@@ -1277,8 +1264,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
         worksheet.unMergeCells(mergeRange);
       } catch (err) {}
       worksheet.mergeCells(mergeRange);
-
-      console.log("licdesplazar: ", licDesplazar);
       worksheet.getCell(`B${licDesplazar}`).value = "Sin licenciatura";
       worksheet.getCell(`B${licDesplazar}`).alignment = {
         horizontal: "center",
@@ -1292,8 +1277,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       }
       if (licCount > 1) {
         acarreo = acarreo - 1;
-
-        console.log("acarrero primero lic: ", acarreo);
         // (filaBase, númeroDeDuplicados, insert => true para desplazar filas hacia abajo)
         worksheet.duplicateRow(LIC_START_ROW, licCount - 1, true);
       }
@@ -1336,8 +1319,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     let maeCount = maestrias.length;
 
     if (maeCount === 0) {
-      console.log("MAE ", MAE_START_ROW);
-
       const mergeRange = `B${MAE_START_ROW}:G${MAE_START_ROW}`;
 
       try {
@@ -1361,8 +1342,6 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       }
 
       const start = MAE_START_ROW;
-
-      console.log(start, " starto ", licDesplazar);
       const end = MAE_START_ROW + maeCount - 1;
 
       // Encabezado en A (si lo necesitas)
@@ -1391,7 +1370,7 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     }
     ///////////////////////////////////////////////
 
-    console.log("acarreo mae: ", acarreo);
+    // console.log("acarreo mae: ", acarreo); // Depuración de desplazamiento de filas
 
     let DOC_START_ROW = 17 + acarreo; // ← ajusta esta fila al inicio de tu sección "Maestría"
     const doctorados = escolaridades.filter(
@@ -1399,9 +1378,7 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     );
     let docCount = doctorados.length;
     if (docCount === 0) {
-      console.log("DOC ", DOC_START_ROW);
       const mergeRange = `B${DOC_START_ROW}:G${DOC_START_ROW}`;
-      console.log("mergeRange: ", mergeRange);
 
       try {
         worksheet.unMergeCells(mergeRange);
@@ -1416,14 +1393,12 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       worksheet.getRow(DOC_START_ROW).hidden = true;
       ///worksheet.getRow(MAE_START_ROW+1).hidden = true;
     } else {
-      if (docCount > 1) {
-        acarreo = acarreo + docCount - 1;
-        worksheet.duplicateRow(DOC_START_ROW, docCount - 1, true);
+      if (maeCount > 1) {
+        acarreo = acarreo + maeCount - 1;
+        worksheet2.duplicateRow(MAE_START_ROW, maeCount - 1, true);
       }
 
-      const start = DOC_START_ROW;
-
-      const end = DOC_START_ROW + docCount - 1;
+      const start = MAE_START_ROW;
 
       // Encabezado en A (si lo necesitas)
 
@@ -1449,17 +1424,14 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
         }
       }
     }
-    console.log("acarreo doc: ", acarreo);
+    // console.log("acarreo doc: ", acarreo);
     let ESP_START_ROW = 18 + acarreo; // ← ajusta esta fila al inicio de tu sección "Maestría"
     const especialidades = escolaridades.filter(
       (e) => e.nivelAcademico.toUpperCase() === "ESPECIALIDAD",
     );
     let espCount = especialidades.length;
     if (espCount === 0) {
-      console.log("ESP ", ESP_START_ROW);
-
       const mergeRange = `B${ESP_START_ROW}:G${ESP_START_ROW}`;
-      console.log("mergeRange: ", mergeRange);
 
       try {
         worksheet.unMergeCells(mergeRange);
@@ -1803,16 +1775,12 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     }
 
     ///////////////////////////////////////////////
-
-    console.log("acarreo mae: ", acarreo);
+    // console.log("acarreo mae: ", acarreo);
 
     DOC_START_ROW = 17 + acarreo; // ← ajusta esta fila al inicio de tu sección "Maestría"
 
     if (docCount === 0) {
-      console.log("DOC ", DOC_START_ROW);
-
       const mergeRange = `B${DOC_START_ROW}:G${DOC_START_ROW}`;
-      console.log("mergeRange: ", mergeRange);
 
       try {
         worksheet2.unMergeCells(mergeRange);
@@ -1857,8 +1825,7 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
         }
       }
     }
-
-    console.log("acarreo doc: ", acarreo);
+    // console.log("acarreo doc: ", acarreo);
 
     ESP_START_ROW = 18 + acarreo; // ← ajusta esta fila al inicio de tu sección "Maestría"
 
@@ -3281,17 +3248,31 @@ app.post("/admin/crear-usuario", verificarAdmin, async (req, res) => {
     }
 
     // Perfil de trabajador: validar datos básicos
-    if (!nombre || !rfc || !curp || !claveTrabjador) {
+    const RFC_MAX = 13;
+
+    const nombreLimpio = (nombre || "").trim().toUpperCase();
+    const rfcLimpio = (rfc || "").trim().toUpperCase();
+    const curpLimpio = (curp || "").trim().toUpperCase();
+    const claveLimpia = (claveTrabjador || "").toString().trim();
+
+    if (!nombreLimpio || !rfcLimpio || !curpLimpio || !claveLimpia) {
       return res.status(400).json({
         success: false,
         error: "Todos los campos son obligatorios",
       });
     }
 
+    if (rfcLimpio.length > RFC_MAX) {
+      return res.status(400).json({
+        success: false,
+        error: `El RFC no puede tener más de ${RFC_MAX} caracteres`,
+      });
+    }
+
     // Verificar que CURP y RFC no existan para el trabajador
     const [existe] = await db.query(
       "SELECT * FROM trabajador WHERE curp = ? OR rfc = ?",
-      [curp.toUpperCase(), rfc.toUpperCase()],
+      [curpLimpio, rfcLimpio],
     );
 
     if (existe && existe.length > 0) {
@@ -3303,12 +3284,12 @@ app.post("/admin/crear-usuario", verificarAdmin, async (req, res) => {
 
     await db.query(
       "INSERT INTO trabajador (nombreTrabajador, rfc, curp, noTrabajador) VALUES (?, ?, ?, ?)",
-      [nombre, rfc.toUpperCase(), curp.toUpperCase(), claveTrabjador],
+      [nombreLimpio, rfcLimpio, curpLimpio, claveLimpia],
     );
 
     return res.json({
       success: true,
-      mensaje: `Trabajador ${nombre} creado exitosamente`,
+      mensaje: `Trabajador ${nombreLimpio} creado exitosamente`,
     });
   } catch (error) {
     console.error("Error al crear trabajador:", error);
