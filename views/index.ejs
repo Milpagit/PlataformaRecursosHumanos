@@ -80,6 +80,34 @@
       <h2 class="text-center text-2xl font-bold text-verdegris uppercase">
         Cédula de datos personales, académicos y profesionales
       </h2>
+      <% 
+        function formatearFechaInput(valor) {
+          if (!valor) return '';
+
+          // Caso string tipo YYYY-MM-DD o ISO
+          if (typeof valor === 'string') {
+            const fechaLimpia = valor.split('T')[0].split(' ')[0];
+            const partes = fechaLimpia.split('-');
+
+            if (partes.length === 3 && partes[0].length === 4) {
+              return `${partes[2]}-${partes[1]}-${partes[0]}`;
+            }
+
+            return valor;
+          }
+
+          // Caso Date u objeto fecha válido
+          const d = new Date(valor);
+          if (!Number.isNaN(d.getTime())) {
+            const dia = String(d.getDate()).padStart(2, '0');
+            const mes = String(d.getMonth() + 1).padStart(2, '0');
+            const anio = d.getFullYear();
+            return `${dia}-${mes}-${anio}`;
+          }
+
+          return '';
+        }
+      %>
       <!-- <p class="text-center text-sm text-grisTexto mb-4">
       Si alguno de los primeros 4 datos no es correcto, acude a Recursos Humanos.
     </p> -->
@@ -155,7 +183,7 @@
           name="fechaIngreso"
           data-format="dd-mm-yyyy"
           placeholder="dd-mm-yyyy"
-          value="<%= user.fechaIngreso ? user.fechaIngreso.split('-').reverse().join('-') : '' %>"
+          value="<%= formatearFechaInput(user.fechaIngreso) %>"
           required
           />
       </div>
@@ -486,7 +514,7 @@
           name="fechaNacimiento"
           data-format="dd-mm-yyyy"
           placeholder="dd-mm-yyyy"
-          value="<%= user.fechaNacimiento ? user.fechaNacimiento.split('-').reverse().join('-') : '' %>"
+          value="<%= formatearFechaInput(user.fechaNacimiento) %>"
           required
         />
       </div>
@@ -812,6 +840,31 @@
         </div>
 
         <div class="mb-4">
+          <% 
+            const principalCalle = (user.calleNumero || '').trim().toUpperCase();
+            const principalColonia = (user.colonia || '').trim().toUpperCase();
+            const principalMunicipio = (user.municipio || '').trim().toUpperCase();
+            const principalEstado = (user.estado || '').trim().toUpperCase();
+            const principalCp = (user.codigoPostal || '').toString().trim();
+
+            const actualCalle = (user.actualCalleNumero || '').trim().toUpperCase();
+            const actualColonia = (user.actualColonia || '').trim().toUpperCase();
+            const actualMunicipio = (user.actualMunicipio || '').trim().toUpperCase();
+            const actualEstado = (user.actualEstado || '').trim().toUpperCase();
+            const actualCp = (user.actualCP || '').toString().trim();
+
+            const tieneDomicilioActual = !!(actualCalle || actualColonia || actualMunicipio || actualEstado || actualCp);
+            const coincideDomicilio =
+              tieneDomicilioActual &&
+              actualCalle === principalCalle &&
+              actualColonia === principalColonia &&
+              actualMunicipio === principalMunicipio &&
+              actualEstado === principalEstado &&
+              actualCp === principalCp;
+
+            const mostrarDomicilioActual = tieneDomicilioActual && !coincideDomicilio;
+          %>
+
           <label class="block mb-1 font-bold text-blue-500"
             >¿El domicilio de la credencial para votar (INE) coincide con tu
             domicilio actual?</label
@@ -824,6 +877,7 @@
                 value="1"
                 class="mr-2"
                 required
+                <%= mostrarDomicilioActual ? '' : 'checked' %>
               />
               Sí</label
             >
@@ -833,6 +887,7 @@
                 name="coincideDomicilio"
                 value="0"
                 class="mr-2"
+                <%= mostrarDomicilioActual ? 'checked' : '' %>
               />
               No</label
             >
@@ -841,7 +896,7 @@
 
         <div
           id="domicilioActualContainer"
-          class="hidden border border-gray-300 p-4 rounded-md mt-4"
+          class="<%= mostrarDomicilioActual ? '' : 'hidden' %> border border-gray-300 p-4 rounded-md mt-4"
         >
           <label class="block text-xl font-bold text-gray-700 mb-2"
             >Domicilio actual</label
@@ -852,6 +907,7 @@
             type="text"
             name="actual_callenumero"
             class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
+            value="<%= user.actualCalleNumero || '' %>"
           />
 
           <label class="block mb-1 text-gray-700">Colonia</label>
@@ -859,6 +915,7 @@
             type="text"
             name="actual_colonia"
             class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
+            value="<%= user.actualColonia || '' %>"
           />
 
           <label class="block mb-1 text-gray-700">Municipio</label>
@@ -866,6 +923,7 @@
             type="text"
             name="actual_municipio"
             class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
+            value="<%= user.actualMunicipio || '' %>"
           />
 
           <label class="block mb-1 text-gray-700">Estado</label>
@@ -873,13 +931,15 @@
             type="text"
             name="actual_estado"
             class="acentos border border-gray-300 w-full p-3 rounded-md bg-gray-50 uppercase"
+            value="<%= user.actualEstado || '' %>"
           />
 
           <label class="block mb-1 text-gray-700">Código Postal</label>
           <input
-            type="number"
+            type="text"
             name="actual_codigopostal"
             class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
+            value="<%= user.actualCP || '' %>"
           />
         </div>
 
@@ -1441,6 +1501,8 @@
         <div id="preguntahijos" class="hidden">
           <label class="block my-3 font-bold text-gray-700"
             >¿Cuántos hijos tienes?</label
+        ><label class="block mb-1 text-gray-700 text-sm italic"
+          >Por favor, complete los datos de todos los integrantes antes de continuar.</label
           >
           <input
             class="border border-gray-300 p-3 rounded-md bg-gray-50 w-32"
@@ -1608,6 +1670,7 @@
           <p class="text-gray-800 mb-1">
             ¿Has concluido la educación primaria?
           </p>
+          <% const primariaConcluida = typeof tienePrimaria !== 'undefined' ? !!tienePrimaria : false; %>
           <div class="flex gap-4 mb-4">
             <label
               ><input
@@ -1617,11 +1680,18 @@
                 class="mr-2"
                 id="radio-primaria"
                 required
+                <%= primariaConcluida ? 'checked' : '' %>
               />
               Sí</label
             >
             <label
-              ><input type="radio" name="primaria" value="No" class="mr-2" />
+              ><input
+                type="radio"
+                name="primaria"
+                value="No"
+                class="mr-2"
+                <%= !primariaConcluida && typeof tienePrimaria !== 'undefined' ? 'checked' : '' %>
+              />
               No</label
             >
           </div>
@@ -1631,6 +1701,7 @@
           <p class="text-gray-800 mb-1">
             ¿Has concluido la educación secundaria?
           </p>
+          <% const secundariaConcluida = typeof tieneSecundaria !== 'undefined' ? !!tieneSecundaria : false; %>
           <div class="flex gap-4 mb-4">
             <label
               ><input
@@ -1640,6 +1711,7 @@
                 class="mr-2"
                 id="radio-secundaria"
                 required
+                <%= secundariaConcluida ? 'checked' : '' %>
               />
               Sí</label
             >
@@ -1649,6 +1721,7 @@
                 name="secundaria_institucion"
                 value="No"
                 class="mr-2"
+                <%= !secundariaConcluida && typeof tieneSecundaria !== 'undefined' ? 'checked' : '' %>
               />
               No</label
             >
@@ -2414,6 +2487,23 @@
               >(empezando por el cargo actual)</span
             ></label
           >
+          <!-- Controles de experiencia: siempre visibles arriba -->
+          <div class="flex flex-wrap gap-2 justify-end mb-4">
+            <button
+              type="button"
+              onclick="agregarExperiencia()"
+              class="bg-blue-500 hover:bg-blue-600 text-white px-4 py-2 rounded-md text-sm font-semibold"
+            >
+              Agregar experiencia
+            </button>
+            <button
+              type="button"
+              onclick="quitarExperiencia()"
+              class="bg-red-500 hover:bg-red-600 text-white px-4 py-2 rounded-md text-sm font-semibold"
+            >
+              Quitar experiencia
+            </button>
+          </div>
           <div id="espacioExperiencia">
             <% if (locals.experienciaPJ && experienciaPJ.length > 0) { %>
               <% experienciaPJ.forEach((exp, i) => { 
@@ -2473,20 +2563,6 @@
             <% } %>
           </div>
           <input type="hidden" id="contadorExperienciaBD" value="<%= (locals.experienciaPJ || []).length %>">
-          <button
-            type="button"
-            onclick="agregarExperiencia()"
-            class="mt-2 bg-blue-500 text-white px-4 py-2 rounded-md"
-          >
-            Agregar experiencia
-          </button>
-          <button
-            type="button"
-            onclick="quitarExperiencia()"
-            class="mt-2 bg-red-500 text-white px-4 py-2 rounded-md"
-          >
-            Quitar experiencia
-          </button>
         </div>
 
         <input
@@ -2509,7 +2585,7 @@
           >
           <% if (locals.existeRfc) { %>
             <div class="mb-2 text-green-600 font-bold text-sm">
-              ✅ Documento cargado <a href="/uploads/<%= user.nombreTrabajador %>_RFC.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+              Documento cargado <a href="/uploads/<%= user.nombreTrabajador %>_RFC.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
             </div>
           <% } %>
           <input

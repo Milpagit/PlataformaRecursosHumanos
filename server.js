@@ -1,4 +1,5 @@
-﻿﻿const express = require("express");
+﻿﻿require("dotenv").config();
+const express = require("express");
 const bodyParser = require("body-parser"); // Leer y entender los datos del formulario
 const db = require("./config/db"); // Ahora es el pool
 const textdb = require("./config/db"); // Ahora es el pool
@@ -67,7 +68,7 @@ app.set("view engine", "ejs");
 
 app.use(
   session({
-    secret: "Vr#Rno@jyc%j5Kckh978SM", // Llave unica de la sesión
+    secret: process.env.SESSION_SECRET || "change_this_secret", // Llave unica de la sesión
     resave: false,
     saveUninitialized: false,
   }),
@@ -166,7 +167,21 @@ app.get("/index", async (req, res) => {
     return res.redirect("/login");
   }
 
-  const nombreTrabajador = req.session.user.nombreTrabajador;
+  // Refresca datos del trabajador desde BD para evitar usar una sesión desactualizada.
+  const [trabajadorActualRows] = await db.query(
+    "SELECT * FROM trabajador WHERE idTrabajador = ?",
+    [req.session.user.idTrabajador],
+  );
+
+  if (!trabajadorActualRows || trabajadorActualRows.length === 0) {
+    req.session.destroy(() => {});
+    return res.redirect("/login");
+  }
+
+  const trabajadorActual = trabajadorActualRows[0];
+  req.session.user = trabajadorActual;
+
+  const nombreTrabajador = trabajadorActual.nombreTrabajador;
   const uploadDir = path.join(__dirname, "uploads");
 
   // Función helper para verificar si existe el PDF
@@ -176,18 +191,18 @@ app.get("/index", async (req, res) => {
   // Consultar experiencia laboral existente
   const [experienciaPJ] = await db.query(
     "SELECT * FROM experienciapj WHERE idTrabajador = ?",
-    [req.session.user.idTrabajador],
+    [trabajadorActual.idTrabajador],
   );
 
   // Consultar hijos existentes
   const [hijos] = await db.query("SELECT * FROM hijo WHERE idTrabajador = ?", [
-    req.session.user.idTrabajador,
+    trabajadorActual.idTrabajador,
   ]);
 
   // Consultar escolaridad (primaria, secundaria, técnica, bachillerato)
   const [escolaridad] = await db.query(
     "SELECT * FROM escolaridad WHERE idTrabajador = ?",
-    [req.session.user.idTrabajador],
+    [trabajadorActual.idTrabajador],
   );
 
   // Filtrar por nivel académico
@@ -203,19 +218,31 @@ app.get("/index", async (req, res) => {
         e.nivelAcademico && e.nivelAcademico.toUpperCase() === "BACHILLERATO",
     )[0] || null;
 
+  // Detectar si ya tiene registrada primaria y secundaria en la base de datos
+  const tienePrimaria = escolaridad.some(
+    (e) =>
+      e.nivelAcademico && e.nivelAcademico.toUpperCase().includes("PRIMARIA"),
+  );
+
+  const tieneSecundaria = escolaridad.some(
+    (e) =>
+      e.nivelAcademico && e.nivelAcademico.toUpperCase().includes("SECUNDARIA"),
+  );
+
   // Obtener datos de enfermedad crónica del usuario logueado
-  const usuarioActual = req.session.user;
   const tieneEnfermedadCronica =
-    usuarioActual.tieneEnfermedadCronica === "Si" ? "1" : "0";
-  const tipoCronica = usuarioActual.tipoCronica || "";
+    trabajadorActual.tieneEnfermedadCronica === "Si" ? "1" : "0";
+  const tipoCronica = trabajadorActual.tipoCronica || "";
 
   res.render("index", {
-    user: req.session.user,
+    user: trabajadorActual,
     experienciaPJ,
     hijos,
     escolaridad,
     tecnica,
     bachillerato,
+    tienePrimaria,
+    tieneSecundaria,
     tieneEnfermedadCronica,
     tipoCronica,
     existeIne: checkFile("INE"),
@@ -292,18 +319,21 @@ function convertirFecha(fechaDDMMYYYY) {
   return `${anio}-${mes}-${dia}`; // Formato correcto YYYY-MM-DD
 }
 
-//function formatearFecha(fecha) {
-//if (!fecha || fecha === '0000-00-00') {
-//   return 'N/A';  // O puedes poner simplemente ''
-// }
+function formatearFecha(fecha) {
+  if (!fecha || fecha === "0000-00-00") {
+    return "N/A";
+  }
 
-// // Si es un objeto Date, lo formateamos
-// const opciones = { day: '2-digit', month: 'long', year: 'numeric' };
-// const fechaFormateada = new Date(fecha).toLocaleDateString('es-MX', opciones);
+  const d = new Date(fecha);
+  if (Number.isNaN(d.getTime())) {
+    return "N/A";
+  }
 
-// // Pone la primera letra de mes en mayúscula (por si acaso)
-//  return fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
-//}
+  const opciones = { day: "2-digit", month: "long", year: "numeric" };
+  const fechaFormateada = d.toLocaleDateString("es-MX", opciones);
+
+  return fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
+}
 
 function convertirFechaTexto(fechaInput) {
   if (!fechaInput) return null;
@@ -1915,8 +1945,19 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     });
     await browser.close();
 
-    fs.unlinkSync(rutaExcel);
-    fs.unlinkSync(rutaHTML);
+    // Limpiar archivos temporales de Excel y HTML (sin fallar si no existen)
+    [rutaExcel, rutaHTML].forEach((file) => {
+      try {
+        if (fs.existsSync(file)) {
+          fs.unlinkSync(file);
+        }
+      } catch (e) {
+        console.warn(
+          `No se pudo eliminar archivo temporal ${file}:`,
+          e.message,
+        );
+      }
+    });
 
     const archiver = require("archiver");
 
@@ -1930,10 +1971,25 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
       console.log(`📦 ZIP creado con ${archive.pointer()} bytes`);
       res.download(zipRuta, (err) => {
         if (err) {
-          console.error("Error al enviar ZIP:", err);
+          if (err.code === "ECONNABORTED" || err.code === "ECONNRESET") {
+            console.warn("El cliente canceló la descarga del ZIP.");
+          } else {
+            console.error("Error al enviar ZIP:", err);
+          }
         } else {
-          fs.unlinkSync(zipRuta);
-          fs.unlinkSync(rutaCompleta);
+          // Limpiar ZIP y Excel generado para este trabajador
+          [zipRuta, rutaCompleta].forEach((file) => {
+            try {
+              if (fs.existsSync(file)) {
+                fs.unlinkSync(file);
+              }
+            } catch (e) {
+              console.warn(
+                `No se pudo eliminar archivo generado ${file}:`,
+                e.message,
+              );
+            }
+          });
           ///fs.unlinkSync(rutaCompleta25);
         }
       });
@@ -1973,7 +2029,14 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
 
     await archive.finalize();
 
-    fs.unlinkSync(rutaPDF);
+    // El PDF ya va incluido en el ZIP; puedes limpiarlo aquí
+    try {
+      if (fs.existsSync(rutaPDF)) {
+        fs.unlinkSync(rutaPDF);
+      }
+    } catch (e) {
+      console.warn(`No se pudo eliminar PDF temporal ${rutaPDF}:`, e.message);
+    }
   } catch (error) {
     console.error("Error generando el reporte:", error);
     res.status(500).send("Error interno del servidor");
@@ -1997,23 +2060,42 @@ app.get("/generar-reportes-todos", async (req, res) => {
       console.log(`📦 ZIP creado con ${archive.pointer()} bytes`);
       res.download(zipRuta, (err) => {
         if (err) {
-          console.error("Error al enviar ZIP:", err);
+          if (err.code === "ECONNABORTED" || err.code === "ECONNRESET") {
+            console.warn("El cliente canceló la descarga del ZIP general.");
+          } else {
+            console.error("Error al enviar ZIP:", err);
+          }
         } else {
           // Limpiar archivos temporales después de enviar
-          fs.unlinkSync(zipRuta);
+          try {
+            if (fs.existsSync(zipRuta)) {
+              fs.unlinkSync(zipRuta);
+            }
+          } catch (e) {
+            console.warn(
+              `No se pudo eliminar ZIP general ${zipRuta}:`,
+              e.message,
+            );
+          }
 
           // Eliminar archivos generados para cada trabajador
           todosTrabajadores.forEach((t) => {
             const base = `./reportes/${t.nombreTrabajador}_`;
-            try {
-              fs.unlinkSync(`${base}CURRICULUM-EDITABLE.xlsx`);
-              fs.unlinkSync(`${base}CURRICULUM_TRANSPARENCIA.pdf`);
-            } catch (e) {
-              console.warn(
-                `No se pudo eliminar archivo de ${t.nombreTrabajador}:`,
-                e.message,
-              );
-            }
+            [
+              `${base}CURRICULUM-EDITABLE.xlsx`,
+              `${base}CURRICULUM_TRANSPARENCIA.pdf`,
+            ].forEach((file) => {
+              try {
+                if (fs.existsSync(file)) {
+                  fs.unlinkSync(file);
+                }
+              } catch (e) {
+                console.warn(
+                  `No se pudo eliminar archivo de ${t.nombreTrabajador} (${file}):`,
+                  e.message,
+                );
+              }
+            });
           });
         }
       });
@@ -3153,6 +3235,28 @@ const verificarAdmin = (req, res, next) => {
   next();
 };
 
+function normalizarSexo(valor) {
+  const sexo = String(valor || "")
+    .trim()
+    .toUpperCase();
+
+  if (!sexo) return "";
+
+  // Casos habituales completos
+  if (sexo === "MASCULINO" || sexo === "HOMBRE" || sexo === "M") {
+    return "Hombre";
+  }
+  if (sexo === "FEMENINO" || sexo === "MUJER" || sexo === "F") {
+    return "Mujer";
+  }
+
+  // Fallback por inicial (ej. "Masculino ", "Femenino ", abreviaturas)
+  if (sexo.startsWith("M")) return "Hombre";
+  if (sexo.startsWith("F")) return "Mujer";
+
+  return "";
+}
+
 // GET - Dashboard del administrador (Unificado: crear + buscar + últimos)
 app.get("/admin/dashboard", verificarAdmin, async (req, res) => {
   let ultimosTrabajadores = [];
@@ -3407,6 +3511,157 @@ app.post("/admin/generar-acuse", verificarAdmin, async (req, res) => {
   } catch (error) {
     console.error("Error al redirigir al acuse desde admin:", error);
     return res.status(500).json({ error: "Error al generar el acuse" });
+  }
+});
+
+// GET - Generar reporte de transparencia en Excel
+app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
+  const { fechaInicio, fechaFin } = req.query;
+
+  if (!fechaInicio || !fechaFin) {
+    return res.status(400).send("Debes enviar fechaInicio y fechaFin");
+  }
+
+  const inicio = dayjs(fechaInicio);
+  const fin = dayjs(fechaFin);
+
+  if (!inicio.isValid() || !fin.isValid()) {
+    return res.status(400).send("Las fechas enviadas no son validas");
+  }
+
+  if (inicio.isAfter(fin, "day")) {
+    return res
+      .status(400)
+      .send("La fecha de inicio no puede ser mayor a la fecha de termino");
+  }
+
+  try {
+    const [trabajadores] = await db.query(
+      `
+      SELECT
+        t.idTrabajador,
+        t.nombreTrabajador,
+        t.cargoActual,
+        t.sexoTrabajador,
+        t.adscripcionActual,
+        ISNULL(exp.numExperiencia, 0) AS numExperiencia,
+        esc.nivelAcademico,
+        esc.nombreTitulo
+      FROM trabajador t
+      OUTER APPLY (
+        SELECT COUNT(1) AS numExperiencia
+        FROM experienciapj e
+        WHERE e.idTrabajador = t.idTrabajador
+      ) exp
+      OUTER APPLY (
+        SELECT TOP 1 s.nivelAcademico, s.nombreTitulo
+        FROM escolaridad s
+        WHERE s.idTrabajador = t.idTrabajador
+        ORDER BY CASE UPPER(ISNULL(s.nivelAcademico, ''))
+          WHEN 'DOCTORADO' THEN 1
+          WHEN 'MAESTRIA' THEN 2
+          WHEN 'LICENCIATURA' THEN 3
+          WHEN 'BACHILLERATO' THEN 4
+          WHEN 'TECNICA' THEN 5
+          WHEN 'SECUNDARIA' THEN 6
+          WHEN 'PRIMARIA' THEN 7
+          ELSE 8
+        END
+      ) esc
+      ORDER BY t.nombreTrabajador ASC
+      `,
+      [],
+    );
+
+    const fechaInicioTexto = inicio.format("YYYY-MM-DD");
+    const fechaFinTexto = fin.format("YYYY-MM-DD");
+    const fechaActualizacion = dayjs().format("YYYY-MM-DD");
+    const ejercicio = inicio.year();
+    const aplicarSexo = !inicio.isBefore(dayjs("2023-04-01"), "day");
+
+    const workbook = new ExcelJS.Workbook();
+    const worksheet = workbook.addWorksheet("Reporte Transparencia");
+
+    const columnas = [
+      "Ejercicio",
+      "Fecha de inicio del periodo que se informa",
+      "Fecha de término del periodo que se informa",
+      "Denominación de puesto (Redactados con perspectiva de género)",
+      "Nombre",
+      "ESTE CRITERIO APLICA A PARTIR DEL 01/04/2023 -> Sexo (Hombre Mujer)",
+      "Área de adscripción",
+      "Nivel máximo de estudios concluido y comprobable (catálogo)",
+      "Carrera genérica, en su caso",
+      "Experiencia laboral (Cantidad de puestos previos)",
+      "Hipervínculo al documento que contenga la trayectoria",
+      "Sanciones Administrativas definitivas aplicadas por la autoridad competente (catálogo)",
+      "Área(s) responsable(s) que genera(n), posee(n), publica(n) y actualizan la información",
+      "Fecha de actualización",
+      "Notas",
+    ];
+
+    worksheet.addRow(columnas);
+
+    for (const t of trabajadores || []) {
+      const fila = [
+        ejercicio,
+        fechaInicioTexto,
+        fechaFinTexto,
+        t.cargoActual || "",
+        t.nombreTrabajador || "",
+      ];
+
+      fila.push(aplicarSexo ? normalizarSexo(t.sexoTrabajador) : "");
+
+      fila.push(
+        t.adscripcionActual || "",
+        t.nivelAcademico || "",
+        t.nombreTitulo || "",
+        Number(t.numExperiencia || 0),
+        "", // Hipervínculo: pendiente por indicación
+        "", // Sanciones: pendiente por indicación
+        "Recursos Humanos",
+        fechaActualizacion,
+        "", // Notas: pendiente por indicación
+      );
+
+      worksheet.addRow(fila);
+    }
+
+    const header = worksheet.getRow(1);
+    header.font = { bold: true };
+    header.alignment = {
+      vertical: "middle",
+      horizontal: "center",
+      wrapText: true,
+    };
+    header.height = 30;
+
+    worksheet.columns = columnas.map((col) => ({
+      width: Math.min(Math.max(col.length + 4, 18), 60),
+    }));
+
+    worksheet.views = [{ state: "frozen", ySplit: 1 }];
+    worksheet.autoFilter = {
+      from: { row: 1, column: 1 },
+      to: { row: 1, column: columnas.length },
+    };
+
+    const nombreArchivo = `REPORTE_TRANSPARENCIA_${fechaInicioTexto}_A_${fechaFinTexto}.xlsx`;
+    res.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${nombreArchivo}"`,
+    );
+
+    await workbook.xlsx.write(res);
+    return res.end();
+  } catch (error) {
+    console.error("Error al generar reporte de transparencia:", error);
+    return res.status(500).send("Error al generar el reporte de transparencia");
   }
 });
 
@@ -3755,12 +4010,12 @@ app.post("/registrar-password", async (req, res) => {
 
 // Configuración de Nodemailer (SMTP)
 const transporter = nodemailer.createTransport({
-  host: "smtp.office365.com",
-  port: 587,
+  host: process.env.SMTP_HOST || "smtp.office365.com",
+  port: process.env.SMTP_PORT ? parseInt(process.env.SMTP_PORT, 10) : 587,
   secure: false,
   auth: {
-    user: "desarrollo.sistemas@pjhidalgo.gob.mx",
-    pass: "Sub20Pach",
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
 });
 

@@ -107,6 +107,8 @@
       </div>
     </div>
 
+
+
     <!-- ÚLTIMOS TRABAJADORES AGREGADOS -->
     <div id="seccionUltimos" class="bg-white rounded-lg shadow-lg p-6 mb-8">
       <h3 class="text-xl font-bold text-verdegris mb-4"> Últimos Trabajadores Agregados</h3>
@@ -189,6 +191,17 @@
 
       <!-- Tarjetas responsivas para resultados (móvil) -->
       <div id="tarjetasBusqueda" class="tarjetas-responsive hidden mt-4 grid gap-4"></div>
+    </div>
+
+    <!-- BOTÓN FINAL: REPORTE DE TRANSPARENCIA -->
+    <div class="flex justify-end mb-8">
+      <button type="button" onclick="abrirModalReporteTransparencia()" class="flex items-center justify-center gap-2 bg-verdegris hover:bg-[#0b6451] text-white font-semibold px-6 py-2 rounded-md shadow-sm transition">
+        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text" viewBox="0 0 16 16">
+          <path d="M5 4a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 1 5 4m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 6m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 8m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 10"/>
+          <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5z"/>
+        </svg>
+        <span>Reporte de transparencia</span>
+      </button>
     </div>
   </main>
 
@@ -285,6 +298,41 @@
           <button type="button" onclick="cerrarModal()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-semibold py-3 rounded-md transition">
             Cancelar
           </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+  <!-- MODAL REPORTE DE TRANSPARENCIA -->
+  <div id="modalReporteTransparencia" class="modal">
+    <div class="modal-content">
+      <span class="close" onclick="cerrarModalReporteTransparencia()">&times;</span>
+      <h2 class="text-2xl font-bold text-verdegris mb-6">Reporte de transparencia</h2>
+
+      <form id="formReporteTransparencia" method="GET" action="/admin/reporte-transparencia">
+        <div class="mb-4">
+          <label for="fechaInicioTransparencia" class="block mb-2 text-sm font-medium text-verdegris">Fecha de inicio del periodo que se informa</label>
+          <input
+            type="date"
+            id="fechaInicioTransparencia"
+            name="fechaInicio"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+        </div>
+
+        <div class="mb-6">
+          <label for="fechaFinTransparencia" class="block mb-2 text-sm font-medium text-verdegris">Fecha de termino del periodo que se informa</label>
+          <input
+            type="date"
+            id="fechaFinTransparencia"
+            name="fechaFin"
+            required
+            class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+        </div>
+
+        <div class="flex justify-end gap-3">
+          <button type="submit" class="bg-amarilloPJ hover:bg-[#e1c27d] text-grisTexto font-semibold px-6 py-2 rounded-md transition">Generar Excel</button>
+          <button type="button" onclick="cerrarModalReporteTransparencia()" class="bg-gray-400 hover:bg-gray-500 text-white font-semibold px-6 py-2 rounded-md transition">Cancelar</button>
         </div>
       </form>
     </div>
@@ -397,11 +445,32 @@
     // Buscar trabajadores
     async function buscarTrabajadores() {
       const busqueda = document.getElementById("busquedaInput").value.trim();
+      const seccionBusqueda = document.getElementById("seccionBusqueda");
+      const tablaBusqueda = document.getElementById("tablaBusqueda");
+      const contTarjetas = document.getElementById("tarjetasBusqueda");
+      const mensajeBusqueda = document.getElementById("mensajeBusqueda");
+      const seccionUltimos = document.getElementById("seccionUltimos");
+
+      // Siempre mostrar la sección de resultados cuando se intenta buscar
+      if (seccionBusqueda) seccionBusqueda.classList.remove("hidden");
+      if (tablaBusqueda) tablaBusqueda.classList.add("hidden");
+      if (contTarjetas) {
+        contTarjetas.classList.add("hidden");
+        contTarjetas.innerHTML = "";
+      }
+      if (mensajeBusqueda) mensajeBusqueda.innerHTML = "";
       
       if (!busqueda) {
-        document.getElementById("mensajeBusqueda").innerHTML = "Ingresa un nombre o CURP para buscar";
+        if (mensajeBusqueda) {
+          mensajeBusqueda.innerHTML = "Ingresa un nombre o CURP para buscar";
+        }
+        // Volver a mostrar últimos si no se ingresó nada
+        if (seccionUltimos) seccionUltimos.classList.remove("hidden");
         return;
       }
+
+      // Ocultar la sección de últimos trabajadores cuando se hace una búsqueda válida
+      if (seccionUltimos) seccionUltimos.classList.add("hidden");
 
       try {
         const response = await fetch("/admin/buscar-trabajadores", {
@@ -415,12 +484,21 @@
         if (result.success && result.usuarios.length > 0) {
           mostrarResultadosBusqueda(result.usuarios);
         } else {
-          document.getElementById("tablaBusqueda").classList.add("hidden");
-          document.getElementById("mensajeBusqueda").innerHTML = "❌ " + (result.error || "No se encontraron resultados");
+          if (tablaBusqueda) tablaBusqueda.classList.add("hidden");
+          if (mensajeBusqueda) {
+            mensajeBusqueda.innerHTML = "❌ " + (result.error || "No se encontraron resultados");
+          }
         }
       } catch (error) {
         console.error("Error:", error);
-        document.getElementById("mensajeBusqueda").innerHTML = "Error al buscar";
+        if (mensajeBusqueda) {
+          mensajeBusqueda.innerHTML = "Error al buscar";
+        }
+      }
+
+      // Llevar la vista hacia la sección de resultados para que el admin la vea
+      if (seccionBusqueda) {
+        seccionBusqueda.scrollIntoView({ behavior: "smooth", block: "start" });
       }
     }
 
@@ -487,6 +565,22 @@
         contTarjetas.classList.add("hidden");
         contTarjetas.innerHTML = "";
       }
+
+      // Al limpiar, volvemos a mostrar la lista de últimos trabajadores
+      const seccionUltimos = document.getElementById("seccionUltimos");
+      if (seccionUltimos) seccionUltimos.classList.remove("hidden");
+    }
+
+    function abrirModalReporteTransparencia() {
+      const modal = document.getElementById("modalReporteTransparencia");
+      if (modal) modal.classList.add("show");
+    }
+
+    function cerrarModalReporteTransparencia() {
+      const modal = document.getElementById("modalReporteTransparencia");
+      if (modal) modal.classList.remove("show");
+      const form = document.getElementById("formReporteTransparencia");
+      if (form) form.reset();
     }
 
     function mostrarMensaje(texto, tipo) {
@@ -505,9 +599,13 @@
 
     // Cerrar modal al hacer click fuera
     window.onclick = function(event) {
-      const modal = document.getElementById("miModal");
-      if (event.target == modal) {
+      const modalTrabajador = document.getElementById("miModal");
+      const modalReporte = document.getElementById("modalReporteTransparencia");
+      if (event.target == modalTrabajador) {
         cerrarModal();
+      }
+      if (event.target == modalReporte) {
+        cerrarModalReporteTransparencia();
       }
     };
   </script>

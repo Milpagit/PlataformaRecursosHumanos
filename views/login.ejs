@@ -5,6 +5,16 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <link href="/css/styles.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200&icon_names=sync_alt" />
+  <style>
+    .material-symbols-outlined {
+      font-variation-settings:
+        'FILL' 0,
+        'wght' 400,
+        'GRAD' 0,
+        'opsz' 24;
+    }
+  </style>
   <title>Acceso - Poder Judicial</title>
 </head>
 
@@ -115,6 +125,14 @@
   <footer class="w-full bg-verdegris text-white text-center py-4 mt-12">
     <p class="text-xs">© 2025 Poder Judicial del Estado de Hidalgo. Todos los derechos reservados.</p>
   </footer>
+
+  <!-- BOTÓN SWITCH A LOGIN ADMIN -->
+  <a href="/admin/login"
+      class="w-12 h-12 p-3 rounded-full bg-verdegris text-white flex items-center justify-center shadow-lg hover:bg-[#0b6451] transition"
+      style="position: fixed; bottom: 20px; right: 20px;"
+     title="Ir a login de administrador">
+    <span class="material-symbols-outlined">sync_alt</span>
+  </a>
 
   <script src="/js/formulario.js"></script>
 </body>

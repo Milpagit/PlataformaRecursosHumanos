@@ -247,6 +247,17 @@
         </li>
       </ul>
 
+      <% if (hijos && hijos.length > 0) { %>
+        <h2>Hijos</h2>
+        <ul class="list-disc pl-6">
+          <% hijos.forEach(h => { %>
+            <li>
+              <%= h.inicialesHijo %> — <%= h.sexoHijo %> — <%= formatearFecha(h.fechaNacimientoHijo) %> — <%= h.edadHijo %> años
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
+
       <% if (escolaridad && escolaridad.length > 0) { %>
         <h2>Escolaridad</h2>
         <ul class="list-disc pl-6">
@@ -288,38 +299,27 @@
         </ul>
       <% } %>
 
-          <% if (actualizacion.length> 0) { %>
-            <h2>Actualizaciones Profesionales</h2>
-            <ul class="list-disc pl-6">
-              <% actualizacion.forEach(a=> { %>
-                <li>
-                  <%= a.tema %> — <%= a.institucion %> — <%= formatearFecha(a.fecha) %> — Documento: <%= a.documento %>
-                </li>
-                <% }) %>
-            </ul>
-            <% } %>
+      <% if (actualizacion && actualizacion.length > 0) { %>
+        <h2>Actualizaciones Profesionales</h2>
+        <ul class="list-disc pl-6">
+          <% actualizacion.forEach(a => { %>
+            <li>
+              <%= a.tema %> — <%= a.institucion %> — <%= formatearFecha(a.fecha) %> — Documento: <%= a.documento %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
 
-             <% if (experienciaPJ.length> 0) { %>
-            <h2>Experiencia Laboral</h2>
-            <ul class="list-disc pl-6">
-              <% experienciaPJ.forEach(p=> { %>
-                <li>
-                  <%= p.cargo %> — <%= p.institucion %> — <%= p.adscripcion %> — <%= p.campoExperiencia %> — Inicio: <%= p.periodoInicio %> — Fin: <%= p.periodoFin %>
-                </li>
-                <% }) %>
-            </ul>
-            <% } %>
-
-            <% if (hijos.length> 0) { %>
-              <h2>Hijos</h2>
-              <ul class="list-disc pl-6">
-                <% hijos.forEach(h=> { %>
-                  <li>
-                    <%= h.inicialesHijo %> — <%= h.sexoHijo %> — <%= formatearFecha(h.fechaNacimientoHijo) %> — <%= h.edadHijo %> años
-                  </li>
-                <% }) %>
-              </ul>
-            <% } %>  
+      <% if (experienciaPJ && experienciaPJ.length > 0) { %>
+        <h2>Experiencia Laboral</h2>
+        <ul class="list-disc pl-6">
+          <% experienciaPJ.forEach(p => { %>
+            <li>
+              <%= p.cargo %> — <%= p.institucion %> — <%= p.adscripcion %> — <%= p.campoExperiencia %> — Inicio: <%= p.periodoInicio %> — Fin: <%= p.periodoFin %>
+            </li>
+          <% }) %>
+        </ul>
+      <% } %>
 
                 <p class="text-center mt-8 text-gray-700 text-center"><span class="text-red-500">
                   He leído y acepto el aviso de privacidad de la Plataforma de Actualización de Datos Personales del Personal del Poder Judicial del Estado de Hidalgo</span>

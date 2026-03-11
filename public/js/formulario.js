@@ -143,15 +143,34 @@ document.addEventListener("DOMContentLoaded", function () {
   function agregarCamposHijos() {
     const noHijos = parseInt(hijoscontador.value) || 0;
     const espacioHijos = document.getElementById("espacioHijos");
-    const hijosActuales = espacioHijos.children.length;
 
-    // Si hay menos hijos de los deseados, eliminamos los sobrantes del final
-    while (espacioHijos.children.length > noHijos) {
-      espacioHijos.removeChild(espacioHijos.lastChild);
-    }
+    // Guardar los datos ya capturados/autocompletados antes de reconstruir la sección
+    const datosExistentes = Array.from(
+      espacioHijos.querySelectorAll(".hijo-item"),
+    ).map((bloque) => {
+      const inputNombre = bloque.querySelector('input[name^="inicialesHijo"]');
+      const selectGenero = bloque.querySelector('select[name^="selectHijo"]');
+      const inputFecha = bloque.querySelector(
+        'input[name^="fechaNacimientoHijo"]',
+      );
 
-    // Si hay más hijos deseados que actuales, agregamos los que faltan
-    for (let i = hijosActuales; i < noHijos; i++) {
+      return {
+        nombre: inputNombre ? inputNombre.value : "",
+        genero: selectGenero ? selectGenero.value : "Seleccione",
+        fecha: inputFecha ? inputFecha.value : "",
+      };
+    });
+
+    // Reconstruimos para mantener índices consistentes y conservar datos existentes
+    espacioHijos.innerHTML = "";
+
+    for (let i = 0; i < noHijos; i++) {
+      const datosHijo = datosExistentes[i] || {
+        nombre: "",
+        genero: "Seleccione",
+        fecha: "",
+      };
+
       const divHijo = document.createElement("div");
       divHijo.classList.add(
         "mb-3",
@@ -202,6 +221,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "uppercase",
       );
       input.setAttribute("required", "true");
+      input.value = datosHijo.nombre;
       divHijo.appendChild(input);
 
       // Sexo label
@@ -243,6 +263,12 @@ document.addEventListener("DOMContentLoaded", function () {
       opcion3.textContent = "Femenino";
       select.appendChild(opcion3);
 
+      if (datosHijo.genero === "Masculino" || datosHijo.genero === "Femenino") {
+        select.value = datosHijo.genero;
+      } else {
+        select.value = "Seleccione";
+      }
+
       select.setCustomValidity("Seleccione el género del hijo");
 
       select.addEventListener("change", function () {
@@ -281,6 +307,7 @@ document.addEventListener("DOMContentLoaded", function () {
         "datepicker",
       );
       input2.setAttribute("required", "true");
+      input2.value = datosHijo.fecha;
       Inputmask("99-99-9999", { placeholder: "dd-mm-yyyy" }).mask(input2);
       divHijo.appendChild(input2);
 
@@ -306,10 +333,14 @@ document.addEventListener("DOMContentLoaded", function () {
         dateFormat: "d-m-Y",
         allowInput: true,
         maxDate: "today",
+        defaultDate: datosHijo.fecha || null,
       });
 
       // Listener select
       selectEventListener();
+
+      // Mantener la limpieza de acentos en campos dinámicos de hijos
+      reemplazarAcentos(input);
     }
   }
 
@@ -521,7 +552,7 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
       if (aceptado) {
         botonFormulario.disabled = true;
         botonFormulario.textContent = "Enviando...";
-        form.submit(); // ✅ Solo se envía si se acepta
+        form.submit(); //  Solo se envía si se acepta
       }
     }
   });
@@ -646,46 +677,8 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
     experienciaIndex = parseInt(contadorExpBD.value);
     document.getElementById("experienciaTotal").value = experienciaIndex;
 
-    // Reactivar listeners para elementos precargados
-    for (let i = 0; i < experienciaIndex; i++) {
-      // Lógica Institución (PJ vs OTRA)
-      const selectInst = document.querySelector(
-        `select[name="experiencia_institucion${i}"]`,
-      );
-      const adscripContainer = document.getElementById(
-        `adscripcion-container-${i}`,
-      );
-      const otraContainer = document.getElementById(`otra-inst-container-${i}`);
-
-      if (selectInst) {
-        selectInst.addEventListener("change", function (e) {
-          if (e.target.value === "PJ") {
-            adscripContainer.classList.remove("hidden");
-            otraContainer.classList.add("hidden");
-          } else {
-            adscripContainer.classList.add("hidden");
-            otraContainer.classList.remove("hidden");
-          }
-        });
-      }
-
-      // Lógica Checkbox "A la fecha"
-      const finInput = document.getElementById(`experiencia_fin${i}`);
-      const actualCb = document.getElementById(`experiencia_actual${i}`);
-
-      if (actualCb) {
-        actualCb.addEventListener("change", () => {
-          if (actualCb.checked) {
-            finInput.classList.add("hidden");
-            finInput.removeAttribute("required");
-            finInput.value = "";
-          } else {
-            finInput.classList.remove("hidden");
-            finInput.setAttribute("required", "true");
-          }
-        });
-      }
-    }
+    // Asegura que los índices y listeners coincidan con el orden visual
+    reindexExperiencias();
 
     configurarFechaInput();
     procesarCamposAcentos();
@@ -1004,7 +997,14 @@ function agregarExperiencia() {
   const container = document.getElementById("espacioExperiencia");
 
   const div = document.createElement("div");
-  div.classList.add("mb-3", "p-4", "rounded", "border", "border-gray-300");
+  div.classList.add(
+    "mb-3",
+    "p-4",
+    "rounded",
+    "border",
+    "border-gray-300",
+    "experiencia-item",
+  );
 
   div.innerHTML = `
 <p class="font-semibold text-gray-800 mb-1">Experiencia ${experienciaIndex + 1}</p>
@@ -1048,56 +1048,15 @@ function agregarExperiencia() {
 `;
 
   if (experienciaIndex < 100) {
-    container.appendChild(div);
-
-    // dentro de agregarExperiencia(), justo tras appendChild(div):
-    const selectInst = div.querySelector(
-      `select[name="experiencia_institucion${experienciaIndex}"]`,
-    );
-    const adscripContainer = div.querySelector(
-      `#adscripcion-container-${experienciaIndex}`,
-    );
-    const otraContainer = div.querySelector(
-      `#otra-inst-container-${experienciaIndex}`,
-    );
-    function toggleCampos(e) {
-      if (e.target.value === "PJ") {
-        adscripContainer.classList.remove("hidden");
-        otraContainer.classList.add("hidden");
-      } else {
-        adscripContainer.classList.add("hidden");
-        otraContainer.classList.remove("hidden");
-      }
+    // Insertar la nueva experiencia al inicio para que quede arriba
+    if (container.firstElementChild) {
+      container.insertBefore(div, container.firstElementChild);
+    } else {
+      container.appendChild(div);
     }
 
-    // Inicializa según el valor por defecto
-    toggleCampos({ target: selectInst });
-
-    // Escucha cambios
-    selectInst.addEventListener("change", toggleCampos);
-
-    const finInput = document.getElementById(
-      `experiencia_fin${experienciaIndex}`,
-    );
-    const actualCb = document.getElementById(
-      `experiencia_actual${experienciaIndex}`,
-    );
-
-    actualCb.addEventListener("change", () => {
-      if (actualCb.checked) {
-        // ocultar visualmente y quitar validación
-        finInput.classList.add("hidden");
-        finInput.removeAttribute("required");
-        finInput.value = ""; // limpia cualquier valor previo
-      } else {
-        // volver a mostrar y requerir
-        finInput.classList.remove("hidden");
-        finInput.setAttribute("required", "true");
-      }
-    });
-
-    experienciaIndex++;
-    document.getElementById("experienciaTotal").value = experienciaIndex;
+    // Reindexar para que los índices (0..n-1) coincidan con el orden visual
+    reindexExperiencias();
   }
 
   document
@@ -1126,9 +1085,106 @@ function agregarExperiencia() {
 
 function quitarExperiencia() {
   const container = document.getElementById("espacioExperiencia");
-  container.removeChild(container.lastChild);
-  experienciaIndex = Math.max(0, experienciaIndex - 1);
-  document.getElementById("experienciaTotal").value = experienciaIndex;
+  if (container.lastElementChild) {
+    container.removeChild(container.lastElementChild);
+  }
+
+  // Mantener índices y nombres consistentes tras eliminar
+  reindexExperiencias();
+}
+
+function reindexExperiencias() {
+  const container = document.getElementById("espacioExperiencia");
+  if (!container) return;
+
+  const items = container.querySelectorAll(".experiencia-item");
+
+  items.forEach((div, index) => {
+    // Actualizar título visible
+    const titulo = div.querySelector("p.font-semibold");
+    if (titulo) {
+      titulo.textContent = `Experiencia ${index + 1}`;
+    }
+
+    const inicio = div.querySelector("input[name^='experiencia_inicio']");
+    const fin = div.querySelector("input[name^='experiencia_fin']");
+    const actualCb = div.querySelector(
+      "input[type='checkbox'][name^='experiencia_actual']",
+    );
+    const selectInst = div.querySelector(
+      "select[name^='experiencia_institucion']",
+    );
+    const adscripContainer = div.querySelector(
+      "[id^='adscripcion-container-']",
+    );
+    const otraContainer = div.querySelector("[id^='otra-inst-container-']");
+    const adscripInput = div.querySelector(
+      "input[name^='experiencia_adscripcion']",
+    );
+    const otraInstInput = div.querySelector(
+      "input[name^='experiencia_otrainst']",
+    );
+    const puestoInput = div.querySelector("input[name^='experiencia_puesto']");
+    const campoInput = div.querySelector("input[name^='experiencia_campo']");
+
+    if (inicio) inicio.name = `experiencia_inicio${index}`;
+    if (fin) {
+      fin.name = `experiencia_fin${index}`;
+      fin.id = `experiencia_fin${index}`;
+    }
+    if (actualCb) {
+      actualCb.name = `experiencia_actual${index}`;
+      actualCb.id = `experiencia_actual${index}`;
+    }
+    if (selectInst) selectInst.name = `experiencia_institucion${index}`;
+    if (adscripInput) adscripInput.name = `experiencia_adscripcion${index}`;
+    if (otraInstInput) otraInstInput.name = `experiencia_otrainst${index}`;
+    if (puestoInput) puestoInput.name = `experiencia_puesto${index}`;
+    if (campoInput) campoInput.name = `experiencia_campo${index}`;
+    if (adscripContainer)
+      adscripContainer.id = `adscripcion-container-${index}`;
+    if (otraContainer) otraContainer.id = `otra-inst-container-${index}`;
+
+    // Lógica Institución (PJ vs OTRA), usando onchange para no acumular listeners
+    if (selectInst && adscripContainer && otraContainer) {
+      selectInst.onchange = function (e) {
+        const value = e.target.value;
+        if (value === "PJ") {
+          adscripContainer.classList.remove("hidden");
+          otraContainer.classList.add("hidden");
+        } else {
+          adscripContainer.classList.add("hidden");
+          otraContainer.classList.remove("hidden");
+        }
+      };
+
+      // Sincronizar estado inicial
+      selectInst.onchange({ target: selectInst });
+    }
+
+    // Lógica Checkbox "A la fecha"
+    if (actualCb && fin) {
+      actualCb.onchange = () => {
+        if (actualCb.checked) {
+          fin.classList.add("hidden");
+          fin.removeAttribute("required");
+          fin.value = "";
+        } else {
+          fin.classList.remove("hidden");
+          fin.setAttribute("required", "true");
+        }
+      };
+
+      // Aplicar estado inicial
+      actualCb.onchange();
+    }
+  });
+
+  experienciaIndex = items.length;
+  const totalInput = document.getElementById("experienciaTotal");
+  if (totalInput) {
+    totalInput.value = experienciaIndex;
+  }
 }
 
 let actualizacionIndex = 0;

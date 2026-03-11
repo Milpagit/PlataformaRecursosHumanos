@@ -1,11 +1,12 @@
 ﻿const sql = require("mssql");
 
+// Configuración de base de datos tomada de variables de entorno
 const config = {
-  user: "JesusML",
-  password: "M1lp426",
-  server: "192.168.73.5",
-  port: 14357,
-  database: "PersonalPrue",
+  user: process.env.DB_USER,
+  password: process.env.DB_PASSWORD,
+  server: process.env.DB_HOST,
+  port: process.env.DB_PORT ? parseInt(process.env.DB_PORT, 10) : 1433,
+  database: process.env.DB_NAME,
   options: {
     encrypt: false,
     trustServerCertificate: true,
