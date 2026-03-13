@@ -24,6 +24,8 @@ dayjs.extend(timezone);
 dayjs.extend(localizedFormat);
 dayjs.locale("es");
 
+const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+
 app.locals.formatearFecha = function (fecha) {
   if (!fecha) return "N/A";
 
@@ -156,6 +158,56 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
   } catch (error) {
     console.error("Error en /acuse:", error);
     res.status(500).send("Error interno al generar el acuse: " + error.message);
+  }
+});
+
+app.get("/curriculum/:noTrabajador", async (req, res) => {
+  const { noTrabajador } = req.params;
+
+  try {
+    // Seguridad: solo el propio trabajador logueado o un administrador pueden ver el curriculum
+    const esAdmin = !!req.session.admin;
+    const usuarioSesion = req.session.user;
+
+    if (!esAdmin) {
+      if (!usuarioSesion) {
+        return res.redirect("/login");
+      }
+
+      const noTrabajadorSesion = String(usuarioSesion.noTrabajador);
+      const noTrabajadorParam = String(noTrabajador);
+
+      if (noTrabajadorSesion !== noTrabajadorParam) {
+        return res
+          .status(403)
+          .send("No tienes permiso para ver este curriculum.");
+      }
+    }
+
+    return res.redirect(
+      `/reporte/${encodeURIComponent(noTrabajador)}?preview=1`,
+    );
+  } catch (error) {
+    console.error("Error en /curriculum:", error);
+    return res
+      .status(500)
+      .send("Error interno al generar el curriculum: " + error.message);
+  }
+});
+
+// Enlace publico para visualizar curriculum sin autenticacion
+app.get("/curriculum_transparencia/:noTrabajador", async (req, res) => {
+  const { noTrabajador } = req.params;
+
+  try {
+    return res.redirect(
+      `/reporte/${encodeURIComponent(noTrabajador)}?preview=1`,
+    );
+  } catch (error) {
+    console.error("Error en /curriculum_transparencia:", error);
+    return res
+      .status(500)
+      .send("Error interno al generar el curriculum: " + error.message);
   }
 });
 app.get("/login", (req, res) => {
@@ -1062,6 +1114,7 @@ app.post("/login", async (req, res) => {
 
 app.get("/reporte/:noTrabajador", async (req, res) => {
   const noTrabajador = req.params.noTrabajador;
+  const previewOnly = req.query.preview === "1";
 
   const rutaPlantilla = "./plantillas/curriculum.xlsx";
 
@@ -1106,6 +1159,15 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     worksheet.getCell("B11").value = trabajador.primaria;
     worksheet.getCell("B12").value = trabajador.secundaria;
     worksheet.getCell("B13").value = trabajador.carreraTecnicaComercial;
+
+    // Hipervínculo al curriculum
+    const curriculumUrl = `${BASE_URL}/curriculum/${trabajador.noTrabajador}`;
+    // Busca la columna correspondiente, por ejemplo C20 (ajusta según plantilla)
+    // Si la columna es variable, busca por nombre o posición
+    worksheet.getCell("C20").value = {
+      text: "Ver trayectoria",
+      hyperlink: curriculumUrl,
+    };
 
     const bachillerato = escolaridades.filter(
       (exp) => exp.nivelAcademico.toUpperCase() === "BACHILLERATO",
@@ -1958,6 +2020,34 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
         );
       }
     });
+
+    if (previewOnly) {
+      const nombrePdfPreview = `${trabajador.nombreTrabajador}_CURRICULUM_TRANSPARENCIA.pdf`;
+      res.setHeader("Content-Type", "application/pdf");
+      res.setHeader(
+        "Content-Disposition",
+        `inline; filename="${nombrePdfPreview}"`,
+      );
+
+      return res.sendFile(path.resolve(rutaPDF), (err) => {
+        if (err) {
+          console.error("Error al enviar preview de curriculum:", err);
+        }
+
+        [rutaPDF, rutaCompleta].forEach((file) => {
+          try {
+            if (fs.existsSync(file)) {
+              fs.unlinkSync(file);
+            }
+          } catch (e) {
+            console.warn(
+              `No se pudo eliminar archivo temporal ${file}:`,
+              e.message,
+            );
+          }
+        });
+      });
+    }
 
     const archiver = require("archiver");
 
@@ -3540,6 +3630,7 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
       `
       SELECT
         t.idTrabajador,
+        t.noTrabajador,
         t.nombreTrabajador,
         t.cargoActual,
         t.sexoTrabajador,
@@ -3573,11 +3664,20 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
       [],
     );
 
+    // Nueva hoja: Tabla_350631 con la vista de experiencia
+    const [vistaExperiencia] = await db.query(
+      "SELECT * FROM VistaExperiencia",
+      [],
+    );
+
     const fechaInicioTexto = inicio.format("YYYY-MM-DD");
     const fechaFinTexto = fin.format("YYYY-MM-DD");
     const fechaActualizacion = dayjs().format("YYYY-MM-DD");
     const ejercicio = inicio.year();
     const aplicarSexo = !inicio.isBefore(dayjs("2023-04-01"), "day");
+
+    // Usar la variable BASE_URL para el hipervínculo de trayectoria
+    const baseUrlTrayectoria = `${BASE_URL}/curriculum_transparencia/`;
 
     const workbook = new ExcelJS.Workbook();
     const worksheet = workbook.addWorksheet("Reporte Transparencia");
@@ -3592,9 +3692,10 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
       "Área de adscripción",
       "Nivel máximo de estudios concluido y comprobable (catálogo)",
       "Carrera genérica, en su caso",
-      "Experiencia laboral (Cantidad de puestos previos)",
+      "Experiencia laboral Tabla_350631",
       "Hipervínculo al documento que contenga la trayectoria",
       "Sanciones Administrativas definitivas aplicadas por la autoridad competente (catálogo)",
+      "Hipervínculo a la resolución donde se observe la aprobación de la sanción",
       "Área(s) responsable(s) que genera(n), posee(n), publica(n) y actualizan la información",
       "Fecha de actualización",
       "Notas",
@@ -3613,13 +3714,19 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
 
       fila.push(aplicarSexo ? normalizarSexo(t.sexoTrabajador) : "");
 
+      const noTrabajador = t.noTrabajador || "";
+      const hipervinculo = noTrabajador
+        ? `${baseUrlTrayectoria}${noTrabajador}`
+        : "";
+
       fila.push(
         t.adscripcionActual || "",
         t.nivelAcademico || "",
         t.nombreTitulo || "",
-        Number(t.numExperiencia || 0),
-        "", // Hipervínculo: pendiente por indicación
-        "", // Sanciones: pendiente por indicación
+        noTrabajador,
+        hipervinculo,
+        "", // Llenado manualmente por rh
+        "", // llenado manualmente por rh
         "Recursos Humanos",
         fechaActualizacion,
         "", // Notas: pendiente por indicación
@@ -3646,6 +3753,30 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
       from: { row: 1, column: 1 },
       to: { row: 1, column: columnas.length },
     };
+
+    // Hoja 2: exportar VistaExperiencia en Tabla_350631
+    const wsExperiencia = workbook.addWorksheet("Tabla_350631");
+
+    if (vistaExperiencia && vistaExperiencia.length > 0) {
+      const columnasVista = Object.keys(vistaExperiencia[0]);
+      wsExperiencia.addRow(columnasVista);
+
+      for (const row of vistaExperiencia) {
+        wsExperiencia.addRow(columnasVista.map((col) => row[col]));
+      }
+
+      const headerExp = wsExperiencia.getRow(1);
+      headerExp.font = { bold: true };
+      headerExp.alignment = {
+        vertical: "middle",
+        horizontal: "center",
+        wrapText: true,
+      };
+
+      wsExperiencia.columns = columnasVista.map((col) => ({
+        width: Math.min(Math.max(String(col).length + 4, 15), 50),
+      }));
+    }
 
     const nombreArchivo = `REPORTE_TRANSPARENCIA_${fechaInicioTexto}_A_${fechaFinTexto}.xlsx`;
     res.setHeader(
