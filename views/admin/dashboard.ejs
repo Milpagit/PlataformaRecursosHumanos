@@ -4,9 +4,58 @@
   <title>Panel de Administración</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <link href="/css/styles.css" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#4a7d59",
+            "primary-dark": "#3b6548",
+            "background-light": "#f6f7f7",
+            amarillo: "#f0d28c",
+            "amarillo-dark": "#e1c27d",
+          },
+          fontFamily: {
+            display: ["Inter"],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    /* Modal overlay */
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 0.75rem;
+      padding: 2rem;
+      max-width: 32rem;
+      width: 90%;
+      max-height: 90vh;
+      overflow-y: auto;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+  </style>
 </head>
-<body class="bg-gray-100 font-sans text-grisTexto">
+<body class="bg-background-light font-display text-slate-900 antialiased">
 
   <!-- ENCABEZADO PRINCIPAL -->
   <header class="w-full bg-verdegris text-white py-6 shadow-md">
@@ -20,282 +69,283 @@
     </div>
   </header>
 
-  <!-- CONTENIDO PRINCIPAL -->
-  <main class="container mx-auto py-8 px-4">
+  <div class="relative flex min-h-screen flex-col">
+    <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-10">
 
-    <!-- Identificación del administrador -->
-    <div class="flex justify-end mt-2 mb-4 gap-3">
-      <div class="flex items-center bg-white rounded-full shadow px-4 py-2 text-sm text-gray-700">
-        <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" fill="currentColor" class="bi bi-person-circle text-verdegris" viewBox="0 0 16 16">
-          <path d="M11 6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
-          <path fill-rule="evenodd" d="M0 8a8 8 0 1 1 16 0A8 8 0 0 1 0 8m8-7a7 7 0 0 0-5.468 11.37C3.242 11.226 4.805 10 8 10s4.757 1.225 5.468 2.37A7 7 0 0 0 8 1"/>
-        </svg>
-        <span class="ml-2 font-semibold"><%= admin.usuario %></span>
-        <span class="ml-1 text-xs text-gray-500">· Administrador del sistema</span>
-      </div>
-      <a href="/admin/logout" class=" items-center flex items-center gap-3 bg-red-600 hover:bg-red-700 text-white text-sm font-semibold px-4 py-2 rounded-full shadow">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-box-arrow-left" viewBox="0 0 16 16">
-          <path fill-rule="evenodd" d="M6 12.5a.5.5 0 0 0 .5.5h8a.5.5 0 0 0 .5-.5v-9a.5.5 0 0 0-.5-.5h-8a.5.5 0 0 0-.5.5v2a.5.5 0 0 1-1 0v-2A1.5 1.5 0 0 1 6.5 2h8A1.5 1.5 0 0 1 16 3.5v9a1.5 1.5 0 0 1-1.5 1.5h-8A1.5 1.5 0 0 1 5 12.5v-2a.5.5 0 0 1 1 0z"/>
-          <path fill-rule="evenodd" d="M.146 8.354a.5.5 0 0 1 0-.708l3-3a.5.5 0 1 1 .708.708L1.707 7.5H10.5a.5.5 0 0 1 0 1H1.707l2.147 2.146a.5.5 0 0 1-.708.708z"/>
-        </svg>
-      </a>
-    </div>
-
-    <% if (error) { %>
-      <div class="bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-        <%= error %>
-      </div>
-    <% } %>
-
-    <% if (mensaje) { %>
-      <div class="bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4" id="mensajeExito">
-        <%= mensaje %>
-      </div>
-    <% } %>
-
-    <!-- SECCIÓN SUPERIOR: BÚSQUEDA Y ACCIONES -->
-    <div class="bg-white rounded-lg shadow-lg p-6 mb-8">
-      <div>
-        <h2 class="text-2xl font-bold text-verdegris mb-2">Gestión de Trabajadores</h2>
+      <!-- Barra de administrador -->
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
+          <span class="material-symbols-outlined text-base">dashboard</span>
+          Panel Principal
+        </div>
+        <div class="flex items-center gap-3">
+          <div class="flex items-center bg-white rounded-lg shadow-sm border border-slate-200 px-4 py-2 text-sm text-slate-700">
+            <span class="material-symbols-outlined text-primary text-lg mr-2">account_circle</span>
+            <span class="font-semibold"><%= admin.usuario %></span>
+            <span class="ml-2 text-xs text-slate-400">Administrador</span>
+          </div>
+          <a href="/admin/logout" class="flex items-center gap-1.5 rounded-lg bg-red-50 border border-red-200 px-3 py-2 text-xs font-bold text-red-600 hover:bg-red-100 transition-colors">
+            <span class="material-symbols-outlined text-sm">logout</span>
+            Salir
+          </a>
+        </div>
       </div>
 
-      <!-- BARRA DE BÚSQUEDA -->
-      <div class="mt-6">
-        <label class="block mb-2 font-semibold text-verdegris">Buscar Trabajador:</label>
-        <div class="flex flex-col lg:flex-row lg:items-center gap-3">
-          <!-- Input con icono de lupa integrado -->
+      <!-- Alertas -->
+      <% if (error) { %>
+        <div class="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">error</span>
+          <%= error %>
+        </div>
+      <% } %>
+
+      <% if (mensaje) { %>
+        <div class="mb-6 rounded-xl bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm flex items-center gap-2" id="mensajeExito">
+          <span class="material-symbols-outlined text-base">check_circle</span>
+          <%= mensaje %>
+        </div>
+      <% } %>
+
+      <!-- SECCIÓN: BÚSQUEDA Y ACCIONES -->
+      <section class="rounded-xl bg-white p-6 shadow-sm border border-slate-200 mb-6">
+        <div class="flex items-center gap-2 bg-slate-50/50 -mx-6 -mt-6 px-6 py-4 mb-6 rounded-t-xl">
+          <span class="material-symbols-outlined text-primary">manage_search</span>
+          <h2 class="font-bold text-lg">Gestión de Trabajadores</h2>
+        </div>
+
+        <!-- Barra de búsqueda -->
+        <div class="flex flex-col lg:flex-row lg:items-end gap-4">
           <div class="flex-1">
-            <div class="flex items-center border border-gray-300 rounded-md bg-gray-50 px-4 py-2">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search text-gray-400 ml-1 mr-4" viewBox="0 0 16 16">
-                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-              </svg>
-              <input type="text" id="busquedaInput" placeholder="Buscar por nombre o CURP..." 
-                     class="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 px-1 py-1">
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Buscar Trabajador</label>
+            <div class="flex items-center border border-slate-200 rounded-lg bg-slate-50 px-4 py-2.5 focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary transition-all">
+              <span class="material-symbols-outlined text-slate-400 text-lg mr-3">search</span>
+              <input type="text" id="busquedaInput" placeholder="Nombre, CURP o clave del trabajador..."
+                     class="flex-1 bg-transparent border-0 focus:outline-none focus:ring-0 text-sm placeholder-slate-400">
             </div>
           </div>
 
-          <!-- Botones de acción al mismo nivel -->
-          <div class="flex gap-3 items-center mt-4">
-            <button onclick="buscarTrabajadores()" class="flex items-center justify-center gap-2 bg-verdegris hover:bg-[#0b6451] text-white font-semibold px-6 py-2 rounded-md transition h-10">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-search" viewBox="0 0 16 16">
-                <path d="M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001q.044.06.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1 1 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0"/>
-              </svg>
-              <span class="btn-text leading-none">Buscar</span>
+          <div class="flex gap-2 items-center">
+            <button onclick="buscarTrabajadores()" class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-xs font-bold text-white hover:bg-primary-dark transition-colors shadow-sm">
+              <span class="material-symbols-outlined text-sm">search</span>
+              Buscar
             </button>
 
-            <button onclick="limpiarBusqueda()" class="flex items-center justify-center gap-16 border border-gray-300 bg-white hover:bg-gray-50 text-gray-600 font-semibold px-4 py-2 rounded-md transition h-10 shadow-sm active:scale-95">
-              <div class="flex items-center gap-">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-arrow-counterclockwise" viewBox="0 0 16 16">
-                <path fill-rule="evenodd" d="M8 3a5 5 0 1 1-4.546 2.914.5.5 0 0 0-.908-.417A6 6 0 1 0 8 2z"/>
-                <path d="M8 4.466V.534a.25.25 0 0 0-.41-.192L5.23 2.308a.25.25 0 0 0 0 .384l2.36 1.966a.25.25 0 0 0 .41-.192z"/>
-              </svg>
-              </div>
-              <span class="btn-text leading-none">Limpiar</span>
+            <button onclick="limpiarBusqueda()" class="flex items-center gap-2 rounded-lg bg-white border border-slate-200 px-4 py-2.5 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+              <span class="material-symbols-outlined text-sm">refresh</span>
+              Limpiar
             </button>
 
-            <button onclick="abrirModal()" class="flex items-center justify-center gap-x-2 bg-amarilloPJ hover:bg-[#e1c27d] text-grisTexto font-semibold px-4 py-2 rounded-md transition duration-200 shadow-sm active:scale-95 flex-nowrap min-w-fit">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-person-fill-add" viewBox="0 0 16 16">
-                <path d="M12.5 16a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7m.5-5v1h1a.5.5 0 0 1 0 1h-1v1a.5.5 0 0 1-1 0v-1h-1a.5.5 0 0 1 0-1h1v-1a.5.5 0 0 1 1 0m-2-6a3 3 0 1 1-6 0 3 3 0 0 1 6 0"/>
-                <path d="M2 13c0 1 1 1 1 1h5.256A4.5 4.5 0 0 1 8 12.5a4.5 4.5 0 0 1 1.544-3.393Q8.844 9.002 8 9c-5 0-6 3-6 4"/>
-              </svg>
-              
-              <span class="btn-text whitespace-nowrap leading-none">Agregar trabajador</span>
+            <button onclick="abrirModal()" class="flex items-center gap-2 rounded-lg bg-amarillo px-4 py-2.5 text-xs font-bold text-slate-800 hover:bg-amarillo-dark transition-colors shadow-sm">
+              <span class="material-symbols-outlined text-sm">person_add</span>
+              Agregar
             </button>
-
           </div>
         </div>
-      </div>
-    </div>
+      </section>
 
+      <!-- ÚLTIMOS TRABAJADORES AGREGADOS -->
+      <section id="seccionUltimos" class="rounded-xl bg-white p-6 shadow-sm border border-slate-200 mb-6">
+        <div class="flex items-center gap-2 bg-slate-50/50 -mx-6 -mt-6 px-6 py-4 mb-6 rounded-t-xl">
+          <span class="material-symbols-outlined text-primary">group</span>
+          <h3 class="font-bold text-lg">Últimos Trabajadores Agregados</h3>
+        </div>
+        
+        <% if (ultimosTrabajadores && ultimosTrabajadores.length > 0) { %>
+          <!-- Vista tabla (desktop) -->
+          <div class="tabla-responsive overflow-x-auto rounded-lg border border-slate-200">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-left">
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">Nombre</th>
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">CURP</th>
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">Clave</th>
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary text-center">Acción</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <% ultimosTrabajadores.forEach((usuario) => { %>
+                  <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-5 py-3.5 font-semibold"><%= usuario.nombreTrabajador %></td>
+                    <td class="px-5 py-3.5 text-slate-500 font-mono text-xs"><%= usuario.curp %></td>
+                    <td class="px-5 py-3.5">
+                      <span class="inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary"><%= usuario.noTrabajador %></span>
+                    </td>
+                    <td class="px-5 py-3.5 text-center">
+                      <a href="/admin/usuario/<%= usuario.idTrabajador %>" 
+                         class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-dark transition-colors shadow-sm">
+                        <span class="material-symbols-outlined text-sm">visibility</span>
+                        Ver Detalles
+                      </a>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
 
+          <!-- Vista tarjetas (móvil) -->
+          <div class="tarjetas-responsive grid gap-3">
+            <% ultimosTrabajadores.forEach((usuario) => { %>
+              <div class="rounded-lg border border-slate-200 p-4 bg-slate-50/50 hover:shadow-sm transition-shadow">
+                <div class="flex items-start justify-between">
+                  <div class="space-y-1">
+                    <p class="text-sm font-bold text-slate-900"><%= usuario.nombreTrabajador %></p>
+                    <p class="text-xs text-slate-500"><span class="font-semibold text-primary">CURP:</span> <%= usuario.curp %></p>
+                    <p class="text-xs text-slate-500"><span class="font-semibold text-primary">Clave:</span> <%= usuario.noTrabajador %></p>
+                  </div>
+                  <a href="/admin/usuario/<%= usuario.idTrabajador %>" 
+                     class="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-bold text-white hover:bg-primary-dark transition-colors">
+                    <span class="material-symbols-outlined text-sm">visibility</span>
+                    Ver
+                  </a>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+            <span class="material-symbols-outlined text-5xl mb-3">person_off</span>
+            <p class="text-sm">No hay trabajadores agregados aún</p>
+          </div>
+        <% } %>
+      </section>
 
-    <!-- ÚLTIMOS TRABAJADORES AGREGADOS -->
-    <div id="seccionUltimos" class="bg-white rounded-lg shadow-lg p-6 mb-8">
-      <h3 class="text-xl font-bold text-verdegris mb-4"> Últimos Trabajadores Agregados</h3>
-      
-      <% if (ultimosTrabajadores && ultimosTrabajadores.length > 0) { %>
-        <!-- Vista tabla (desktop) -->
-        <div class="tabla-responsive overflow-x-auto">
-          <table class="w-full">
-            <thead class="bg-gray-200">
-              <tr>
-                <th class="px-6 py-3 text-left font-semibold text-grisTexto">Nombre</th>
-                <th class="px-6 py-3 text-left font-semibold text-grisTexto">CURP</th>
-                <th class="px-6 py-3 text-left font-semibold text-grisTexto">Clave</th>
-                <th class="px-6 py-3 text-center font-semibold text-grisTexto">Acción</th>
+      <!-- RESULTADOS DE BÚSQUEDA (Oculto por defecto) -->
+      <section id="seccionBusqueda" class="hidden rounded-xl bg-white p-6 shadow-sm border border-slate-200 mb-6">
+        <div class="flex items-center justify-between bg-slate-50/50 -mx-6 -mt-6 px-6 py-4 mb-6 rounded-t-xl">
+          <div class="flex items-center gap-2">
+            <span class="material-symbols-outlined text-primary">search</span>
+            <h3 class="font-bold text-lg">Resultados de Búsqueda</h3>
+          </div>
+          <button onclick="limpiarBusqueda()" class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-200 transition-colors text-slate-500">
+            <span class="material-symbols-outlined text-lg">close</span>
+          </button>
+        </div>
+        
+        <div id="mensajeBusqueda" class="text-center text-slate-400 py-4 text-sm"></div>
+        
+        <div id="tablaBusqueda" class="tabla-responsive hidden overflow-x-auto rounded-lg border border-slate-200">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="bg-slate-50 text-left">
+                <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">Nombre</th>
+                <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">CURP</th>
+                <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">RFC</th>
+                <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">Puesto</th>
+                <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary text-center">Acciones</th>
               </tr>
             </thead>
-            <tbody>
-              <% ultimosTrabajadores.forEach((usuario, index) => { %>
-                <tr class="<%= index % 2 === 0 ? 'bg-white' : 'bg-gray-50' %> border-b hover:bg-gray-100 transition">
-                  <td class="px-6 py-4 font-semibold"><%= usuario.nombreTrabajador %></td>
-                  <td class="px-6 py-4"><%= usuario.curp %></td>
-                  <td class="px-6 py-4"><%= usuario.noTrabajador %></td>
-                  <td class="px-6 py-4 text-center">
-                    <a href="/admin/usuario/<%= usuario.idTrabajador %>" 
-                       class="bg-verdegris hover:bg-[#0b6451] text-white px-4 py-2 rounded text-sm font-semibold">
-                      Ver Detalles
-                    </a>
-                  </td>
-                </tr>
-              <% }); %>
+            <tbody id="tablaBusquedaBody" class="divide-y divide-slate-100">
             </tbody>
           </table>
         </div>
 
-        <!-- Vista tarjetas (móvil) -->
-        <div class="tarjetas-responsive grid gap-4">
-          <% ultimosTrabajadores.forEach((usuario) => { %>
-            <div class="border border-gray-200 rounded-lg shadow-sm p-4 bg-gray-50">
-              <p class="text-sm font-semibold text-grisTexto mb-1"><%= usuario.nombreTrabajador %></p>
-              <p class="text-xs text-gray-600"><span class="font-semibold">CURP:</span> <%= usuario.curp %></p>
-              <p class="text-xs text-gray-600"><span class="font-semibold">Clave:</span> <%= usuario.noTrabajador %></p>
-              <div class="mt-3 flex justify-end">
-                <a href="/admin/usuario/<%= usuario.idTrabajador %>" 
-                   class="inline-flex items-center justify-center bg-verdegris hover:bg-[#0b6451] text-white px-3 py-2 rounded text-xs font-semibold">
-                  Ver Detalles
-                </a>
-              </div>
-            </div>
-          <% }); %>
-        </div>
-      <% } else { %>
-        <p class="text-gray-500 text-center py-4">No hay trabajadores agregados aún</p>
-      <% } %>
-    </div>
+        <div id="tarjetasBusqueda" class="tarjetas-responsive hidden mt-4 grid gap-3"></div>
+      </section>
 
-    <!-- RESULTADOS DE BÚSQUEDA (Oculto por defecto) -->
-    <div id="seccionBusqueda" class="hidden bg-white rounded-lg shadow-lg p-6">
-      <div class="flex justify-between items-center mb-4">
-        <h3 class="text-xl font-bold text-verdegris">🔍 Resultados de Búsqueda</h3>
-        <button onclick="limpiarBusqueda()" class="text-gray-600 hover:text-gray-900 text-2xl">✕</button>
-      </div>
-      
-      <div id="mensajeBusqueda" class="text-center text-gray-500 py-4"></div>
-      
-      <div id="tablaBusqueda" class="tabla-responsive hidden overflow-x-auto">
-        <table class="w-full">
-          <thead class="bg-gray-200">
-            <tr>
-              <th class="px-6 py-3 text-left font-semibold text-grisTexto">Nombre</th>
-              <th class="px-6 py-3 text-left font-semibold text-grisTexto">CURP</th>
-              <th class="px-6 py-3 text-left font-semibold text-grisTexto">RFC</th>
-              <th class="px-6 py-3 text-left font-semibold text-grisTexto">Puesto</th>
-              <th class="px-6 py-3 text-center font-semibold text-grisTexto">Acciones</th>
-            </tr>
-          </thead>
-          <tbody id="tablaBusquedaBody">
-          </tbody>
-        </table>
+      <!-- Reporte de Transparencia -->
+      <div class="flex justify-end mb-6">
+        <button type="button" onclick="abrirModalReporteTransparencia()" class="flex items-center gap-2 rounded-lg bg-white border border-primary/30 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/5 transition-colors">
+          <span class="material-symbols-outlined text-sm">summarize</span>
+          Reporte de transparencia
+        </button>
       </div>
 
-      <!-- Tarjetas responsivas para resultados (móvil) -->
-      <div id="tarjetasBusqueda" class="tarjetas-responsive hidden mt-4 grid gap-4"></div>
-    </div>
+    </main>
 
-    <!-- BOTÓN FINAL: REPORTE DE TRANSPARENCIA -->
-    <div class="flex justify-end mb-8">
-      <button type="button" onclick="abrirModalReporteTransparencia()" class="flex items-center justify-center gap-2 bg-verdegris hover:bg-[#0b6451] text-white font-semibold px-6 py-2 rounded-md shadow-sm transition">
-        <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="currentColor" class="bi bi-file-earmark-text" viewBox="0 0 16 16">
-          <path d="M5 4a.5.5 0 0 1 .5-.5h2a.5.5 0 0 1 0 1h-2A.5.5 0 0 1 5 4m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 6m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 8m0 2a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 0 1h-5A.5.5 0 0 1 5 10"/>
-          <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5z"/>
-        </svg>
-        <span>Reporte de transparencia</span>
-      </button>
-    </div>
-  </main>
+    <!-- Footer -->
+    <footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
+      Poder Judicial del Estado de Hidalgo &mdash; Plataforma de Recursos Humanos
+    </footer>
+  </div>
 
   <!-- MODAL CREAR USUARIO -->
-  <div id="miModal" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="cerrarModal()">&times;</span>
-      <h2 class="text-2xl font-bold text-verdegris mb-6">Crear Nuevo Trabajador</h2>
+  <div id="miModal" class="modal-overlay">
+    <div class="modal-box">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-xl">person_add</span>
+          <h2 class="text-xl font-bold text-slate-900">Crear Nuevo Trabajador</h2>
+        </div>
+        <button onclick="cerrarModal()" class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-100 transition-colors text-slate-400">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
       
       <form id="formularioCrear" onsubmit="crearTrabajador(event)">
         <!-- PERFIL DE TRABAJADOR -->
-        <div id="camposTrabajador">
-          <div class="mb-4">
-            <label class="block mb-2 text-sm font-medium">Nombre Completo:</label>
-            <input 
-            type="text" 
-            name="nombre" 
-            required placeholder="Nombre completo"
-            oninput="this.value = this.value.toUpperCase()"
-            class="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+        <div id="camposTrabajador" class="space-y-4">
+          <div>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Nombre Completo</label>
+            <input type="text" name="nombre" required placeholder="Nombre completo"
+                   oninput="this.value = this.value.toUpperCase()"
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
 
-          <div class="mb-4">
-            <label class="block mb-2 text-sm font-medium">CURP:</label>
-            <input 
-            type="text" 
-            name="curp" 
-            required placeholder="CURP (18 caracteres)" maxlength="18"
-            oninput="this.value = this.value.toUpperCase()"
-            class="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris uppercase">
+          <div>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">CURP</label>
+            <input type="text" name="curp" required placeholder="CURP (18 caracteres)" maxlength="18"
+                   oninput="this.value = this.value.toUpperCase()"
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
 
-          <div class="mb-4">
-            <label class="block mb-2 text-sm font-medium">RFC:</label>
-            <input 
-            type="text" 
-            name="rfc" 
-            required placeholder="RFC (12 o 13 caracteres)" maxlength="13"
-            oninput="this.value = this.value.toUpperCase()"
-            class="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris uppercase">
+          <div>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">RFC</label>
+            <input type="text" name="rfc" required placeholder="RFC (12 o 13 caracteres)" maxlength="13"
+                   oninput="this.value = this.value.toUpperCase()"
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm uppercase focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
 
-          <div class="mb-6">
-            <label 
-            class="block mb-2 text-sm font-medium">Clave de Trabajador:</label>
-            <input 
-            type="number" 
-            name="claveTrabjador" 
-            required placeholder="Clave del trabajador"
-            class="w-full px-4 py-3 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+          <div>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Clave de Trabajador</label>
+            <input type="number" name="claveTrabjador" required placeholder="Clave del trabajador"
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
         </div>
 
         <!-- PERFIL DE ADMINISTRADOR -->
-        <div class="mb-4 flex items-center gap-3">
-          <input type="checkbox" id="esAdmin" name="esAdmin" class="h-4 w-4">
-          <label for="esAdmin" class="text-sm font-medium">Perfil de administrador</label>
+        <div class="mt-5 pt-5 border-t border-slate-200 flex items-center gap-3">
+          <input type="checkbox" id="esAdmin" name="esAdmin" class="h-4 w-4 rounded border-slate-300 text-primary focus:ring-primary">
+          <label for="esAdmin" class="text-sm font-medium text-slate-700">Perfil de administrador</label>
         </div>
 
-        <div id="camposAdmin" class="mb-4 space-y-4 hidden">
-          <p class="text-xs text-gray-600">Para crear un nuevo administrador, llena estos datos y confirma tu propia contraseña de administrador.</p>
+        <div id="camposAdmin" class="mt-4 space-y-4 hidden">
+          <p class="text-xs text-slate-500 bg-slate-50 rounded-lg p-3">Para crear un nuevo administrador, llena estos datos y confirma tu propia contraseña de administrador.</p>
 
           <div>
-            <label class="block mb-1 text-sm font-medium">Usuario del nuevo administrador:</label>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Usuario del nuevo administrador</label>
             <input type="text" name="usuarioAdmin" placeholder="Ej. usuario2"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
 
           <div>
-            <label class="block mb-1 text-sm font-medium">Correo del nuevo administrador:</label>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Correo del nuevo administrador</label>
             <input type="email" name="correoAdmin" placeholder="correo@ejemplo.com"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
 
           <div>
-            <label class="block mb-1 text-sm font-medium">Contraseña del nuevo administrador:</label>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Contraseña del nuevo administrador</label>
             <input type="password" name="passwordAdmin" placeholder="Contraseña para el nuevo admin"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
 
           <div>
-            <label class="block mb-1 text-sm font-medium">Tu contraseña de administrador (para confirmar):</label>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Tu contraseña de administrador (para confirmar)</label>
             <input type="password" name="adminPasswordActual" placeholder="Tu contraseña actual de admin"
-                   class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
         </div>
 
-        <div id="errorModal" class="hidden bg-red-100 border border-red-400 text-red-700 px-3 py-2 rounded mb-4 text-sm"></div>
+        <div id="errorModal" class="hidden mt-4 rounded-lg bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-sm flex items-center gap-2">
+        </div>
 
-        <div class="flex gap-3">
-          <button id="btnCrearUsuario" type="submit" class="flex-1 bg-amarilloPJ hover:bg-[#e1c27d] text-grisTexto font-semibold py-3 rounded-md transition">
+        <div class="flex gap-3 mt-6">
+          <button id="btnCrearUsuario" type="submit" class="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-2.5 rounded-lg transition-colors shadow-sm text-sm">
+            <span class="material-symbols-outlined text-sm">add_circle</span>
             Crear Trabajador
           </button>
-          <button type="button" onclick="cerrarModal()" class="flex-1 bg-gray-400 hover:bg-gray-500 text-white font-semibold py-3 rounded-md transition">
+          <button type="button" onclick="cerrarModal()" class="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-lg transition-colors text-sm">
             Cancelar
           </button>
         </div>
@@ -304,35 +354,41 @@
   </div>
 
   <!-- MODAL REPORTE DE TRANSPARENCIA -->
-  <div id="modalReporteTransparencia" class="modal">
-    <div class="modal-content">
-      <span class="close" onclick="cerrarModalReporteTransparencia()">&times;</span>
-      <h2 class="text-2xl font-bold text-verdegris mb-6">Reporte de transparencia</h2>
+  <div id="modalReporteTransparencia" class="modal-overlay">
+    <div class="modal-box">
+      <div class="flex items-center justify-between mb-6">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary text-xl">summarize</span>
+          <h2 class="text-xl font-bold text-slate-900">Reporte de transparencia</h2>
+        </div>
+        <button onclick="cerrarModalReporteTransparencia()" class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-100 transition-colors text-slate-400">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
 
       <form id="formReporteTransparencia" method="GET" action="/admin/reporte-transparencia">
-        <div class="mb-4">
-          <label for="fechaInicioTransparencia" class="block mb-2 text-sm font-medium text-verdegris">Fecha de inicio del periodo que se informa</label>
-          <input
-            type="date"
-            id="fechaInicioTransparencia"
-            name="fechaInicio"
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
+        <div class="space-y-4">
+          <div>
+            <label for="fechaInicioTransparencia" class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Fecha de inicio del periodo</label>
+            <input type="date" id="fechaInicioTransparencia" name="fechaInicio" required
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+          </div>
+
+          <div>
+            <label for="fechaFinTransparencia" class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Fecha de término del periodo</label>
+            <input type="date" id="fechaFinTransparencia" name="fechaFin" required
+                   class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+          </div>
         </div>
 
-        <div class="mb-6">
-          <label for="fechaFinTransparencia" class="block mb-2 text-sm font-medium text-verdegris">Fecha de termino del periodo que se informa</label>
-          <input
-            type="date"
-            id="fechaFinTransparencia"
-            name="fechaFin"
-            required
-            class="w-full px-4 py-2 border border-gray-300 rounded-md bg-gray-50 focus:outline-none focus:ring-2 focus:ring-verdegris">
-        </div>
-
-        <div class="flex justify-end gap-3">
-          <button type="submit" class="bg-amarilloPJ hover:bg-[#e1c27d] text-grisTexto font-semibold px-6 py-2 rounded-md transition">Generar Excel</button>
-          <button type="button" onclick="cerrarModalReporteTransparencia()" class="bg-gray-400 hover:bg-gray-500 text-white font-semibold px-6 py-2 rounded-md transition">Cancelar</button>
+        <div class="flex justify-end gap-3 mt-6">
+          <button type="submit" class="flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold px-5 py-2.5 rounded-lg transition-colors shadow-sm text-sm">
+            <span class="material-symbols-outlined text-sm">download</span>
+            Generar Excel
+          </button>
+          <button type="button" onclick="cerrarModalReporteTransparencia()" class="flex items-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold px-5 py-2.5 rounded-lg transition-colors text-sm">
+            Cancelar
+          </button>
         </div>
       </form>
     </div>
@@ -354,7 +410,9 @@
       const chk = document.getElementById("esAdmin");
       if (chk) chk.checked = false;
       const btn = document.getElementById("btnCrearUsuario");
-      if (btn) btn.textContent = "Crear Trabajador";
+      if (btn) {
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm">add_circle</span> Crear Trabajador';
+      }
     }
 
     // Crear trabajador
@@ -366,13 +424,11 @@
       const datos = { esAdmin };
 
       if (esAdmin) {
-        // Perfil de administrador: solo datos de admin
         datos.usuarioAdmin = formData.get("usuarioAdmin");
         datos.correoAdmin = formData.get("correoAdmin");
         datos.passwordAdmin = formData.get("passwordAdmin");
         datos.adminPasswordActual = formData.get("adminPasswordActual");
       } else {
-        // Perfil de trabajador normal
         datos.nombre = formData.get("nombre");
         datos.curp = formData.get("curp");
         datos.rfc = formData.get("rfc");
@@ -415,9 +471,8 @@
       if (e.target.checked) {
         cont.classList.remove("hidden");
         trab.classList.add("hidden");
-        btn.textContent = "Crear Administrador";
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm">admin_panel_settings</span> Crear Administrador';
 
-        // Deshabilitar campos de trabajador para que no entren en la validación nativa del navegador
         inputsTrab.forEach((inp) => {
           inp.disabled = true;
           inp.required = false;
@@ -425,9 +480,8 @@
       } else {
         cont.classList.add("hidden");
         trab.classList.remove("hidden");
-        btn.textContent = "Crear Trabajador";
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm">add_circle</span> Crear Trabajador';
 
-        // Rehabilitar campos de trabajador y marcar los requeridos
         inputsTrab.forEach((inp) => {
           inp.disabled = false;
         });
@@ -451,7 +505,6 @@
       const mensajeBusqueda = document.getElementById("mensajeBusqueda");
       const seccionUltimos = document.getElementById("seccionUltimos");
 
-      // Siempre mostrar la sección de resultados cuando se intenta buscar
       if (seccionBusqueda) seccionBusqueda.classList.remove("hidden");
       if (tablaBusqueda) tablaBusqueda.classList.add("hidden");
       if (contTarjetas) {
@@ -464,12 +517,10 @@
         if (mensajeBusqueda) {
           mensajeBusqueda.innerHTML = "Ingresa un nombre o CURP para buscar";
         }
-        // Volver a mostrar últimos si no se ingresó nada
         if (seccionUltimos) seccionUltimos.classList.remove("hidden");
         return;
       }
 
-      // Ocultar la sección de últimos trabajadores cuando se hace una búsqueda válida
       if (seccionUltimos) seccionUltimos.classList.add("hidden");
 
       try {
@@ -486,7 +537,7 @@
         } else {
           if (tablaBusqueda) tablaBusqueda.classList.add("hidden");
           if (mensajeBusqueda) {
-            mensajeBusqueda.innerHTML = "❌ " + (result.error || "No se encontraron resultados");
+            mensajeBusqueda.innerHTML = "No se encontraron resultados";
           }
         }
       } catch (error) {
@@ -496,7 +547,6 @@
         }
       }
 
-      // Llevar la vista hacia la sección de resultados para que el admin la vea
       if (seccionBusqueda) {
         seccionBusqueda.scrollIntoView({ behavior: "smooth", block: "start" });
       }
@@ -507,20 +557,19 @@
       tbody.innerHTML = "";
 
       const contTarjetas = document.getElementById("tarjetasBusqueda");
-      if (contTarjetas) {
-        contTarjetas.innerHTML = "";
-      }
+      if (contTarjetas) contTarjetas.innerHTML = "";
 
-      usuarios.forEach((usuario, index) => {
+      usuarios.forEach((usuario) => {
         const fila = `
-          <tr class="${index % 2 === 0 ? 'bg-white' : 'bg-gray-50'} border-b hover:bg-gray-100 transition">
-            <td class="px-6 py-4 font-semibold">${usuario.nombreTrabajador || 'N/A'}</td>
-            <td class="px-6 py-4">${usuario.curp || 'N/A'}</td>
-            <td class="px-6 py-4">${usuario.rfc || 'N/A'}</td>
-            <td class="px-6 py-4">${usuario.cargoActual || 'N/A'}</td>
-            <td class="px-6 py-4 text-center">
+          <tr class="hover:bg-slate-50/50 transition-colors">
+            <td class="px-5 py-3.5 font-semibold">${usuario.nombreTrabajador || 'N/A'}</td>
+            <td class="px-5 py-3.5 text-slate-500 font-mono text-xs">${usuario.curp || 'N/A'}</td>
+            <td class="px-5 py-3.5 text-slate-500 font-mono text-xs">${usuario.rfc || 'N/A'}</td>
+            <td class="px-5 py-3.5 text-slate-500">${usuario.cargoActual || 'N/A'}</td>
+            <td class="px-5 py-3.5 text-center">
               <a href="/admin/usuario/${usuario.idTrabajador}" 
-                 class="bg-verdegris hover:bg-[#0b6451] text-white px-4 py-2 rounded text-sm font-semibold">
+                 class="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-bold text-white hover:bg-primary-dark transition-colors shadow-sm">
+                <span class="material-symbols-outlined text-sm">visibility</span>
                 Ver Detalles
               </a>
             </td>
@@ -530,16 +579,19 @@
 
         if (contTarjetas) {
           const tarjeta = document.createElement("div");
-          tarjeta.className = "border border-gray-200 rounded-lg shadow-sm p-4 bg-gray-50";
+          tarjeta.className = "rounded-lg border border-slate-200 p-4 bg-slate-50/50 hover:shadow-sm transition-shadow";
           tarjeta.innerHTML = `
-            <p class="text-sm font-semibold text-grisTexto mb-1">${usuario.nombreTrabajador || 'N/A'}</p>
-            <p class="text-xs text-gray-600"><span class="font-semibold">CURP:</span> ${usuario.curp || 'N/A'}</p>
-            <p class="text-xs text-gray-600"><span class="font-semibold">RFC:</span> ${usuario.rfc || 'N/A'}</p>
-            <p class="text-xs text-gray-600"><span class="font-semibold">Puesto:</span> ${usuario.cargoActual || 'N/A'}</p>
-            <div class="mt-3 flex justify-end">
+            <div class="flex items-start justify-between">
+              <div class="space-y-1">
+                <p class="text-sm font-bold text-slate-900">${usuario.nombreTrabajador || 'N/A'}</p>
+                <p class="text-xs text-slate-500"><span class="font-semibold text-primary">CURP:</span> ${usuario.curp || 'N/A'}</p>
+                <p class="text-xs text-slate-500"><span class="font-semibold text-primary">RFC:</span> ${usuario.rfc || 'N/A'}</p>
+                <p class="text-xs text-slate-500"><span class="font-semibold text-primary">Puesto:</span> ${usuario.cargoActual || 'N/A'}</p>
+              </div>
               <a href="/admin/usuario/${usuario.idTrabajador}" 
-                 class="inline-flex items-center justify-center bg-verdegris hover:bg-[#0b6451] text-white px-3 py-2 rounded text-xs font-semibold">
-                Ver Detalles
+                 class="inline-flex items-center gap-1 rounded-md bg-primary px-2.5 py-1.5 text-xs font-bold text-white hover:bg-primary-dark transition-colors">
+                <span class="material-symbols-outlined text-sm">visibility</span>
+                Ver
               </a>
             </div>
           `;
@@ -549,9 +601,7 @@
 
       document.getElementById("seccionBusqueda").classList.remove("hidden");
       document.getElementById("tablaBusqueda").classList.remove("hidden");
-      if (contTarjetas) {
-        contTarjetas.classList.remove("hidden");
-      }
+      if (contTarjetas) contTarjetas.classList.remove("hidden");
       document.getElementById("mensajeBusqueda").innerHTML = `Encontrados: ${usuarios.length} resultado(s)`;
     }
 
@@ -566,7 +616,6 @@
         contTarjetas.innerHTML = "";
       }
 
-      // Al limpiar, volvemos a mostrar la lista de últimos trabajadores
       const seccionUltimos = document.getElementById("seccionUltimos");
       if (seccionUltimos) seccionUltimos.classList.remove("hidden");
     }
@@ -585,8 +634,8 @@
 
     function mostrarMensaje(texto, tipo) {
       const div = document.createElement("div");
-      div.className = `${tipo === 'success' ? 'bg-green-100 border-green-400 text-green-700' : 'bg-red-100 border-red-400 text-red-700'} border px-4 py-3 rounded mb-4`;
-      div.textContent = texto;
+      div.className = `${tipo === 'success' ? 'bg-green-50 border-green-200 text-green-700' : 'bg-red-50 border-red-200 text-red-700'} border rounded-xl px-4 py-3 mb-4 text-sm flex items-center gap-2`;
+      div.innerHTML = `<span class="material-symbols-outlined text-base">${tipo === 'success' ? 'check_circle' : 'error'}</span> ${texto}`;
       document.querySelector("main").insertBefore(div, document.querySelector("main").firstChild);
       
       setTimeout(() => div.remove(), 3000);

@@ -1,231 +1,263 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <title>Detalles del Trabajador</title>
+  <title>Detalles del Trabajador - Poder Judicial Hidalgo</title>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
   <link href="/css/styles.css" rel="stylesheet" />
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-sRIl4kxILFvY47J16cr9ZwB07vP4J8+LH7qKQnuqkuIAvNWLzeN8tE5YBujZqJLB" crossorigin="anonymous">
-  <style>
-    .action-btn {
-      min-height: 38px;
-      border-radius: 0.5rem;
-      border: 1px solid transparent;
-      box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06);
-      transition: transform 0.15s ease, box-shadow 0.15s ease, filter 0.15s ease;
-      font-size: 0.875rem;
-    }
 
-    .action-btn:hover {
-      transform: translateY(-1px);
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
-      filter: brightness(0.98);
-    }
-
-    .action-btn:active {
-      transform: translateY(0);
-    }
-
-    .action-btn:focus-visible {
-      outline: none;
-      box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.28);
-    }
-  </style>
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#4a7d59",
+            "background-light": "#f6f7f7",
+          },
+          fontFamily: {
+            display: ["Inter"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
   <script>
     function generarAcuse() {
       const noTrabajador = document.getElementById('noTrabajador').value;
-      // Abrir el mismo acuse HTML que ve el trabajador
       window.open(`/acuse/${noTrabajador}`, '_blank');
     }
 
     function verCurriculum() {
       const noTrabajador = document.getElementById('noTrabajador').value;
-      // Abrir el curriculum en vista previa HTML/PDF
       window.open(`/curriculum/${noTrabajador}`, '_blank');
     }
 
     function descargarZip() {
       const noTrabajador = document.getElementById('noTrabajador').value;
-      // Descargar el ZIP con reporte + documentos del trabajador
       window.location.href = `/reporte/${noTrabajador}`;
     }
   </script>
 </head>
-<body class="bg-gray-100 font-sans text-grisTexto flex flex-col min-h-screen">
-
-  <!-- ENCABEZADO PRINCIPAL -->
-<header class="w-full bg-verdegris text-white py-6 shadow-md">
+<body class="bg-background-light font-display text-slate-900 antialiased">
+    <!-- ENCABEZADO PRINCIPAL -->
+  <header class="w-full bg-verdegris text-white py-6 shadow-md">
     <div class="container mx-auto flex items-center justify-center">
       <img src="/images/pj-logo.png" alt="Logo PJ" class="w-24 h-auto mr-4" />
       <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-wide">
         Detalles del Trabajador 
       </h1>
       <img src="/images/consejo-logo.png" alt="Logo Consejo" class="w-24 h-auto mr-4" />
+    
     </div>
   </header>
-  <!-- CONTENIDO PRINCIPAL -->
-  <main class="flex-grow container mx-auto py-8 px-4">
+  <div class="relative flex min-h-screen flex-col">
 
-    <% if (error) { %>
-      <div class="max-w-4xl mx-auto bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded mb-4">
-        <%= error %>
-      </div>
-    <% } %>
+    <main class="mx-auto w-full max-w-7xl flex-1 px-4 py-8 md:px-10">
 
-    <% if (trabajador) { %>
-      <input type="hidden" id="idTrabajador" value="<%= trabajador.idTrabajador %>" />
-      <input type="hidden" id="noTrabajador" value="<%= trabajador.noTrabajador %>" />
+      <% if (error) { %>
+        <div class="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm">
+          <%= error %>
+        </div>
+      <% } %>
 
-      <div class="max-w-4xl mx-auto">
+      <% if (trabajador) { %>
+        <input type="hidden" id="idTrabajador" value="<%= trabajador.idTrabajador %>" />
+        <input type="hidden" id="noTrabajador" value="<%= trabajador.noTrabajador %>" />
 
-        <!-- INFORMACIÓN PRINCIPAL -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <div class="flex justify-between items-start mb-6">
-            <div>
-              <h2 class="text-9xl font-bold text-verdegris"><%= trabajador.nombreTrabajador %></h2>
+        <!-- Profile Hero Section -->
+        <div class="mb-6 rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+          <div class="flex flex-col md:flex-row md:items-center justify-between gap-6">
+            <div class="space-y-1">
+              <div class="flex items-center gap-2 text-primary font-bold text-sm uppercase tracking-wider">
+                <span class="material-symbols-outlined text-base">badge</span>
+                Expediente del Trabajador
+              </div>
+              <h2 class="text-2xl font-bold text-slate-900">
+                <%= trabajador.nombreTrabajador %>
+              </h2>
+              <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-500">
+                <span class="flex items-center gap-1.5"><strong>CURP:</strong> <%= trabajador.curp || 'N/A' %></span>
+                <span class="flex items-center gap-1.5"><strong>RFC:</strong> <%= trabajador.rfc || 'N/A' %></span>
+                <span class="flex items-center gap-1.5 text-primary font-medium">
+                  <span class="material-symbols-outlined text-sm">location_on</span>
+                  <%= trabajador.adscripcionActual || 'N/A' %>
+                </span>
+              </div>
             </div>
-          </div>
-
-          <!-- DATOS PRINCIPALES -->
-          <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-            <div>
-              <p class="text-sm text-gray-600">CURP</p>
-              <p class="text-xl font-semibold"><%= trabajador.curp || 'N/A' %></p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-600">RFC</p>
-              <p class="text-xl font-semibold"><%= trabajador.rfc || 'N/A' %></p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-600">Correo Electrónico</p>
-              <p class="text-lg font-semibold"><%= trabajador.correoElectronico || 'N/A' %></p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-600">Puesto Actual</p>
-              <p class="text-lg font-semibold"><%= trabajador.cargoActual || 'N/A' %></p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-600">Adscripción</p>
-              <p class="text-lg font-semibold"><%= trabajador.adscripcionActual || 'N/A' %></p>
-            </div>
-            <div>
-              <p class="text-sm text-gray-600">Fecha de Ingreso</p>
-              <p class="text-lg font-semibold"><%= trabajador.fechaIngreso ? new Date(trabajador.fechaIngreso).toLocaleDateString('es-MX') : 'N/A' %></p>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="generarAcuse()" class="flex items-center gap-2 rounded-md bg-slate-100 px-3 py-2 text-xs font-bold text-slate-700 border border-slate-200 hover:bg-slate-200 transition-colors">
+                <span class="material-symbols-outlined text-base">document_scanner</span>
+                Ver Acuse
+              </button>
+              <button onclick="verCurriculum()" class="flex items-center gap-2 rounded-md bg-primary px-3 py-2 text-xs font-bold text-white hover:bg-primary/90 transition-colors shadow-sm">
+                <span class="material-symbols-outlined text-base">visibility</span>
+                Ver CV
+              </button>
+              <button onclick="descargarZip()" class="flex items-center gap-2 rounded-md bg-white border border-primary/30 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/5 transition-colors">
+                <span class="material-symbols-outlined text-base">download</span>
+                Descargar Todo
+              </button>
             </div>
           </div>
         </div>
 
-        <!-- BOTONES DE ACCIONES -->
-        <div class="bg-white rounded-lg shadow-lg p-6 mb-6">
-          <h3 class="text-xl font-bold text-verdegris mb-4">Acciones</h3>
-          <div class="flex flex-nowrap items-center gap-2 overflow-x-auto pb-1">
-            <button onclick="generarAcuse()" class="action-btn inline-flex items-center justify-center gap-x-2 bg-verdegris text-white font-semibold px-3 py-2 whitespace-nowrap">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark-medical flex-shrink-0" viewBox="0 0 16 16">
-                <path d="M7.5 5.5a.5.5 0 0 0-1 0v.634l-.549-.317a.5.5 0 1 0-.5.866L6 7l-.549.317a.5.5 0 1 0 .5.866l.549-.317V8.5a.5.5 0 1 0 1 0v-.634l.549.317a.5.5 0 1 0 .5-.866L8 7l.549-.317a.5.5 0 1 0-.5-.866l-.549.317zm-2 4.5a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zm0 2a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1z"/>
-                <path d="M14 14V4.5L9.5 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2M9.5 3A1.5 1.5 0 0 0 11 4.5h2V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
-              </svg>
-              
-              <span class="leading-none whitespace-nowrap">Generar Acuse</span>
-            </button>
+        <!-- Content Grid -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
 
-            <button onclick="verCurriculum()" class="action-btn inline-flex items-center justify-center gap-x-2 bg-blue-600 text-white font-semibold px-3 py-2 whitespace-nowrap">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark-text flex-shrink-0" viewBox="0 0 16 16">
-                <path d="M5.5 7a.5.5 0 0 0 0 1h5a.5.5 0 0 0 0-1zM5 9.5A.5.5 0 0 1 5.5 9h5a.5.5 0 0 1 0 1h-5a.5.5 0 0 1-.5-.5m0 2A.5.5 0 0 1 5.5 11h2a.5.5 0 0 1 0 1h-2a.5.5 0 0 1-.5-.5"/>
-                <path d="M14 4.5V14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V2a2 2 0 0 1 2-2h5.5zm-3 0A1.5 1.5 0 0 1 9.5 3V1H4a1 1 0 0 0-1 1v12a1 1 0 0 0 1 1h8a1 1 0 0 0 1-1V4.5z"/>
-              </svg>
-              <span class="leading-none whitespace-nowrap">Ver Curriculum</span>
-            </button>
+          <!-- Left Column: Personal & Family -->
+          <div class="space-y-8">
 
-            <button onclick="descargarZip()" class="action-btn inline-flex items-center justify-center gap-x-2 bg-amarilloPJ text-grisTexto font-semibold px-3 py-2 whitespace-nowrap border border-[#e2c77f]">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" fill="currentColor" class="bi bi-file-earmark-zip flex-shrink-0" viewBox="0 0 16 16">
-                <path d="M6.5 7.5V8h1v-.5z"/>
-                <path d="M6 8.5V9h1v-.5z"/>
-                <path d="M6.5 9.5V10h1v-.5z"/>
-                <path d="M9.293 0H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2V4.707a1 1 0 0 0-.293-.707L10 0.293A1 1 0 0 0 9.293 0M9.5 3a1.5 1.5 0 0 0 1.5 1.5H13V14a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1V2a1 1 0 0 1 1-1h5.5z"/>
-                <path d="M6 5h1v1H6zM7 6h1v1H7zM6 7h1v1H6zM7 8h1v1H7zM6 9h1v1H6z"/>
-              </svg>
+            <!-- Datos Personales -->
+            <section class="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+              <div class="mb-5 flex items-center gap-2 bg-slate-50/50 -mx-6 -mt-6 px-6 py-4 mb-6 rounded-t-xl">
+                <span class="material-symbols-outlined text-primary">person</span>
+                <h3 class="font-bold text-lg">Datos Personales</h3>
+              </div>
+              <div class="space-y-4">
+                <div class="grid grid-cols-2 gap-4">
+                  <div class="col-span-2">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-primary">Correo Electrónico</p>
+                    <p class="text-sm font-semibold"><%= trabajador.correoElectronico || 'N/A' %></p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-primary">Fecha de Ingreso</p>
+                    <p class="text-sm font-semibold"><%= trabajador.fechaIngreso ? new Date(trabajador.fechaIngreso).toLocaleDateString('es-MX') : 'N/A' %></p>
+                  </div>
+                  <div>
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-primary">Puesto Actual</p>
+                    <p class="text-sm font-semibold"><%= trabajador.cargoActual || 'N/A' %></p>
+                  </div>
+                  <div class="col-span-2">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-primary">Adscripción</p>
+                    <p class="text-sm font-semibold"><%= trabajador.adscripcionActual || 'N/A' %></p>
+                  </div>
+                </div>
+              </div>
+            </section>
 
-              <span class="leading-none whitespace-nowrap">Descargar ZIP</span>
-            </button>
+            <!-- Información Familiar (Hijos) -->
+            <section class="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+              <div class="mb-5 flex items-center gap-2 bg-slate-50/50 -mx-6 -mt-6 px-6 py-4 mb-6 rounded-t-xl">
+                <span class="material-symbols-outlined text-primary">family_restroom</span>
+                <h3 class="font-bold text-lg">Información Familiar</h3>
+              </div>
+              <div class="space-y-3">
+                <p class="text-[10px] font-bold uppercase tracking-widest text-primary mb-3">Hijos Registrados</p>
+                <% if (hijos && hijos.length > 0) { %>
+                  <div class="border-t border-slate-100">
+                    <% hijos.forEach(hijo => { %>
+                      <div class="flex items-center justify-between py-2 border-b border-slate-50">
+                        <span class="text-sm font-medium"><%= hijo.inicialesHijo %></span>
+                        <span class="text-[10px] font-bold px-2 py-0.5 bg-blue-50 text-blue-700 rounded"><%= hijo.sexoHijo %></span>
+                      </div>
+                    <% }); %>
+                  </div>
+                <% } else { %>
+                  <p class="text-slate-400 text-sm">Sin información</p>
+                <% } %>
+              </div>
+            </section>
+
+          </div>
+
+          <!-- Right Column: Education & Experience -->
+          <div class="lg:col-span-2 space-y-8">
+
+            <!-- Escolaridad Timeline -->
+            <section class="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+              <div class="mb-6 flex items-center gap-2 bg-slate-50/50 -mx-6 -mt-6 px-6 py-4 mb-6 rounded-t-xl">
+                <span class="material-symbols-outlined text-primary">school</span>
+                <h3 class="font-bold text-lg">Escolaridad</h3>
+              </div>
+              <% if (escolaridad && escolaridad.length > 0) { %>
+                <div class="relative space-y-8 pl-8 before:absolute before:left-[11px] before:top-2 before:h-[calc(100%-16px)] before:w-0.5 before:bg-slate-200">
+                  <% escolaridad.forEach(esc => { %>
+                    <div class="relative">
+                      <div class="absolute -left-[27px] top-1.5 h-4 w-4 rounded-full border-2 border-primary bg-white"></div>
+                      <div class="flex flex-col md:flex-row md:items-center justify-between gap-2">
+                        <div>
+                          <h4 class="font-bold text-slate-900"><%= esc.nombreTitulo || 'Sin Título' %></h4>
+                          <p class="text-sm text-slate-500"><%= esc.institucion || 'Sin Institución' %></p>
+                          <% if (esc.fechaObtencion) { %>
+                            <p class="text-xs text-slate-400 mt-0.5"><%= new Date(esc.fechaObtencion).toLocaleDateString('es-MX') %></p>
+                          <% } %>
+                        </div>
+                        <span class="inline-flex shrink-0 items-center rounded-full bg-primary/10 px-3 py-1 text-xs font-bold text-primary">
+                          <%= esc.nivelAcademico || 'N/A' %>
+                        </span>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <p class="text-slate-400 text-sm">Sin información</p>
+              <% } %>
+            </section>
+
+            <!-- Experiencia PJ -->
+            <section class="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+              <div class="mb-5 flex items-center gap-2 bg-slate-50/50 -mx-6 -mt-6 px-6 py-4 mb-4 rounded-t-xl">
+                <span class="material-symbols-outlined text-primary">work_history</span>
+                <h3 class="font-bold text-lg">Experiencia en Poder Judicial</h3>
+              </div>
+              <% if (experienciaPJ && experienciaPJ.length > 0) { %>
+                <div class="divide-y divide-slate-100">
+                  <% experienciaPJ.forEach(exp => { %>
+                    <div class="py-4 first:pt-0 last:pb-0">
+                      <div class="flex items-start gap-4">
+                        <div class="flex h-12 w-12 shrink-0 items-center justify-center rounded-lg bg-slate-50 text-primary">
+                          <span class="material-symbols-outlined">work</span>
+                        </div>
+                        <div>
+                          <h4 class="font-bold"><%= exp.cargo || 'N/A' %></h4>
+                          <p class="text-sm text-slate-500"><%= exp.adscripcion || 'N/A' %></p>
+                        </div>
+                      </div>
+                    </div>
+                  <% }); %>
+                </div>
+              <% } else { %>
+                <p class="text-slate-400 text-sm">Sin información</p>
+              <% } %>
+            </section>
+
           </div>
         </div>
 
-        <!-- INFORMACIÓN ADICIONAL -->
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
-
-          <!-- HIJOS -->
-          <div class="bg-white rounded-lg shadow-lg p-6">
-            <h1 class="text-3xl font-bold text-verdegris mb-4">Información Adicional</h1>
-
-            <h3 class="text-lg font-bold text-verdegris mb-4">Hijos</h3>
-            <% if (hijos && hijos.length > 0) { %>
-              <ul class="space-y-2">
-                <% hijos.forEach(hijo => { %>
-                  <li class="text-sm border-b pb-2">
-                    <strong><%= hijo.inicialesHijo %>.</strong> - <%= hijo.sexoHijo %>
-                  </li>
-                <% }); %>
-              </ul>
-            <% } else { %>
-              <p class="text-gray-500 text-sm">Sin información</p>
-            <% } %>
-          </div>
-
-          <!-- ESCOLARIDAD -->
-          <div class="bg-white rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-bold text-verdegris mb-4">Escolaridad</h3>
-            <% if (escolaridad && escolaridad.length > 0) { %>
-              <ul class="space-y-3">
-                <% escolaridad.forEach(esc => { %>
-                  <li class="text-sm border-b pb-2">
-                    <div class="font-semibold text-verdegris"><%= esc.nivelAcademico || 'N/A' %></div>
-                    <div class="text-gray-700"><%= esc.nombreTitulo || 'Sin Título' %></div>
-                    <% if (esc.institucion) { %>
-                      <div class="text-gray-600 text-xs"><%= esc.institucion %></div>
-                    <% } %>
-                    <% if (esc.fechaObtencion) { %>
-                      <div class="text-gray-500 text-xs"><%= new Date(esc.fechaObtencion).toLocaleDateString('es-MX') %></div>
-                    <% } %>
-                  </li>
-                <% }); %>
-              </ul>
-            <% } else { %>
-              <p class="text-gray-500 text-sm">Sin información</p>
-            <% } %>
-          </div>
-
-          <!-- EXPERIENCIA EN PJ -->
-          <div class="bg-white rounded-lg shadow-lg p-6">
-            <h3 class="text-lg font-bold text-verdegris mb-4">Experiencia PJ</h3>
-            <% if (experienciaPJ && experienciaPJ.length > 0) { %>
-              <ul class="space-y-2">
-                <% experienciaPJ.forEach(exp => { %>
-                  <li class="text-sm border-b pb-2">
-                    <strong><%= exp.cargo || 'N/A' %></strong>
-                    <br/>
-                    <span class="text-gray-600"><%= exp.adscripcion || 'N/A' %></span>
-                  </li>
-                <% }); %>
-              </ul>
-            <% } else { %>
-              <p class="text-gray-500 text-sm">Sin información</p>
-            <% } %>
-          </div>
-
+      <% } else { %>
+        <div class="text-center py-16">
+          <p class="text-2xl text-slate-400">Trabajador no encontrado</p>
+          <a href="/admin/dashboard" class="mt-4 inline-block bg-primary hover:bg-primary/90 text-white font-semibold px-6 py-3 rounded-lg transition-colors">
+            Volver a dashboard
+          </a>
         </div>
+      <% } %>
 
+    </main>
+
+    <!-- Footer -->
+    <footer class="mt-12 border-t border-slate-200 bg-white py-8 px-4 md:px-10">
+      <div class="mx-auto max-w-7xl flex flex-col md:flex-row justify-between items-center gap-4 text-slate-500 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">verified</span>
+          <span>Poder Judicial del Estado de Hidalgo</span>
+        </div>
+        <div class="flex gap-6">
+          <a class="hover:text-primary transition-colors" href="/admin/dashboard">Dashboard</a>
+          <p>&copy; 2026 PJH</p>
+        </div>
       </div>
+    </footer>
 
-    <% } else { %>
-      <div class="max-w-4xl mx-auto text-center py-16">
-        <p class="text-2xl text-gray-500">Trabajador no encontrado</p>
-        <a href="/admin/dashboard" class="mt-4 inline-block bg-verdegris hover:bg-[#0b6451] text-white font-semibold px-6 py-3 rounded">
-          Volver a dashboard
-        </a>
-      </div>
-    <% } %>
-
-  </main>
-
+  </div>
 </body>
 </html>
