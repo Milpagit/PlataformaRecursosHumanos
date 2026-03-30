@@ -52,6 +52,37 @@
         />
       </div>
 
+      <div>
+        <label class="block mb-1 font-medium text-gray-700"
+          >Tipo de Trabajador</label
+        >
+        <div class="flex gap-8 mt-2">
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              id="tipoConfianza"
+              name="tipoTrabajador"
+              value="C"
+              required
+              class="w-4 h-4"
+              style="accent-color: #738f81"
+            />
+            <span>Confianza</span>
+          </label>
+          <label class="flex items-center gap-2 cursor-pointer">
+            <input
+              type="radio"
+              id="tipoHonorario"
+              name="tipoTrabajador"
+              value="H"
+              class="w-4 h-4"
+              style="accent-color: #738f81"
+            />
+            <span>Honorario</span>
+          </label>
+        </div>
+      </div>
+
       <button
         type="submit"
         class="bg-verdegris hover:opacity-90 text-white py-3 rounded-md text-lg font-semibold transition"
@@ -84,19 +115,30 @@
         const noTrabajador = document
           .getElementById("trabajadorInput")
           .value.trim();
+        const tipoRadio = document.querySelector(
+          'input[name="tipoTrabajador"]:checked',
+        );
+        const tipoTrabajador = tipoRadio ? tipoRadio.value : "";
+
         if (!noTrabajador) {
           alert("Ingresa un número de trabajador válido.");
           return;
         }
+        if (!tipoTrabajador) {
+          alert("Selecciona el tipo de trabajador (Confianza u Honorario).");
+          return;
+        }
 
         try {
-          const response = await fetch(`/existe/${noTrabajador}`);
+          const response = await fetch(
+            `/existe/${noTrabajador}/${tipoTrabajador}`,
+          );
           const data = await response.json();
 
           if (data.existe) {
-            window.location.href = `/reporte/${noTrabajador}`;
+            window.location.href = `/reporte/${noTrabajador}/${tipoTrabajador}`;
           } else {
-            alert("No se encontró ningún trabajador con ese número.");
+            alert("No se encontró ningún trabajador con ese número y tipo.");
           }
         } catch (error) {
           alert("Error al verificar el número. Intenta más tarde.");

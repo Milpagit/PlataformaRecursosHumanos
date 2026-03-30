@@ -133,12 +133,12 @@ app.post("/guardar", async (req, res) => {
  */
 
 // Generar Acuse (Ruta que te daba error 500)
-app.get("/acuse/:noTrabajador", async (req, res) => {
-  const { noTrabajador } = req.params;
+app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
+  const { noTrabajador, tipoTrabajador } = req.params;
   try {
     const [rows] = await db.query(
-      "SELECT * FROM trabajador WHERE noTrabajador = ?",
-      [noTrabajador],
+      "SELECT * FROM trabajador WHERE noTrabajador = ? AND tipoTrabajador = ?",
+      [noTrabajador, tipoTrabajador],
     );
 
     if (rows && rows.length > 0) {
@@ -193,12 +193,12 @@ app.get("/buscador", (req, res) => {
   res.render("buscador");
 });
 
-// Verificar existencia para el buscador [cite: 406, 407]
-app.get("/existe/:noTrabajador", async (req, res) => {
+// Verificar existencia para el buscador
+app.get("/existe/:noTrabajador/:tipoTrabajador", async (req, res) => {
   try {
     const [rows] = await db.query(
-      "SELECT 1 FROM trabajador WHERE noTrabajador = ?",
-      [req.params.noTrabajador],
+      "SELECT 1 FROM trabajador WHERE noTrabajador = ? AND tipoTrabajador = ?",
+      [req.params.noTrabajador, req.params.tipoTrabajador],
     );
     res.json({ existe: rows.length > 0 });
   } catch (error) {

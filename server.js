@@ -76,8 +76,8 @@ app.use(
   }),
 );
 
-app.get("/acuse/:noTrabajador", async (req, res) => {
-  const { noTrabajador } = req.params;
+app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
+  const { noTrabajador, tipoTrabajador } = req.params;
 
   try {
     // Seguridad: solo el propio trabajador logueado o un administrador pueden ver el acuse
@@ -93,14 +93,19 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
       // El trabajador solo puede ver su propio acuse (normalizamos a string para evitar problemas de tipo)
       const noTrabajadorSesion = String(usuarioSesion.noTrabajador);
       const noTrabajadorParam = String(noTrabajador);
+      const tipoSesion = String(usuarioSesion.tipoTrabajador || "");
+      const tipoParam = String(tipoTrabajador || "");
 
-      if (noTrabajadorSesion !== noTrabajadorParam) {
+      if (
+        noTrabajadorSesion !== noTrabajadorParam ||
+        tipoSesion !== tipoParam
+      ) {
         return res.status(403).send("No tienes permiso para ver este acuse.");
       }
     }
     const [rows] = await db.query(
-      "SELECT * FROM trabajador WHERE noTrabajador = ?",
-      [noTrabajador],
+      "SELECT * FROM trabajador WHERE noTrabajador = ? AND tipoTrabajador = ?",
+      [noTrabajador, tipoTrabajador],
     );
 
     if (!rows || rows.length === 0) {
@@ -161,8 +166,8 @@ app.get("/acuse/:noTrabajador", async (req, res) => {
   }
 });
 
-app.get("/curriculum/:noTrabajador", async (req, res) => {
-  const { noTrabajador } = req.params;
+app.get("/curriculum/:noTrabajador/:tipoTrabajador", async (req, res) => {
+  const { noTrabajador, tipoTrabajador } = req.params;
 
   try {
     // Seguridad: solo el propio trabajador logueado o un administrador pueden ver el curriculum
@@ -176,8 +181,13 @@ app.get("/curriculum/:noTrabajador", async (req, res) => {
 
       const noTrabajadorSesion = String(usuarioSesion.noTrabajador);
       const noTrabajadorParam = String(noTrabajador);
+      const tipoSesion = String(usuarioSesion.tipoTrabajador || "");
+      const tipoParam = String(tipoTrabajador || "");
 
-      if (noTrabajadorSesion !== noTrabajadorParam) {
+      if (
+        noTrabajadorSesion !== noTrabajadorParam ||
+        tipoSesion !== tipoParam
+      ) {
         return res
           .status(403)
           .send("No tienes permiso para ver este curriculum.");
@@ -185,7 +195,7 @@ app.get("/curriculum/:noTrabajador", async (req, res) => {
     }
 
     return res.redirect(
-      `/reporte/${encodeURIComponent(noTrabajador)}?preview=1`,
+      `/reporte/${encodeURIComponent(noTrabajador)}/${encodeURIComponent(tipoTrabajador)}?preview=1`,
     );
   } catch (error) {
     console.error("Error en /curriculum:", error);
@@ -196,20 +206,23 @@ app.get("/curriculum/:noTrabajador", async (req, res) => {
 });
 
 // Enlace publico para visualizar curriculum sin autenticacion
-app.get("/curriculum_transparencia/:noTrabajador", async (req, res) => {
-  const { noTrabajador } = req.params;
+app.get(
+  "/curriculum_transparencia/:noTrabajador/:tipoTrabajador",
+  async (req, res) => {
+    const { noTrabajador, tipoTrabajador } = req.params;
 
-  try {
-    return res.redirect(
-      `/reporte/${encodeURIComponent(noTrabajador)}?preview=1`,
-    );
-  } catch (error) {
-    console.error("Error en /curriculum_transparencia:", error);
-    return res
-      .status(500)
-      .send("Error interno al generar el curriculum: " + error.message);
-  }
-});
+    try {
+      return res.redirect(
+        `/reporte/${encodeURIComponent(noTrabajador)}/${encodeURIComponent(tipoTrabajador)}?preview=1`,
+      );
+    } catch (error) {
+      console.error("Error en /curriculum_transparencia:", error);
+      return res
+        .status(500)
+        .send("Error interno al generar el curriculum: " + error.message);
+    }
+  },
+);
 app.get("/login", (req, res) => {
   res.render("login", { error: null });
 });
@@ -313,13 +326,13 @@ app.get("/buscador", (req, res) => {
   res.render("buscador"); // si usas EJS
 });
 
-app.get("/existe/:noTrabajador", async (req, res) => {
-  const noTrabajador = req.params.noTrabajador;
+app.get("/existe/:noTrabajador/:tipoTrabajador", async (req, res) => {
+  const { noTrabajador, tipoTrabajador } = req.params;
 
   try {
     const [result] = await db.query(
-      "SELECT COUNT(*) AS total FROM trabajador WHERE noTrabajador = ?",
-      [noTrabajador],
+      "SELECT COUNT(*) AS total FROM trabajador WHERE noTrabajador = ? AND tipoTrabajador = ?",
+      [noTrabajador, tipoTrabajador],
     );
     const existe = result[0].total > 0;
     res.json({ existe });
@@ -1051,7 +1064,8 @@ app.post(
 
       const idTrab = idTrabajador;
       req.session.idTrabajador = idTrab;
-      res.redirect(`/acuse/${noTrabajador}`);
+      const tipoTrabajadorSesion = req.session.user?.tipoTrabajador || "C";
+      res.redirect(`/acuse/${noTrabajador}/${tipoTrabajadorSesion}`);
     } catch (err) {
       console.error("❌ Error al guardar:", err);
       res.send("Error al guardar");
@@ -1112,16 +1126,16 @@ app.post("/login", async (req, res) => {
   }
 });
 
-app.get("/reporte/:noTrabajador", async (req, res) => {
-  const noTrabajador = req.params.noTrabajador;
+app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
+  const { noTrabajador, tipoTrabajador } = req.params;
   const previewOnly = req.query.preview === "1";
 
   const rutaPlantilla = "./plantillas/curriculum.xlsx";
 
   try {
     const [trabajadorRows] = await db.query(
-      "SELECT * FROM trabajador WHERE noTrabajador = ?",
-      [noTrabajador],
+      "SELECT * FROM trabajador WHERE noTrabajador = ? AND tipoTrabajador = ?",
+      [noTrabajador, tipoTrabajador],
     );
     const trabajador = trabajadorRows[0];
     const idTrabajador = trabajador.idTrabajador;
@@ -1161,7 +1175,7 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
     worksheet.getCell("B13").value = trabajador.carreraTecnicaComercial;
 
     // Hipervínculo al curriculum
-    const curriculumUrl = `${BASE_URL}/curriculum/${trabajador.noTrabajador}`;
+    const curriculumUrl = `${BASE_URL}/curriculum/${trabajador.noTrabajador}/${trabajador.tipoTrabajador}`;
     // Busca la columna correspondiente, por ejemplo C20 (ajusta según plantilla)
     // Si la columna es variable, busca por nombre o posición
     worksheet.getCell("C20").value = {
@@ -1985,18 +1999,23 @@ app.get("/reporte/:noTrabajador", async (req, res) => {
 
     const { exec } = require("child_process");
 
-    const rutaExcel = `./reportes/${trabajador.nombreTrabajador}_temp.xlsx`;
-    const rutaPDF = `./reportes/${trabajador.nombreTrabajador}_CURRICULUM_TRANSPARENCIA.pdf`;
-    const rutaHTML = `./reportes/${trabajador.nombreTrabajador}_temp.html`;
+    const _uid = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const rutaExcel = `./reportes/${trabajador.nombreTrabajador}_${_uid}_temp.xlsx`;
+    const rutaPDF = `./reportes/${trabajador.nombreTrabajador}_${_uid}_CURRICULUM_TRANSPARENCIA.pdf`;
+    const rutaHTML = `./reportes/${trabajador.nombreTrabajador}_${_uid}_temp.html`;
     // 1. Guardar Excel temporal
     await workbook2.xlsx.writeFile(rutaExcel);
 
-    excelToHtmlWithStyles(rutaExcel, rutaHTML);
+    await excelToHtmlWithStyles(rutaExcel, rutaHTML);
 
-    const browser = await puppeteer.launch();
+    const browser = await puppeteer.launch({
+      headless: "new",
+      args: ["--no-sandbox", "--disable-setuid-sandbox"],
+    });
     const page = await browser.newPage();
-    // Carga el HTML recién creado (asegúrate de resolver la ruta absoluta)
-    await page.goto(`file://${path.resolve(rutaHTML)}`, {
+    // Carga el HTML recién creado — convertir ruta Windows a URL file:/// válida
+    const fileUrlHTML = `file:///${path.resolve(rutaHTML).replace(/\\/g, "/")}`;
+    await page.goto(fileUrlHTML, {
       waitUntil: "networkidle0",
     });
     await page.pdf({
@@ -2209,13 +2228,13 @@ app.get("/generar-reportes-todos", async (req, res) => {
         const rutaPlantilla = "./plantillas/curriculum.xlsx";
 
         const [trabajadorRows] = await db.query(
-          "SELECT * FROM trabajador WHERE noTrabajador = ?",
-          [noTrabajador],
+          "SELECT * FROM trabajador WHERE idTrabajador = ?",
+          [trabajador.idTrabajador],
         );
-        const trabajador = trabajadorRows[0];
+        const trabajadorData = trabajadorRows[0];
         const idTrabajador = trabajador.idTrabajador;
 
-        if (!trabajador) {
+        if (!trabajadorData) {
           return res.status(404).send("No se encontró el trabajador");
         }
 
@@ -3194,18 +3213,23 @@ app.get("/generar-reportes-todos", async (req, res) => {
 
         const { exec } = require("child_process");
 
-        const rutaExcel = `./reportes/${trabajador.nombreTrabajador}_temp.xlsx`;
-        const rutaPDF = `./reportes/${trabajador.nombreTrabajador}_CURRICULUM_TRANSPARENCIA.pdf`;
-        const rutaHTML = `./reportes/${trabajador.nombreTrabajador}_temp.html`;
+        const _uid = `${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+        const rutaExcel = `./reportes/${trabajador.nombreTrabajador}_${_uid}_temp.xlsx`;
+        const rutaPDF = `./reportes/${trabajador.nombreTrabajador}_${_uid}_CURRICULUM_TRANSPARENCIA.pdf`;
+        const rutaHTML = `./reportes/${trabajador.nombreTrabajador}_${_uid}_temp.html`;
         // 1. Guardar Excel temporal
         await workbook2.xlsx.writeFile(rutaExcel);
 
-        excelToHtmlWithStyles(rutaExcel, rutaHTML);
+        await excelToHtmlWithStyles(rutaExcel, rutaHTML);
 
-        const browser = await puppeteer.launch();
+        const browser = await puppeteer.launch({
+          headless: "new",
+          args: ["--no-sandbox", "--disable-setuid-sandbox"],
+        });
         const page = await browser.newPage();
-        // Carga el HTML recién creado (asegúrate de resolver la ruta absoluta)
-        await page.goto(`file://${path.resolve(rutaHTML)}`, {
+        // Carga el HTML recién creado — convertir ruta Windows a URL file:/// válida
+        const fileUrlHTML = `file:///${path.resolve(rutaHTML).replace(/\\/g, "/")}`;
+        await page.goto(fileUrlHTML, {
           waitUntil: "networkidle0",
         });
         await page.pdf({
@@ -3448,11 +3472,26 @@ app.post("/admin/crear-usuario", verificarAdmin, async (req, res) => {
     const rfcLimpio = (rfc || "").trim().toUpperCase();
     const curpLimpio = (curp || "").trim().toUpperCase();
     const claveLimpia = (claveTrabjador || "").toString().trim();
+    const tipoLimpio = (req.body.tipoTrabajador || "").trim().toUpperCase();
 
-    if (!nombreLimpio || !rfcLimpio || !curpLimpio || !claveLimpia) {
+    if (
+      !nombreLimpio ||
+      !rfcLimpio ||
+      !curpLimpio ||
+      !claveLimpia ||
+      !tipoLimpio
+    ) {
       return res.status(400).json({
         success: false,
-        error: "Todos los campos son obligatorios",
+        error:
+          "Todos los campos son obligatorios, incluyendo el tipo de trabajador (C u H)",
+      });
+    }
+
+    if (tipoLimpio !== "C" && tipoLimpio !== "H") {
+      return res.status(400).json({
+        success: false,
+        error: "El tipo de trabajador debe ser C (Confianza) o H (Honorario)",
       });
     }
 
@@ -3477,8 +3516,8 @@ app.post("/admin/crear-usuario", verificarAdmin, async (req, res) => {
     }
 
     await db.query(
-      "INSERT INTO trabajador (nombreTrabajador, rfc, curp, noTrabajador) VALUES (?, ?, ?, ?)",
-      [nombreLimpio, rfcLimpio, curpLimpio, claveLimpia],
+      "INSERT INTO trabajador (nombreTrabajador, rfc, curp, noTrabajador, tipoTrabajador) VALUES (?, ?, ?, ?, ?)",
+      [nombreLimpio, rfcLimpio, curpLimpio, claveLimpia, tipoLimpio],
     );
 
     return res.json({
@@ -3588,7 +3627,7 @@ app.post("/admin/generar-acuse", verificarAdmin, async (req, res) => {
 
   try {
     const [trabajador] = await db.query(
-      "SELECT noTrabajador FROM trabajador WHERE idTrabajador = ?",
+      "SELECT noTrabajador, tipoTrabajador FROM trabajador WHERE idTrabajador = ?",
       [idTrabajador],
     );
 
@@ -3596,11 +3635,123 @@ app.post("/admin/generar-acuse", verificarAdmin, async (req, res) => {
       return res.status(404).json({ error: "Trabajador no encontrado" });
     }
 
-    const { noTrabajador } = trabajador[0];
-    return res.redirect(`/acuse/${noTrabajador}`);
+    const { noTrabajador, tipoTrabajador } = trabajador[0];
+    return res.redirect(`/acuse/${noTrabajador}/${tipoTrabajador}`);
   } catch (error) {
     console.error("Error al redirigir al acuse desde admin:", error);
     return res.status(500).json({ error: "Error al generar el acuse" });
+  }
+});
+
+// POST - Editar datos críticos del trabajador (noTrabajador, tipoTrabajador)
+app.post("/admin/editar-datos-criticos", verificarAdmin, async (req, res) => {
+  const { idTrabajador, nuevoNoTrabajador, nuevoTipo, password } = req.body;
+
+  if (!idTrabajador || !nuevoNoTrabajador || !nuevoTipo || !password) {
+    return res
+      .status(400)
+      .json({ success: false, error: "Todos los campos son obligatorios" });
+  }
+
+  if (nuevoTipo !== "C" && nuevoTipo !== "H") {
+    return res
+      .status(400)
+      .json({ success: false, error: "Tipo de trabajador inválido" });
+  }
+
+  try {
+    // Validar contraseña del administrador en sesión
+    const idAdmin = req.session.admin?.idAdmin;
+    const [adminRows] = await db.query(
+      "SELECT * FROM administrador WHERE idAdmin = ? AND password = ? AND activo = 1",
+      [idAdmin, password],
+    );
+    if (!adminRows || adminRows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: "Contraseña de administrador incorrecta",
+      });
+    }
+
+    // Verificar que el nuevo número+tipo no exista en otro trabajador
+    const [duplicado] = await db.query(
+      "SELECT idTrabajador FROM trabajador WHERE noTrabajador = ? AND tipoTrabajador = ? AND idTrabajador <> ?",
+      [nuevoNoTrabajador, nuevoTipo, idTrabajador],
+    );
+    if (duplicado && duplicado.length > 0) {
+      return res.status(400).json({
+        success: false,
+        error: `Ya existe un trabajador con el número ${nuevoNoTrabajador} y tipo ${nuevoTipo === "C" ? "Confianza" : "Honorario"}`,
+      });
+    }
+
+    await db.query(
+      "UPDATE trabajador SET noTrabajador = ?, tipoTrabajador = ? WHERE idTrabajador = ?",
+      [nuevoNoTrabajador, nuevoTipo, idTrabajador],
+    );
+
+    return res.json({
+      success: true,
+      mensaje: "Datos actualizados correctamente",
+    });
+  } catch (error) {
+    console.error("Error al editar datos críticos:", error);
+    return res
+      .status(500)
+      .json({ success: false, error: "Error interno al actualizar los datos" });
+  }
+});
+
+// POST - Eliminar trabajador (con confirmación de contraseña)
+app.post("/admin/eliminar-trabajador", verificarAdmin, async (req, res) => {
+  const { idTrabajador, password } = req.body;
+
+  if (!idTrabajador || !password) {
+    return res
+      .status(400)
+      .json({ success: false, error: "ID y contraseña son requeridos" });
+  }
+
+  try {
+    // Validar contraseña del administrador en sesión
+    const idAdmin = req.session.admin?.idAdmin;
+    const [adminRows] = await db.query(
+      "SELECT * FROM administrador WHERE idAdmin = ? AND password = ? AND activo = 1",
+      [idAdmin, password],
+    );
+    if (!adminRows || adminRows.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: "Contraseña de administrador incorrecta",
+      });
+    }
+
+    // Eliminar registros relacionados antes del trabajador principal
+    await db.query("DELETE FROM hijo WHERE idTrabajador = ?", [idTrabajador]);
+    await db.query("DELETE FROM escolaridad WHERE idTrabajador = ?", [
+      idTrabajador,
+    ]);
+    await db.query("DELETE FROM experienciapj WHERE idTrabajador = ?", [
+      idTrabajador,
+    ]);
+    await db.query(
+      "DELETE FROM actualizacionprofesional WHERE idTrabajador = ?",
+      [idTrabajador],
+    );
+    await db.query("DELETE FROM trabajador WHERE idTrabajador = ?", [
+      idTrabajador,
+    ]);
+
+    return res.json({
+      success: true,
+      mensaje: "Trabajador eliminado correctamente",
+    });
+  } catch (error) {
+    console.error("Error al eliminar trabajador:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error interno al eliminar el trabajador",
+    });
   }
 });
 
@@ -3631,6 +3782,7 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
       SELECT
         t.idTrabajador,
         t.noTrabajador,
+        t.tipoTrabajador,
         t.nombreTrabajador,
         t.cargoActual,
         t.sexoTrabajador,
@@ -3715,9 +3867,11 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
       fila.push(aplicarSexo ? normalizarSexo(t.sexoTrabajador) : "");
 
       const noTrabajador = t.noTrabajador || "";
-      const hipervinculo = noTrabajador
-        ? `${baseUrlTrayectoria}${noTrabajador}`
-        : "";
+      const tipoTrabajadorRep = t.tipoTrabajador || "";
+      const hipervinculo =
+        noTrabajador && tipoTrabajadorRep
+          ? `${baseUrlTrayectoria}${noTrabajador}/${tipoTrabajadorRep}`
+          : "";
 
       fila.push(
         t.adscripcionActual || "",
@@ -3848,8 +4002,9 @@ async function convertExcelToPdf(excelPath, pdfPath) {
   });
   const page = await browser.newPage();
 
-  // Usar file:// para cargar el archivo local
-  await page.goto(`file://${path.resolve(htmlPath)}`, {
+  // Usar file:/// con forward slashes para compatibilidad Windows
+  const fileUrlHtmlLegacy = `file:///${path.resolve(htmlPath).replace(/\\/g, "/")}`;
+  await page.goto(fileUrlHtmlLegacy, {
     waitUntil: "networkidle0",
   });
 

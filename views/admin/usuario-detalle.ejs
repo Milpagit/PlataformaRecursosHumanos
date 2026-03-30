@@ -33,17 +33,96 @@
   <script>
     function generarAcuse() {
       const noTrabajador = document.getElementById('noTrabajador').value;
-      window.open(`/acuse/${noTrabajador}`, '_blank');
+      const tipoTrabajador = document.getElementById('tipoTrabajador').value;
+      window.open(`/acuse/${noTrabajador}/${tipoTrabajador}`, '_blank');
     }
 
     function verCurriculum() {
       const noTrabajador = document.getElementById('noTrabajador').value;
-      window.open(`/curriculum/${noTrabajador}`, '_blank');
+      const tipoTrabajador = document.getElementById('tipoTrabajador').value;
+      window.open(`/curriculum/${noTrabajador}/${tipoTrabajador}`, '_blank');
     }
 
     function descargarZip() {
       const noTrabajador = document.getElementById('noTrabajador').value;
-      window.location.href = `/reporte/${noTrabajador}`;
+      const tipoTrabajador = document.getElementById('tipoTrabajador').value;
+      window.location.href = `/reporte/${noTrabajador}/${tipoTrabajador}`;
+    }
+
+    function toggleEdicion() {
+      const panel = document.getElementById('panelEdicion');
+      const icono = document.getElementById('iconoEdicion');
+      panel.classList.toggle('hidden');
+      icono.textContent = panel.classList.contains('hidden') ? 'expand_more' : 'expand_less';
+    }
+
+    function mostrarMensajeEdicion(texto, tipo) {
+      const el = document.getElementById('mensajeEdicion');
+      el.textContent = texto;
+      el.className = `text-sm rounded-lg px-3 py-2 ${tipo === 'error' ? 'bg-red-50 border border-red-200 text-red-700' : 'bg-green-50 border border-green-200 text-green-700'}`;
+      el.classList.remove('hidden');
+    }
+
+    async function guardarDatosCriticos() {
+      const idTrabajador = document.getElementById('idTrabajador').value;
+      const nuevoNoTrabajador = document.getElementById('nuevoNoTrabajador').value.trim();
+      const nuevoTipo = document.querySelector('input[name="nuevoTipo"]:checked')?.value;
+      const password = document.getElementById('passwordConfirmacion').value;
+
+      if (!nuevoNoTrabajador || !nuevoTipo) {
+        mostrarMensajeEdicion('Completa el número y tipo de trabajador.', 'error');
+        return;
+      }
+      if (!password) {
+        mostrarMensajeEdicion('Ingresa tu contraseña de administrador para confirmar.', 'error');
+        return;
+      }
+
+      try {
+        const res = await fetch('/admin/editar-datos-criticos', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idTrabajador, nuevoNoTrabajador, nuevoTipo, password }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          mostrarMensajeEdicion(data.mensaje, 'success');
+          document.getElementById('noTrabajador').value = nuevoNoTrabajador;
+          document.getElementById('tipoTrabajador').value = nuevoTipo;
+          setTimeout(() => location.reload(), 1500);
+        } else {
+          mostrarMensajeEdicion(data.error, 'error');
+        }
+      } catch (e) {
+        mostrarMensajeEdicion('Error de conexión. Intenta de nuevo.', 'error');
+      }
+    }
+
+    async function confirmarEliminar() {
+      const password = document.getElementById('passwordConfirmacion').value;
+      if (!password) {
+        mostrarMensajeEdicion('Ingresa tu contraseña de administrador para confirmar la eliminación.', 'error');
+        return;
+      }
+      if (!confirm('¿Estás seguro de eliminar este trabajador? Esta acción no se puede deshacer.')) return;
+
+      const idTrabajador = document.getElementById('idTrabajador').value;
+      try {
+        const res = await fetch('/admin/eliminar-trabajador', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ idTrabajador, password }),
+        });
+        const data = await res.json();
+        if (data.success) {
+          mostrarMensajeEdicion(data.mensaje, 'success');
+          setTimeout(() => window.location.href = '/admin/dashboard', 1500);
+        } else {
+          mostrarMensajeEdicion(data.error, 'error');
+        }
+      } catch (e) {
+        mostrarMensajeEdicion('Error de conexión. Intenta de nuevo.', 'error');
+      }
     }
   </script>
 </head>
@@ -72,6 +151,7 @@
       <% if (trabajador) { %>
         <input type="hidden" id="idTrabajador" value="<%= trabajador.idTrabajador %>" />
         <input type="hidden" id="noTrabajador" value="<%= trabajador.noTrabajador %>" />
+        <input type="hidden" id="tipoTrabajador" value="<%= trabajador.tipoTrabajador || '' %>" />
 
         <!-- Profile Hero Section -->
         <div class="mb-6 rounded-xl bg-white p-6 shadow-sm border border-slate-200">
@@ -87,6 +167,17 @@
               <div class="flex flex-wrap gap-x-6 gap-y-1 text-sm text-slate-500">
                 <span class="flex items-center gap-1.5"><strong>CURP:</strong> <%= trabajador.curp || 'N/A' %></span>
                 <span class="flex items-center gap-1.5"><strong>RFC:</strong> <%= trabajador.rfc || 'N/A' %></span>
+                <span class="flex items-center gap-1.5">
+                  <strong>No. Trabajador:</strong>
+                  <span class="font-bold text-primary"><%= trabajador.noTrabajador || 'N/A' %></span>
+                </span>
+                <span class="flex items-center gap-1.5">
+                  <strong>Tipo:</strong>
+                  <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold
+                    <%= trabajador.tipoTrabajador === 'C' ? 'bg-blue-50 text-blue-700' : trabajador.tipoTrabajador === 'H' ? 'bg-amber-50 text-amber-700' : 'bg-slate-100 text-slate-500' %>">
+                    <%= trabajador.tipoTrabajador === 'C' ? 'Confianza' : trabajador.tipoTrabajador === 'H' ? 'Honorario' : 'N/A' %>
+                  </span>
+                </span>
                 <span class="flex items-center gap-1.5 text-primary font-medium">
                   <span class="material-symbols-outlined text-sm">location_on</span>
                   <%= trabajador.adscripcionActual || 'N/A' %>
@@ -164,6 +255,72 @@
                 <% } else { %>
                   <p class="text-slate-400 text-sm">Sin información</p>
                 <% } %>
+              </div>
+            </section>
+
+            <!-- Edición de Datos Críticos -->
+            <section class="rounded-xl bg-white shadow-sm border border-red-200" id="seccionDatosCriticos">
+              <button type="button" onclick="toggleEdicion()"
+                class="w-full flex items-center justify-between px-6 py-4 rounded-xl hover:bg-red-50 transition-colors">
+                <div class="flex items-center gap-2">
+                  <span class="material-symbols-outlined text-red-600">admin_panel_settings</span>
+                  <span class="font-bold text-red-700 text-sm uppercase tracking-widest">Edición de Datos Críticos</span>
+                </div>
+                <span class="material-symbols-outlined text-red-400" id="iconoEdicion">expand_more</span>
+              </button>
+
+              <div id="panelEdicion" class="hidden px-6 pb-6 space-y-4">
+                <p class="text-xs text-slate-500 bg-amber-50 border border-amber-200 rounded-lg p-3">
+                  Modifica el número y tipo de trabajador, o elimina el registro. <strong>Se requiere tu contraseña de administrador para confirmar.</strong>
+                </p>
+
+                <!-- No. Trabajador -->
+                <div>
+                  <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-600">Nuevo Número de Trabajador</label>
+                  <input type="number" id="nuevoNoTrabajador" value="<%= trabajador.noTrabajador %>"
+                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                </div>
+
+                <!-- Tipo de Trabajador -->
+                <div>
+                  <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-600">Tipo de Trabajador</label>
+                  <div class="flex gap-6 mt-1">
+                    <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                      <input type="radio" name="nuevoTipo" value="C" style="accent-color:#738F81;" class="w-4 h-4"
+                        <%= trabajador.tipoTrabajador === 'C' ? 'checked' : '' %>>
+                      Confianza
+                    </label>
+                    <label class="flex items-center gap-2 cursor-pointer text-sm font-medium">
+                      <input type="radio" name="nuevoTipo" value="H" style="accent-color:#738F81;" class="w-4 h-4"
+                        <%= trabajador.tipoTrabajador === 'H' ? 'checked' : '' %>>
+                      Honorario
+                    </label>
+                  </div>
+                </div>
+
+                <!-- Contraseña de confirmación -->
+                <div>
+                  <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-slate-600">Contraseña de Administrador</label>
+                  <input type="password" id="passwordConfirmacion" placeholder="Tu contraseña actual"
+                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+                </div>
+
+                <!-- Mensaje de error/éxito -->
+                <div id="mensajeEdicion" class="hidden text-sm rounded-lg px-3 py-2"></div>
+
+                <!-- Botones -->
+                <div class="flex gap-3 pt-2">
+                  <button type="button" onclick="guardarDatosCriticos()"
+                    class="flex-1 flex items-center justify-center gap-2 bg-primary hover:bg-primary/90 text-white font-bold py-2.5 rounded-lg transition-colors text-sm shadow-sm">
+                    <span class="material-symbols-outlined text-sm">save</span>
+                    Guardar Cambios
+                  </button>
+                  <button type="button" onclick="confirmarEliminar()"
+                    class="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 px-4 rounded-lg transition-colors text-sm shadow-sm">
+                    <span class="material-symbols-outlined text-sm">delete</span>
+                    Eliminar
+                  </button>
+                </div>
               </div>
             </section>
 

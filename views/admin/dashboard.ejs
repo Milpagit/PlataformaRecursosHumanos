@@ -301,6 +301,20 @@
             <input type="number" name="claveTrabjador" required placeholder="Clave del trabajador"
                    class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
           </div>
+
+          <div>
+            <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Tipo de Trabajador</label>
+            <div class="flex gap-6 mt-2">
+              <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                <input type="radio" name="tipoTrabajador" value="C" required class="h-4 w-4" style="accent-color: #738F81;">
+                Confianza
+              </label>
+              <label class="flex items-center gap-2 cursor-pointer text-sm font-medium text-slate-700">
+                <input type="radio" name="tipoTrabajador" value="H" class="h-4 w-4" style="accent-color: #738F81;">
+                Honorario
+              </label>
+            </div>
+          </div>
         </div>
 
         <!-- PERFIL DE ADMINISTRADOR -->
@@ -433,6 +447,7 @@
         datos.curp = formData.get("curp");
         datos.rfc = formData.get("rfc");
         datos.claveTrabjador = formData.get("claveTrabjador");
+        datos.tipoTrabajador = formData.get("tipoTrabajador");
       }
 
       try {

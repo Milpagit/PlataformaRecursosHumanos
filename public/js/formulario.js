@@ -329,11 +329,15 @@ document.addEventListener("DOMContentLoaded", function () {
       espacioHijos.appendChild(divHijo);
 
       // Flatpickr para fechas
+      // Convertir el string d-m-Y a un Date real para que flatpickr lo parsee correctamente
+      const fechaParseada = datosHijo.fecha
+        ? flatpickr.parseDate(datosHijo.fecha, "d-m-Y")
+        : null;
       flatpickr(input2, {
         dateFormat: "d-m-Y",
         allowInput: true,
         maxDate: "today",
-        defaultDate: datosHijo.fecha || null,
+        defaultDate: fechaParseada,
       });
 
       // Listener select
@@ -1057,6 +1061,18 @@ function agregarExperiencia() {
 
     // Reindexar para que los índices (0..n-1) coincidan con el orden visual
     reindexExperiencias();
+
+    // Desmarcar "a la fecha" de la segunda experiencia (la que era la más reciente antes de agregar)
+    const items = container.querySelectorAll(".experiencia-item");
+    if (items.length > 1) {
+      const segundaCb = items[1].querySelector(
+        "input[type='checkbox'][name^='experiencia_actual']",
+      );
+      if (segundaCb) {
+        segundaCb.checked = false;
+        segundaCb.dispatchEvent(new Event("change"));
+      }
+    }
   }
 
   document
