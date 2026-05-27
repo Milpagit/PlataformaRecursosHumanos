@@ -611,9 +611,19 @@ app.post(
     ///let carreraTecnica = req.body.tecnica_institucion;
     const vigenciaINE = req.body.vigenciaINE;
     const tieneTecnica = req.body.tieneTecnica === "1";
-    const carreraTecnicaComercial = tieneTecnica
-      ? req.body.tecnica_institucion.trim().toUpperCase()
-      : "No";
+    const tecnicaNombre = (req.body.tecnica_institucion || "")
+      .trim()
+      .toUpperCase();
+    const carreraTecnicaComercial =
+      tieneTecnica && tecnicaNombre ? tecnicaNombre : "No";
+
+    let cantidadHijosSegura = parseInt(cantidadHijos, 10);
+    if (Number.isNaN(cantidadHijosSegura) || cantidadHijosSegura < 0) {
+      cantidadHijosSegura = 0;
+    }
+    cantidadHijosSegura = Math.min(10, cantidadHijosSegura);
+
+    const telefonoCasaLimpio = (telefonocasa || "").trim();
 
     const tieneBachillerato = req.body.tieneBachillerato === "1";
     const prepaTitulo = tieneBachillerato
@@ -702,7 +712,7 @@ app.post(
         actualEstado,
         actualCP,
         telefono,
-        telefonocasa,
+        telefonoCasaLimpio || null,
         telefonofamiliar,
         parentesco,
         correo,
@@ -716,7 +726,7 @@ app.post(
         cronicaTexto,
         padre,
         embarazada,
-        cantidadHijos,
+        cantidadHijosSegura,
         primaria,
         secundaria_institucion,
         carreraTecnicaComercial,
@@ -729,8 +739,8 @@ app.post(
 
       // ... después de borrar los hijos anteriores ...
 
-      if (cantidadHijos && cantidadHijos > 0) {
-        for (let i = 0; i < cantidadHijos; i++) {
+      if (cantidadHijosSegura > 0) {
+        for (let i = 0; i < cantidadHijosSegura; i++) {
           let iniciales = req.body[`inicialesHijo${i}`];
           const sexo = req.body[`selectHijo${i}`];
           const fechaNacimiento = req.body[`fechaNacimientoHijo${i}`];
@@ -959,7 +969,7 @@ app.post(
         const institucion = req.body[`actualizacion_institucion${i}`];
         const documento = req.body[`actualizacion_documento${i}`];
 
-        const hayDatos = tema || fecha || institucion || documento;
+        const hayDatos = tema || fecha || institucion;
 
         if (hayDatos) {
           actualizaciones.push({ tema, fecha, institucion, documento });
@@ -3547,8 +3557,8 @@ app.post("/admin/buscar-trabajadores", verificarAdmin, async (req, res) => {
 
   try {
     const [usuarios] = await db.query(
-      "SELECT idTrabajador, noTrabajador, nombreTrabajador, curp, rfc, correoElectronico, cargoActual FROM trabajador WHERE nombreTrabajador LIKE ? OR curp LIKE ? ORDER BY nombreTrabajador",
-      [`%${busqueda}%`, `%${busqueda}%`],
+      "SELECT idTrabajador, noTrabajador, nombreTrabajador, curp, rfc, correoElectronico, cargoActual FROM trabajador WHERE nombreTrabajador LIKE ? OR curp LIKE ? OR CAST(noTrabajador AS VARCHAR(50)) LIKE ? ORDER BY nombreTrabajador",
+      [`%${busqueda}%`, `%${busqueda}%`, `%${busqueda}%`],
     );
 
     return res.json({
@@ -3947,6 +3957,154 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
   } catch (error) {
     console.error("Error al generar reporte de transparencia:", error);
     return res.status(500).send("Error al generar el reporte de transparencia");
+  }
+});
+
+// GET - Gestionar administradores (lista todos los admins)
+app.get("/admin/gestionar-admins", verificarAdmin, async (req, res) => {
+  try {
+    const [admins] = await db.query(
+      "SELECT idAdmin, usuario, correo, activo FROM administrador ORDER BY idAdmin ASC",
+      [],
+    );
+    return res.render("admin/gestionar-admins", {
+      admin: req.session.admin,
+      administradores: admins || [],
+      error: null,
+      mensaje: null,
+    });
+  } catch (error) {
+    console.error("Error al listar administradores:", error);
+    return res.render("admin/gestionar-admins", {
+      admin: req.session.admin,
+      administradores: [],
+      error: "Error al obtener la lista de administradores",
+      mensaje: null,
+    });
+  }
+});
+
+// POST - Desactivar administrador (borrado lógico)
+app.post("/admin/desactivar-admin", verificarAdmin, async (req, res) => {
+  const { idAdminObjetivo, password } = req.body;
+  const idAdminActual = req.session.admin?.idAdmin;
+
+  if (!idAdminObjetivo || !password) {
+    return res.status(400).json({
+      success: false,
+      error: "ID del administrador y contraseña son requeridos",
+    });
+  }
+
+  // No puede desactivarse a sí mismo
+  if (parseInt(idAdminObjetivo) === idAdminActual) {
+    return res
+      .status(400)
+      .json({ success: false, error: "No puedes desactivar tu propia cuenta" });
+  }
+
+  try {
+    // Validar contraseña del admin en sesión
+    const [adminValido] = await db.query(
+      "SELECT * FROM administrador WHERE idAdmin = ? AND password = ? AND activo = 1",
+      [idAdminActual, password],
+    );
+    if (!adminValido || adminValido.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: "Contraseña de administrador incorrecta",
+      });
+    }
+
+    // Verificar que quede al menos un admin activo después de desactivar
+    const [conteo] = await db.query(
+      "SELECT COUNT(*) AS total FROM administrador WHERE activo = 1 AND idAdmin <> ?",
+      [idAdminObjetivo],
+    );
+    if (!conteo || conteo[0].total < 1) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "No se puede desactivar: debe quedar al menos un administrador activo",
+      });
+    }
+
+    await db.query("UPDATE administrador SET activo = 0 WHERE idAdmin = ?", [
+      idAdminObjetivo,
+    ]);
+
+    return res.json({
+      success: true,
+      mensaje: "Administrador desactivado correctamente",
+    });
+  } catch (error) {
+    console.error("Error al desactivar administrador:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error interno al desactivar el administrador",
+    });
+  }
+});
+
+// POST - Eliminar administrador (borrado físico)
+app.post("/admin/eliminar-admin", verificarAdmin, async (req, res) => {
+  const { idAdminObjetivo, password } = req.body;
+  const idAdminActual = req.session.admin?.idAdmin;
+
+  if (!idAdminObjetivo || !password) {
+    return res.status(400).json({
+      success: false,
+      error: "ID del administrador y contraseña son requeridos",
+    });
+  }
+
+  // No puede eliminarse a sí mismo
+  if (parseInt(idAdminObjetivo) === idAdminActual) {
+    return res
+      .status(400)
+      .json({ success: false, error: "No puedes eliminar tu propia cuenta" });
+  }
+
+  try {
+    // Validar contraseña del admin en sesión
+    const [adminValido] = await db.query(
+      "SELECT * FROM administrador WHERE idAdmin = ? AND password = ? AND activo = 1",
+      [idAdminActual, password],
+    );
+    if (!adminValido || adminValido.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: "Contraseña de administrador incorrecta",
+      });
+    }
+
+    // Verificar que quede al menos un admin activo después de eliminar
+    const [conteo] = await db.query(
+      "SELECT COUNT(*) AS total FROM administrador WHERE activo = 1 AND idAdmin <> ?",
+      [idAdminObjetivo],
+    );
+    if (!conteo || conteo[0].total < 1) {
+      return res.status(400).json({
+        success: false,
+        error:
+          "No se puede eliminar: debe quedar al menos un administrador activo",
+      });
+    }
+
+    await db.query("DELETE FROM administrador WHERE idAdmin = ?", [
+      idAdminObjetivo,
+    ]);
+
+    return res.json({
+      success: true,
+      mensaje: "Administrador eliminado permanentemente",
+    });
+  } catch (error) {
+    console.error("Error al eliminar administrador:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error interno al eliminar el administrador",
+    });
   }
 });
 

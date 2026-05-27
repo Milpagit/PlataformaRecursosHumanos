@@ -243,12 +243,18 @@
         <div id="tarjetasBusqueda" class="tarjetas-responsive hidden mt-4 grid gap-3"></div>
       </section>
 
-      <!-- Reporte de Transparencia -->
-      <div class="flex justify-end mb-6">
+      <!-- Reporte de Transparencia y Gestión de Admins -->
+      <div class="flex justify-between mb-6">
+        <a href="/admin/gestionar-admins" class="flex items-center gap-2 rounded-lg bg-white border border-primary/30 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/5 transition-colors">
+          <span class="material-symbols-outlined text-sm">admin_panel_settings</span>
+          Gestión de Administradores
+        </a>
+        <div class="flex gap-2">
         <button type="button" onclick="abrirModalReporteTransparencia()" class="flex items-center gap-2 rounded-lg bg-white border border-primary/30 px-4 py-2.5 text-xs font-bold text-primary hover:bg-primary/5 transition-colors">
           <span class="material-symbols-outlined text-sm">summarize</span>
           Reporte de transparencia
         </button>
+        </div>
       </div>
 
     </main>

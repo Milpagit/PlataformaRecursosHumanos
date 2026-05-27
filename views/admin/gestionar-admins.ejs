@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>Gestión de Administradores</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link href="/css/styles.css" rel="stylesheet" />
+
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#4a7d59",
+            "primary-dark": "#3b6548",
+            "background-light": "#f6f7f7",
+            amarillo: "#f0d28c",
+            "amarillo-dark": "#e1c27d",
+          },
+          fontFamily: {
+            display: ["Inter"],
+          },
+        },
+      },
+    };
+  </script>
+
+  <style>
+    .modal-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.4);
+      backdrop-filter: blur(4px);
+      z-index: 50;
+      justify-content: center;
+      align-items: center;
+    }
+    .modal-overlay.show {
+      display: flex;
+    }
+    .modal-box {
+      background: white;
+      border-radius: 0.75rem;
+      padding: 2rem;
+      max-width: 28rem;
+      width: 90%;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.25);
+    }
+  </style>
+</head>
+<body class="bg-background-light font-display text-slate-900 antialiased">
+
+  <!-- ENCABEZADO -->
+  <header class="w-full bg-verdegris text-white py-6 shadow-md">
+    <div class="container mx-auto flex items-center justify-center">
+      <img src="/images/pj-logo.png" alt="Logo PJ" class="w-24 h-auto mr-4" />
+      <h1 class="text-2xl md:text-3xl font-bold uppercase tracking-wide">
+        Gestión de Administradores
+      </h1>
+      <img src="/images/consejo-logo.png" alt="Logo Consejo" class="w-24 h-auto mr-4" />
+    </div>
+  </header>
+
+  <div class="relative flex min-h-screen flex-col">
+    <main class="mx-auto w-full max-w-5xl flex-1 px-4 py-8 md:px-10">
+
+      <!-- Barra superior -->
+      <div class="flex items-center justify-between mb-6">
+        <a href="/admin/dashboard" class="flex items-center gap-1.5 rounded-lg bg-white border border-slate-200 px-3 py-2 text-xs font-bold text-slate-600 hover:bg-slate-50 transition-colors">
+          <span class="material-symbols-outlined text-sm">arrow_back</span>
+          Volver al Panel
+        </a>
+        <div class="flex items-center bg-white rounded-lg shadow-sm border border-slate-200 px-4 py-2 text-sm text-slate-700">
+          <span class="material-symbols-outlined text-primary text-lg mr-2">account_circle</span>
+          <span class="font-semibold"><%= admin.usuario %></span>
+          <span class="ml-2 text-xs text-slate-400">Administrador</span>
+        </div>
+      </div>
+
+      <!-- Alertas -->
+      <% if (error) { %>
+        <div class="mb-6 rounded-xl bg-red-50 border border-red-200 text-red-700 px-4 py-3 text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">error</span>
+          <%= error %>
+        </div>
+      <% } %>
+
+      <% if (mensaje) { %>
+        <div class="mb-6 rounded-xl bg-green-50 border border-green-200 text-green-700 px-4 py-3 text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-base">check_circle</span>
+          <%= mensaje %>
+        </div>
+      <% } %>
+
+      <!-- LISTA DE ADMINISTRADORES -->
+      <section class="rounded-xl bg-white p-6 shadow-sm border border-slate-200">
+        <div class="flex items-center gap-2 bg-slate-50/50 -mx-6 -mt-6 px-6 py-4 mb-6 rounded-t-xl">
+          <span class="material-symbols-outlined text-primary">admin_panel_settings</span>
+          <h2 class="font-bold text-lg">Administradores Registrados</h2>
+          <span class="ml-auto inline-flex items-center rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-bold text-primary">
+            <%= administradores.length %> total
+          </span>
+        </div>
+
+        <% if (administradores && administradores.length > 0) { %>
+          <!-- Vista tabla (desktop) -->
+          <div class="tabla-responsive overflow-x-auto rounded-lg border border-slate-200">
+            <table class="w-full text-sm">
+              <thead>
+                <tr class="bg-slate-50 text-left">
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">ID</th>
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">Usuario</th>
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">Correo</th>
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary">Estado</th>
+                  <th class="px-5 py-3 text-[10px] font-bold uppercase tracking-widest text-primary text-center">Acciones</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-100">
+                <% administradores.forEach((adm) => { %>
+                  <tr class="hover:bg-slate-50/50 transition-colors">
+                    <td class="px-5 py-3.5 text-slate-400 text-xs"><%= adm.idAdmin %></td>
+                    <td class="px-5 py-3.5 font-semibold">
+                      <%= adm.usuario %>
+                      <% if (adm.idAdmin === admin.idAdmin) { %>
+                        <span class="ml-1.5 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Tú</span>
+                      <% } %>
+                    </td>
+                    <td class="px-5 py-3.5 text-slate-500 text-xs"><%= adm.correo || 'Sin correo' %></td>
+                    <td class="px-5 py-3.5">
+                      <% if (adm.activo) { %>
+                        <span class="inline-flex items-center rounded-full bg-green-50 border border-green-200 px-2.5 py-0.5 text-xs font-bold text-green-700">Activo</span>
+                      <% } else { %>
+                        <span class="inline-flex items-center rounded-full bg-slate-100 border border-slate-200 px-2.5 py-0.5 text-xs font-bold text-slate-500">Inactivo</span>
+                      <% } %>
+                    </td>
+                    <td class="px-5 py-3.5 text-center">
+                      <% if (adm.idAdmin !== admin.idAdmin) { %>
+                        <div class="flex items-center justify-center gap-2">
+                          <% if (adm.activo) { %>
+                            <button data-id="<%= adm.idAdmin %>" data-usuario="<%= adm.usuario %>" data-tipo="desactivar" onclick="abrirModalAccionBtn(this)"
+                                    class="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-3 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors">
+                              <span class="material-symbols-outlined text-sm">block</span>
+                              Desactivar
+                            </button>
+                          <% } %>
+                          <button data-id="<%= adm.idAdmin %>" data-usuario="<%= adm.usuario %>" data-tipo="eliminar" onclick="abrirModalAccionBtn(this)"
+                                  class="inline-flex items-center gap-1 rounded-md bg-red-50 border border-red-200 px-3 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors">
+                            <span class="material-symbols-outlined text-sm">delete</span>
+                            Eliminar
+                          </button>
+                        </div>
+                      <% } else { %>
+                        <span class="text-xs text-slate-400">—</span>
+                      <% } %>
+                    </td>
+                  </tr>
+                <% }); %>
+              </tbody>
+            </table>
+          </div>
+
+          <!-- Vista tarjetas (móvil) -->
+          <div class="tarjetas-responsive grid gap-3">
+            <% administradores.forEach((adm) => { %>
+              <div class="rounded-lg border border-slate-200 p-4 bg-slate-50/50 hover:shadow-sm transition-shadow">
+                <div class="flex items-start justify-between">
+                  <div class="space-y-1">
+                    <p class="text-sm font-bold text-slate-900">
+                      <%= adm.usuario %>
+                      <% if (adm.idAdmin === admin.idAdmin) { %>
+                        <span class="ml-1 inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold text-primary">Tú</span>
+                      <% } %>
+                    </p>
+                    <p class="text-xs text-slate-500"><span class="font-semibold text-primary">Correo:</span> <%= adm.correo || 'Sin correo' %></p>
+                    <p class="text-xs text-slate-500">
+                      <span class="font-semibold text-primary">Estado:</span>
+                      <% if (adm.activo) { %>
+                        <span class="text-green-700 font-semibold">Activo</span>
+                      <% } else { %>
+                        <span class="text-slate-500 font-semibold">Inactivo</span>
+                      <% } %>
+                    </p>
+                  </div>
+                  <% if (adm.idAdmin !== admin.idAdmin) { %>
+                    <div class="flex flex-col gap-1.5">
+                      <% if (adm.activo) { %>
+                        <button data-id="<%= adm.idAdmin %>" data-usuario="<%= adm.usuario %>" data-tipo="desactivar" onclick="abrirModalAccionBtn(this)"
+                                class="inline-flex items-center gap-1 rounded-md bg-amber-50 border border-amber-200 px-2.5 py-1.5 text-xs font-bold text-amber-700 hover:bg-amber-100 transition-colors">
+                          <span class="material-symbols-outlined text-sm">block</span>
+                          Desactivar
+                        </button>
+                      <% } %>
+                      <button data-id="<%= adm.idAdmin %>" data-usuario="<%= adm.usuario %>" data-tipo="eliminar" onclick="abrirModalAccionBtn(this)"
+                              class="inline-flex items-center gap-1 rounded-md bg-red-50 border border-red-200 px-2.5 py-1.5 text-xs font-bold text-red-700 hover:bg-red-100 transition-colors">
+                        <span class="material-symbols-outlined text-sm">delete</span>
+                        Eliminar
+                      </button>
+                    </div>
+                  <% } %>
+                </div>
+              </div>
+            <% }); %>
+          </div>
+        <% } else { %>
+          <div class="flex flex-col items-center justify-center py-12 text-slate-400">
+            <span class="material-symbols-outlined text-5xl mb-3">admin_panel_settings</span>
+            <p class="text-sm">No hay administradores registrados</p>
+          </div>
+        <% } %>
+      </section>
+
+    </main>
+
+    <footer class="border-t border-slate-200 bg-white py-6 text-center text-xs text-slate-400">
+      Poder Judicial del Estado de Hidalgo &mdash; Plataforma de Recursos Humanos
+    </footer>
+  </div>
+
+  <!-- MODAL CONFIRMACIÓN DE ACCIÓN -->
+  <div id="modalAccion" class="modal-overlay">
+    <div class="modal-box">
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-2">
+          <span id="iconoAccion" class="material-symbols-outlined text-xl text-red-600">warning</span>
+          <h2 id="tituloAccion" class="text-lg font-bold text-slate-900">Confirmar acción</h2>
+        </div>
+        <button onclick="cerrarModalAccion()" class="flex items-center justify-center w-8 h-8 rounded-full hover:bg-slate-100 transition-colors text-slate-400">
+          <span class="material-symbols-outlined text-lg">close</span>
+        </button>
+      </div>
+
+      <p id="descripcionAccion" class="text-sm text-slate-600 mb-5"></p>
+
+      <input type="hidden" id="idAdminObjetivo" value="" />
+      <input type="hidden" id="tipoAccion" value="" />
+
+      <div class="space-y-4">
+        <div>
+          <label class="block mb-1.5 text-[10px] font-bold uppercase tracking-widest text-primary">Tu contraseña de administrador</label>
+          <input type="password" id="passwordConfirmacion" placeholder="Ingresa tu contraseña"
+                 class="w-full px-4 py-2.5 rounded-lg border border-slate-200 bg-slate-50 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary transition-all">
+        </div>
+
+        <div id="errorAccion" class="hidden rounded-lg bg-red-50 border border-red-200 text-red-700 px-3 py-2 text-sm flex items-center gap-2">
+          <span class="material-symbols-outlined text-sm">error</span>
+          <span id="errorAccionTexto"></span>
+        </div>
+
+        <div class="flex gap-3">
+          <button id="btnConfirmarAccion" onclick="ejecutarAccion()" class="flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-sm text-sm">
+            <span class="material-symbols-outlined text-sm">check</span>
+            Confirmar
+          </button>
+          <button onclick="cerrarModalAccion()" class="flex-1 flex items-center justify-center gap-2 bg-slate-100 hover:bg-slate-200 text-slate-600 font-bold py-2.5 rounded-lg transition-colors text-sm">
+            Cancelar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    function abrirModalAccionBtn(btn) {
+      abrirModalAccion(btn.dataset.id, btn.dataset.usuario, btn.dataset.tipo);
+    }
+
+    function abrirModalAccion(idAdmin, usuario, tipo) {
+      document.getElementById("idAdminObjetivo").value = idAdmin;
+      document.getElementById("tipoAccion").value = tipo;
+      document.getElementById("passwordConfirmacion").value = "";
+      document.getElementById("errorAccion").classList.add("hidden");
+
+      const titulo = document.getElementById("tituloAccion");
+      const desc = document.getElementById("descripcionAccion");
+      const icono = document.getElementById("iconoAccion");
+      const btn = document.getElementById("btnConfirmarAccion");
+
+      if (tipo === "desactivar") {
+        titulo.textContent = "Desactivar Administrador";
+        desc.innerHTML = `¿Estás seguro de desactivar al administrador <strong>${usuario}</strong>? Ya no podrá iniciar sesión pero su registro se conservará.`;
+        icono.textContent = "block";
+        icono.className = "material-symbols-outlined text-xl text-amber-600";
+        btn.className = "flex-1 flex items-center justify-center gap-2 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-sm text-sm";
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm">block</span> Desactivar';
+      } else {
+        titulo.textContent = "Eliminar Administrador";
+        desc.innerHTML = `¿Estás seguro de eliminar <strong>permanentemente</strong> al administrador <strong>${usuario}</strong>? Esta acción no se puede deshacer.`;
+        icono.textContent = "delete_forever";
+        icono.className = "material-symbols-outlined text-xl text-red-600";
+        btn.className = "flex-1 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white font-bold py-2.5 rounded-lg transition-colors shadow-sm text-sm";
+        btn.innerHTML = '<span class="material-symbols-outlined text-sm">delete_forever</span> Eliminar';
+      }
+
+      document.getElementById("modalAccion").classList.add("show");
+    }
+
+    function cerrarModalAccion() {
+      document.getElementById("modalAccion").classList.remove("show");
+      document.getElementById("passwordConfirmacion").value = "";
+      document.getElementById("errorAccion").classList.add("hidden");
+    }
+
+    async function ejecutarAccion() {
+      const idAdminObjetivo = document.getElementById("idAdminObjetivo").value;
+      const tipo = document.getElementById("tipoAccion").value;
+      const password = document.getElementById("passwordConfirmacion").value;
+      const errorDiv = document.getElementById("errorAccion");
+      const errorTexto = document.getElementById("errorAccionTexto");
+
+      if (!password) {
+        errorDiv.classList.remove("hidden");
+        errorTexto.textContent = "Debes ingresar tu contraseña para confirmar";
+        return;
+      }
+
+      const url = tipo === "desactivar" ? "/admin/desactivar-admin" : "/admin/eliminar-admin";
+
+      try {
+        const response = await fetch(url, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ idAdminObjetivo, password }),
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          cerrarModalAccion();
+          // Mostrar mensaje y recargar
+          const div = document.createElement("div");
+          div.className = "bg-green-50 border border-green-200 text-green-700 rounded-xl px-4 py-3 mb-4 text-sm flex items-center gap-2";
+          div.innerHTML = '<span class="material-symbols-outlined text-base">check_circle</span> ' + result.mensaje;
+          document.querySelector("main").insertBefore(div, document.querySelector("main").children[1]);
+          setTimeout(() => location.reload(), 1200);
+        } else {
+          errorDiv.classList.remove("hidden");
+          errorTexto.textContent = result.error;
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        errorDiv.classList.remove("hidden");
+        errorTexto.textContent = "Error al procesar la solicitud";
+      }
+    }
+
+    // Cerrar modal al hacer click fuera
+    window.onclick = function(event) {
+      if (event.target === document.getElementById("modalAccion")) {
+        cerrarModalAccion();
+      }
+    };
+  </script>
+
+</body>
+</html>

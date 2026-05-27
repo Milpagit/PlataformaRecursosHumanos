@@ -62,6 +62,7 @@ document.addEventListener("DOMContentLoaded", function () {
     if (radiospapa[0].checked) {
       preguntaHijos.classList.remove("hidden");
       hijoscontador.setAttribute("required", "true");
+      hijoscontador.setAttribute("max", "10");
     } else {
       const espacioHijos = document.getElementById("espacioHijos");
       preguntaHijos.classList.add("hidden");
@@ -141,7 +142,11 @@ document.addEventListener("DOMContentLoaded", function () {
   }
 
   function agregarCamposHijos() {
-    const noHijos = parseInt(hijoscontador.value) || 0;
+    const noHijosCapturados = parseInt(hijoscontador.value, 10) || 0;
+    const noHijos = Math.min(10, Math.max(0, noHijosCapturados));
+    if (hijoscontador.value && noHijosCapturados !== noHijos) {
+      hijoscontador.value = noHijos;
+    }
     const espacioHijos = document.getElementById("espacioHijos");
 
     // Guardar los datos ya capturados/autocompletados antes de reconstruir la sección
@@ -485,6 +490,14 @@ document.addEventListener("DOMContentLoaded", function () {
       valido = false;
     }
 
+    const totalHijos = parseInt(hijoscontador.value || "0", 10);
+    if (!Number.isNaN(totalHijos) && totalHijos > 10) {
+      alert("⚠️ El número máximo de hijos permitido es 10.");
+      hijoscontador.value = 10;
+      hijoscontador.focus();
+      valido = false;
+    }
+
     if (!validarEscolaridad("licenciatura", 3, "Licenciatura")) valido = false;
     if (!validarEscolaridad("maestria", 3, "Maestría")) valido = false;
     if (!validarEscolaridad("especialidad", 3, "Especialidad")) valido = false;
@@ -820,14 +833,14 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
     licenciatura: {
       titulo: "Ej. DERECHO, PSICOLOGIA, ADMINISTRACIÓN",
       institucion: "Ej. UNIVERSIDAD AUTONOMA DEL ESTADO DE HIDALGO",
-      fecha: "dd-mm-yyyy",
+      fecha: "mm-yyyy",
       documento: "Diploma / Certificado",
       estatus: "Concluido / En curso / Titulado",
       cedula: "Ej. 1234567",
     },
     maestria: {
       titulo: "Ej. DERECHO CONSTITUCIONAL",
-      fecha: "dd-mm-yyyy",
+      fecha: "mm-yyyy",
       institucion: "Ej. UNIVERSIDAD AUTONOMA DEL ESTADO DE HIDALGO",
       // ...y así para los demás si quieres
     },
@@ -916,7 +929,7 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
                  name="${key.toLowerCase()}_fecha${i}"
                  required
                 placeholder="${ph.fecha || ""}"
-                 data-format="dd-mm-yyyy"
+                 data-format="mm-yyyy"
                  class="border p-2 w-full rounded mb-2">
  
           <label class="block mb-1">Cédula profesional (Si no cuenta con una deje el campo vacio)</label>
@@ -1168,9 +1181,15 @@ function reindexExperiencias() {
         if (value === "PJ") {
           adscripContainer.classList.remove("hidden");
           otraContainer.classList.add("hidden");
+            if (otraInstInput) {
+              otraInstInput.value = "";
+            }
         } else {
           adscripContainer.classList.add("hidden");
           otraContainer.classList.remove("hidden");
+            if (adscripInput) {
+              adscripInput.value = "";
+            }
         }
       };
 
@@ -1233,7 +1252,7 @@ function agregarActualizacion() {
     <input type="text" name="actualizacion_institucion${actualizacionIndex}" class="acentos border w-full p-2 rounded-md bg-white mb-2" required>
 
     <label class="block text-gray-700 font-semibold">Documento recibido</label>
-     <select  class="acentos border w-full p-2 rounded-md bg-white mb-2" name="actualizacion_documento${actualizacionIndex}" required>
+      <select  class="acentos border w-full p-2 rounded-md bg-white mb-2" name="actualizacion_documento${actualizacionIndex}">
       <option value="">Seleccione documento</option>
       <option value="CERTIFICADO">CERTIFICADO</option>
       <option value="DIPLOMA">DIPLOMA</option>
@@ -1337,8 +1356,7 @@ function validarActualizaciones(cantidadMaxima) {
     const incompleto =
       !tema.value.trim() ||
       !fecha.value.trim() ||
-      !inst.value.trim() ||
-      !doc.value.trim();
+      !inst.value.trim();
 
     if (hayAlgo && incompleto) {
       alert(
