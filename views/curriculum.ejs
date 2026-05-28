@@ -5,31 +5,37 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
     <title>Curriculum Vitae</title>
     <style>
+      @import url('https://fonts.googleapis.com/css2?family=Montserrat:wght@500;700;800&family=Source+Sans+3:wght@400;600;700&display=swap');
+
       * {
         box-sizing: border-box;
       }
 
       body {
         margin: 0;
-        background: #e6e6e6;
-        font-family: Arial, Helvetica, sans-serif;
-        color: #000;
-        padding: 16px;
+        min-height: 100vh;
+        background: #f6f7f7;
+        font-family: 'Source Sans 3', 'Segoe UI', sans-serif;
+        color: #1f2d28;
+        padding: 26px 18px 40px;
       }
 
       .cv-page {
-        max-width: 940px;
+        max-width: 980px;
         margin: 0 auto;
-        border: 1px solid #c2c2c2;
-        background: #ededed;
+        border: 1px solid #d4dcd8;
+        border-radius: 20px;
+        background: #fcfcfb;
+        box-shadow: none;
+        overflow: hidden;
       }
 
       .cv-actions {
-        max-width: 940px;
-        margin: 14px auto 0;
+        max-width: 980px;
+        margin: 22px auto 0;
         display: flex;
         justify-content: flex-end;
-        gap: 12px;
+        gap: 10px;
         flex-wrap: wrap;
       }
 
@@ -40,85 +46,122 @@
         border: 1px solid #4a7d59;
         background: #4a7d59;
         color: #fff;
-        padding: 10px 16px;
-        border-radius: 6px;
-        font-size: 14px;
+        padding: 11px 18px;
+        border-radius: 999px;
+        font-size: 13px;
         font-weight: 700;
+        letter-spacing: 0.3px;
         cursor: pointer;
+        box-shadow: none;
+        transition: background-color 0.2s ease;
       }
 
       .cv-button:hover {
-        background: #3f6a4b;
+        background: #3f6d4d;
       }
 
       .header {
         display: flex;
         align-items: flex-start;
         justify-content: space-between;
-        padding: 14px 26px 8px;
+        padding: 26px 28px 22px;
+        background: #f4f7f5;
+        border-bottom: 1px solid #d5dfd9;
       }
 
       .logo {
-        width: 74px;
+        width: 84px;
         height: auto;
+        padding: 6px;
+        background: #fff;
+        border-radius: 12px;
+        border: 1px solid #d8e1dc;
       }
 
       .linea-titulo {
         text-align: center;
+        font-family: 'Montserrat', 'Source Sans 3', sans-serif;
         font-weight: 700;
-        font-size: 28px;
-        border-top: 1px solid #c2c2c2;
-        border-bottom: 1px solid #c2c2c2;
-        background: #f4f4f4;
-        padding: 8px 10px;
+        font-size: 20px;
+        letter-spacing: 0.7px;
+        border-top: 1px solid #dde4e0;
+        background: #f4f7f5;
+        padding: 7px 12px;
       }
 
       .barra-seccion {
+        font-family: 'Montserrat', 'Source Sans 3', sans-serif;
+        font-size: 16px;
+        letter-spacing: 1px;
+        text-transform: uppercase;
+        font-weight: 800;
         text-align: center;
-        font-weight: 700;
-        font-size: 28px;
-        background: #7f9488;
-        border-top: 1px solid #5f7468;
-        border-bottom: 1px solid #5f7468;
-        padding: 7px 10px;
+        color: #f5f8f7;
+        background: #738f81;
+        border: 1px solid #738f81;
+        border-radius: 12px;
+        padding: 10px 12px;
+        margin-bottom: 12px;
+      }
+
+      .seccion {
+        margin: 14px 18px;
+        padding: 14px;
+        border: 1px solid #e4ebe7;
+        border-radius: 16px;
+        background: #ffffff;
+      }
+
+      .resumen-tabla {
+        border-radius: 12px;
+        overflow: hidden;
       }
 
       .tabla {
         width: 100%;
         border-collapse: collapse;
         table-layout: fixed;
+        background: #fff;
       }
 
       .tabla td,
       .tabla th {
-        border: 1px solid #111;
-        padding: 7px 9px;
+        border: 1px solid #ced8d2;
+        padding: 9px 10px;
         font-size: 13px;
         vertical-align: middle;
-        line-height: 1.2;
+        line-height: 1.25;
         white-space: normal;
         word-break: break-word;
-        overflow-wrap: break-word;
+        overflow-wrap: anywhere;
         hyphens: none;
       }
 
       .tabla th {
-        background: #e8d39d;
+        background: #eaf1ee;
+        color: #193e31;
         text-align: center;
         font-weight: 700;
-        line-height: 1.1;
+        line-height: 1.2;
         font-size: 12px;
+      }
+
+      .tabla tbody tr:nth-child(even) {
+        background: #f8fbf9;
       }
 
       .etiqueta {
         width: 19%;
-        background: #f4f4f4;
+        background: #e9f0ec;
         font-weight: 700;
+        color: #1a4435;
       }
 
       .valor {
         text-align: center;
-        font-weight: 400;
+        font-weight: 700;
+        font-size: 15px;
+        letter-spacing: 0.3px;
       }
 
       .centro {
@@ -130,13 +173,16 @@
       }
 
       .separador {
-        text-align: center;
-        padding: 12px 0;
-        font-size: 24px;
+        height: 6px;
       }
 
       .tradicional-resumen {
         margin: 0;
+      }
+
+      .tabla-wrap {
+        overflow-x: auto;
+        border-radius: 12px;
       }
 
       .tabla-escolaridad th:nth-child(2),
@@ -157,23 +203,44 @@
       }
 
       @media (max-width: 1000px) {
+        body {
+          padding: 16px 8px 28px;
+        }
+
+        .header {
+          padding: 16px 14px;
+        }
+
         .linea-titulo,
         .barra-seccion {
-          font-size: 18px;
+          font-size: 15px;
         }
 
         .tabla td,
         .tabla th,
         .separador {
-          font-size: 15px;
+          font-size: 12px;
         }
 
         .tabla th {
-          font-size: 14px;
+          font-size: 11px;
         }
 
         .cv-actions {
           justify-content: center;
+        }
+
+        .seccion {
+          margin: 10px;
+          padding: 10px;
+        }
+
+        .logo {
+          width: 66px;
+        }
+
+        .valor {
+          font-size: 13px;
         }
       }
 
@@ -194,7 +261,16 @@
 
         .cv-page {
           border: none;
+          border-radius: 0;
+          box-shadow: none;
           max-width: 100%;
+        }
+
+        .seccion {
+          margin: 10px 0;
+          padding: 0;
+          border: none;
+          background: transparent;
         }
       }
     </style>
@@ -259,105 +335,116 @@
       <div class="linea-titulo">PODER JUDICIAL DEL ESTADO DE HIDALGO</div>
       <div class="linea-titulo">CONSEJO DE LA JUDICATURA</div>
       <div class="linea-titulo">COORDINACION GENERAL DE ADMINISTRACION</div>
-      <div class="barra-seccion">CURRICULUM VITAE</div>
+      <div class="seccion">
+        <div class="barra-seccion">CURRICULUM VITAE</div>
 
-      <table class="tabla tradicional-resumen">
-        <tr>
-          <td class="etiqueta">NOMBRE</td>
-          <td class="valor"><%= trabajador?.nombreTrabajador || "N/D" %></td>
-        </tr>
-      </table>
-
-      <div class="separador">.</div>
-      <div class="barra-seccion">ESCOLARIDAD</div>
-      <table class="tabla tabla-escolaridad">
-        <thead>
+        <table class="tabla tradicional-resumen resumen-tabla">
           <tr>
-            <th style="width: 16%">GRADO</th>
-            <th style="width: 26%">NOMBRE DE LA LICENCIATURA, MAESTRIA, DOCTORADO O ESPECIALIDAD</th>
-            <th style="width: 18%">FECHA DE OBTENCION DE GRADO (MES / ANO)</th>
-            <th style="width: 24%">INSTITUCION QUE EXPIDIO EL TITULO</th>
+            <td class="etiqueta">NOMBRE</td>
+            <td class="valor"><%= trabajador?.nombreTrabajador || "N/D" %></td>
           </tr>
-        </thead>
-        <tbody>
-          <% nivelOrden.forEach((nivel) => { %>
-            <% (escolaridadPorNivel[nivel] || []).forEach((dato) => { %>
-              <tr>
-                <td class="resaltado"><%= nivel %></td>
-                <td><%= dato.nombreTitulo || "N/D" %></td>
-                <td><%= mesAnio(dato.fechaObtencion) %></td>
-                <td><%= dato.institucion || "N/D" %></td>
-              </tr>
-            <% }) %>
-          <% }) %>
+        </table>
+      </div>
 
-          <% if (!nivelOrden.some((nivel) => (escolaridadPorNivel[nivel] || []).length > 0)) { %>
-            <tr>
-              <td class="centro" colspan="4">Sin Escolaridad</td>
-            </tr>
-          <% } %>
-        </tbody>
-      </table>
-
-      <div class="separador">.</div>
-      <div class="barra-seccion">ACTUALIZACION PROFESIONAL (DIPLOMADOS, CURSOS, TALLERES)</div>
-      <table class="tabla tabla-actualizacion">
-        <thead>
-          <tr>
-            <th style="width: 31%">TEMA</th>
-            <th style="width: 17%">FECHA</th>
-            <th style="width: 28%">INSTITUCION</th>
-            <th style="width: 24%">DOCUMENTO QUE LO ACREDITA</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (actualizacion && actualizacion.length > 0) { %>
-            <% actualizacion.forEach((act) => { %>
+      <div class="seccion">
+        <div class="barra-seccion">ESCOLARIDAD</div>
+        <div class="tabla-wrap">
+          <table class="tabla tabla-escolaridad">
+            <thead>
               <tr>
-                <td><%= act.tema || "N/D" %></td>
-                <td><%= mesAnio(act.fecha) %></td>
-                <td><%= act.institucion || "N/D" %></td>
-                <td><%= act.documento || "N/D" %></td>
+                <th style="width: 16%">GRADO</th>
+                <th style="width: 26%">NOMBRE DE LA LICENCIATURA, MAESTRIA, DOCTORADO O ESPECIALIDAD</th>
+                <th style="width: 18%">FECHA DE OBTENCION DE GRADO (MES / ANO)</th>
+                <th style="width: 24%">INSTITUCION QUE EXPIDIO EL TITULO</th>
               </tr>
-            <% }) %>
-          <% } else { %>
-            <tr>
-              <td class="centro" colspan="4">Sin Actualizaciones</td>
-            </tr>
-          <% } %>
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              <% nivelOrden.forEach((nivel) => { %>
+                <% (escolaridadPorNivel[nivel] || []).forEach((dato) => { %>
+                  <tr>
+                    <td class="resaltado"><%= nivel %></td>
+                    <td><%= dato.nombreTitulo || "N/D" %></td>
+                    <td><%= mesAnio(dato.fechaObtencion) %></td>
+                    <td><%= dato.institucion || "N/D" %></td>
+                  </tr>
+                <% }) %>
+              <% }) %>
 
-      <div class="separador">.</div>
-      <div class="barra-seccion">EXPERIENCIA LABORAL</div>
-      <table class="tabla tabla-experiencia">
-        <thead>
-          <tr>
-            <th style="width: 16%">PERIODO: MES/ANO DE INICIO</th>
-            <th style="width: 16%">PERIODO: MES/ANO DE TERMINO</th>
-            <th style="width: 26%">DENOMINACION DE LA INSTITUCION O EMPRESA</th>
-            <th style="width: 20%">CARGO O PUESTO DESEMPENADO</th>
-            <th style="width: 22%">CAMPO DE EXPERIENCIA</th>
-          </tr>
-        </thead>
-        <tbody>
-          <% if (experienciaPJ && experienciaPJ.length > 0) { %>
-            <% experienciaPJ.forEach((exp) => { %>
+              <% if (!nivelOrden.some((nivel) => (escolaridadPorNivel[nivel] || []).length > 0)) { %>
+                <tr>
+                  <td class="centro" colspan="4">Sin Escolaridad</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <div class="barra-seccion">ACTUALIZACION PROFESIONAL (DIPLOMADOS, CURSOS, TALLERES)</div>
+        <div class="tabla-wrap">
+          <table class="tabla tabla-actualizacion">
+            <thead>
               <tr>
-                <td><%= mesAnio(exp.periodoInicio) %></td>
-                <td><%= mesAnio(exp.periodoFin) %></td>
-                <td><%= exp.institucion || exp.adscripcion || "N/D" %></td>
-                <td><%= exp.cargo || "N/D" %></td>
-                <td><%= exp.campoExperiencia || "N/D" %></td>
+                <th style="width: 31%">TEMA</th>
+                <th style="width: 17%">FECHA</th>
+                <th style="width: 28%">INSTITUCION</th>
+                <th style="width: 24%">DOCUMENTO QUE LO ACREDITA</th>
               </tr>
-            <% }) %>
-          <% } else { %>
-            <tr>
-              <td class="centro" colspan="5">Sin Experiencias</td>
-            </tr>
-          <% } %>
-        </tbody>
-      </table>
+            </thead>
+            <tbody>
+              <% if (actualizacion && actualizacion.length > 0) { %>
+                <% actualizacion.forEach((act) => { %>
+                  <tr>
+                    <td><%= act.tema || "N/D" %></td>
+                    <td><%= mesAnio(act.fecha) %></td>
+                    <td><%= act.institucion || "N/D" %></td>
+                    <td><%= act.documento || "N/D" %></td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td class="centro" colspan="4">Sin Actualizaciones</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="seccion">
+        <div class="barra-seccion">EXPERIENCIA LABORAL</div>
+        <div class="tabla-wrap">
+          <table class="tabla tabla-experiencia">
+            <thead>
+              <tr>
+                <th style="width: 16%">PERIODO: MES/ANO DE INICIO</th>
+                <th style="width: 16%">PERIODO: MES/ANO DE TERMINO</th>
+                <th style="width: 26%">DENOMINACION DE LA INSTITUCION O EMPRESA</th>
+                <th style="width: 20%">CARGO O PUESTO DESEMPENADO</th>
+                <th style="width: 22%">CAMPO DE EXPERIENCIA</th>
+              </tr>
+            </thead>
+            <tbody>
+              <% if (experienciaPJ && experienciaPJ.length > 0) { %>
+                <% experienciaPJ.forEach((exp) => { %>
+                  <tr>
+                    <td><%= mesAnio(exp.periodoInicio) %></td>
+                    <td><%= mesAnio(exp.periodoFin) %></td>
+                    <td><%= exp.institucion || exp.adscripcion || "N/D" %></td>
+                    <td><%= exp.cargo || "N/D" %></td>
+                    <td><%= exp.campoExperiencia || "N/D" %></td>
+                  </tr>
+                <% }) %>
+              <% } else { %>
+                <tr>
+                  <td class="centro" colspan="5">Sin Experiencias</td>
+                </tr>
+              <% } %>
+            </tbody>
+          </table>
+        </div>
+      </div>
     </div>
 
     <div class="cv-actions noprint">

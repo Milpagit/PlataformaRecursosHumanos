@@ -40,13 +40,17 @@
     function verCurriculum() {
       const noTrabajador = document.getElementById('noTrabajador').value;
       const tipoTrabajador = document.getElementById('tipoTrabajador').value;
-      window.open(`/curriculum/${noTrabajador}/${tipoTrabajador}`, '_blank');
+      const noTrabajadorEncoded = encodeURIComponent(noTrabajador);
+      const tipoTrabajadorEncoded = encodeURIComponent(tipoTrabajador);
+      window.open(`/curriculum?W=${noTrabajadorEncoded}&T=${tipoTrabajadorEncoded}`, '_blank');
     }
 
     function descargarZip() {
       const noTrabajador = document.getElementById('noTrabajador').value;
       const tipoTrabajador = document.getElementById('tipoTrabajador').value;
-      window.location.href = `/reporte/${noTrabajador}/${tipoTrabajador}`;
+      const noTrabajadorEncoded = encodeURIComponent(noTrabajador);
+      const tipoTrabajadorEncoded = encodeURIComponent(tipoTrabajador);
+      window.location.href = `/reporte/${noTrabajadorEncoded}/${tipoTrabajadorEncoded}`;
     }
 
     function toggleEdicion() {

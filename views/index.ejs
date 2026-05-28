@@ -983,11 +983,12 @@
           </label>
           <div class="flex gap-4">
             <% 
-              // Lógica principal: inferir Sí/No mirando comunidadIndigena
-              const valComunidad = user.comunidadIndigena ? user.comunidadIndigena.trim().toUpperCase() : 'N/A';
-              const tieneComunidad = (valComunidad !== 'N/A' && valComunidad !== '');
-
-              const esIndigena = tieneComunidad ? '1' : '0';
+              // Triestado: '1' (sí), '0' (no), '' (sin respuesta)
+              const valComunidad = user.comunidadIndigena ? user.comunidadIndigena.trim().toUpperCase() : '';
+              let esIndigena = '';
+              if (valComunidad && valComunidad !== 'N/A') {
+                esIndigena = valComunidad === 'NO' ? '0' : '1';
+              }
             %>
 
             <label class="flex items-center cursor-pointer">
@@ -1098,11 +1099,12 @@
           >
           <div class="flex gap-4">
             <% 
-              // CORRECCIÓN: Usar familiaLinguistica que es el campo real de la BD
-              const valFamilia = user.familiaLinguistica ? user.familiaLinguistica.trim().toUpperCase() : 'N/A';
-              const lenguaIndigena = (valFamilia !== 'N/A' && valFamilia !== '');
-
-              const leIndigena = lenguaIndigena ? '1' : '0';
+              // Triestado: '1' (sí), '0' (no), '' (sin respuesta)
+              const valFamilia = user.familiaLinguistica ? user.familiaLinguistica.trim().toUpperCase() : '';
+              let leIndigena = '';
+              if (valFamilia && valFamilia !== 'N/A') {
+                leIndigena = valFamilia === 'NO' ? '0' : '1';
+              }
             %>
             <label
               ><input
@@ -1201,10 +1203,21 @@
           </label>
           <div class="flex gap-4">
             <% 
-              // CORRECCIÓN: El campo en BD es lenguajeSenias (según app.js)
-              const respuestaLSM = user.lenguajeSenias 
-                ? String(user.lenguajeSenias).trim() 
-                : 'No';  // por defecto No si no existe
+              // Triestado: 'Sí', 'No' o '' (sin respuesta)
+              const respuestaLSMRaw = user.lenguajeSenias
+                ? String(user.lenguajeSenias).trim()
+                : '';
+              const respuestaLSMNorm = respuestaLSMRaw
+                .toUpperCase()
+                .normalize("NFD")
+                .replace(/[\u0300-\u036f]/g, "");
+
+              let respuestaLSM = '';
+              if (respuestaLSMNorm === 'SI') {
+                respuestaLSM = 'Sí';
+              } else if (respuestaLSMNorm === 'NO') {
+                respuestaLSM = 'No';
+              }
             %>
 
             <label class="flex items-center cursor-pointer">
@@ -1330,9 +1343,12 @@
             >¿Tienes alguna discapacidad?</label
           >
           <%
-             // Si tipoDiscapacidad es diferente de NO y N/A, entonces es Sí
-             const valDiscapacidad = user.tipoDiscapacidad ? user.tipoDiscapacidad.trim().toUpperCase() : 'NO';
-             const tieneDiscapacidad = (valDiscapacidad !== 'NO' && valDiscapacidad !== 'N/A') ? '1' : '0';
+             // Triestado: '1' (sí), '0' (no), '' (sin respuesta)
+             const valDiscapacidad = user.tipoDiscapacidad ? user.tipoDiscapacidad.trim().toUpperCase() : '';
+             let tieneDiscapacidad = '';
+             if (valDiscapacidad) {
+               tieneDiscapacidad = (valDiscapacidad === 'NO' || valDiscapacidad === 'N/A') ? '0' : '1';
+             }
           %>
           <div class="flex gap-4">
             <label
@@ -1404,9 +1420,11 @@
             >¿Padeces alguna enfermedad crónica o degenerativa?</label
           >
           <%
-             // La BD guarda "Si" o "No" en tieneEnfermedadCronica
-             const valCronica = user.tieneEnfermedadCronica ? user.tieneEnfermedadCronica.trim() : 'No';
-             const esCronica = valCronica === 'Si' ? '1' : '0';
+             // Triestado: '1' (sí), '0' (no), '' (sin respuesta)
+             const valCronica = user.tieneEnfermedadCronica ? user.tieneEnfermedadCronica.trim() : '';
+             let esCronica = '';
+             if (valCronica === 'Si') esCronica = '1';
+             if (valCronica === 'No') esCronica = '0';
           %>
           <div class="flex gap-4">
             <label
@@ -1450,9 +1468,11 @@
             >¿Estás embarazada?</label
           >
           <%
-             // La BD guarda "Embarazada", "No", "No aplica"
-             const valEmbarazo = user.embarazada ? user.embarazada.trim() : 'No';
-             const estaEmbarazada = valEmbarazo === 'Embarazada' ? '1' : '0';
+             // Triestado para no forzar selección cuando no hay dato
+             const valEmbarazo = user.embarazada ? user.embarazada.trim() : '';
+             let estaEmbarazada = '';
+             if (valEmbarazo === 'Embarazada') estaEmbarazada = '1';
+             if (valEmbarazo === 'No') estaEmbarazada = '0';
           %>
           <div class="flex gap-4">
             <label
@@ -1483,8 +1503,10 @@
           <%
              // La BD guarda "Padre", "Madre" o "No"
              const tieneHijos = (locals.hijos && locals.hijos.length > 0);
-             const valPadre = user.es_padre_madre ? user.es_padre_madre.trim() : 'No';
-             const esPadre = (valPadre === 'Padre' || valPadre === 'Madre' || tieneHijos) ? '1' : '0';
+             const valPadre = user.es_padre_madre ? user.es_padre_madre.trim() : '';
+             let esPadre = '';
+             if (tieneHijos || valPadre === 'Padre' || valPadre === 'Madre') esPadre = '1';
+             if (!tieneHijos && valPadre === 'No') esPadre = '0';
           %>
           <div class="flex gap-4">
             <label
@@ -1682,7 +1704,12 @@
           <p class="text-gray-800 mb-1">
             ¿Has concluido la educación primaria?
           </p>
-          <% const primariaConcluida = typeof tienePrimaria !== 'undefined' ? !!tienePrimaria : false; %>
+          <% 
+            const valPrimaria = user.primaria ? String(user.primaria).trim().toUpperCase() : '';
+            let primariaConcluida = '';
+            if (valPrimaria === 'SI' || valPrimaria === 'SÍ') primariaConcluida = '1';
+            if (valPrimaria === 'NO') primariaConcluida = '0';
+          %>
           <div class="flex gap-4 mb-4">
             <label
               ><input
@@ -1692,7 +1719,7 @@
                 class="mr-2"
                 id="radio-primaria"
                 required
-                <%= primariaConcluida ? 'checked' : '' %>
+                <%= primariaConcluida === '1' ? 'checked' : '' %>
               />
               Sí</label
             >
@@ -1702,7 +1729,7 @@
                 name="primaria"
                 value="No"
                 class="mr-2"
-                <%= !primariaConcluida && typeof tienePrimaria !== 'undefined' ? 'checked' : '' %>
+                <%= primariaConcluida === '0' ? 'checked' : '' %>
               />
               No</label
             >
@@ -1713,7 +1740,12 @@
           <p class="text-gray-800 mb-1">
             ¿Has concluido la educación secundaria?
           </p>
-          <% const secundariaConcluida = typeof tieneSecundaria !== 'undefined' ? !!tieneSecundaria : false; %>
+          <% 
+            const valSecundaria = user.secundaria ? String(user.secundaria).trim().toUpperCase() : '';
+            let secundariaConcluida = '';
+            if (valSecundaria === 'SI' || valSecundaria === 'SÍ') secundariaConcluida = '1';
+            if (valSecundaria === 'NO') secundariaConcluida = '0';
+          %>
           <div class="flex gap-4 mb-4">
             <label
               ><input
@@ -1723,7 +1755,7 @@
                 class="mr-2"
                 id="radio-secundaria"
                 required
-                <%= secundariaConcluida ? 'checked' : '' %>
+                <%= secundariaConcluida === '1' ? 'checked' : '' %>
               />
               Sí</label
             >
@@ -1733,7 +1765,7 @@
                 name="secundaria_institucion"
                 value="No"
                 class="mr-2"
-                <%= !secundariaConcluida && typeof tieneSecundaria !== 'undefined' ? 'checked' : '' %>
+                <%= secundariaConcluida === '0' ? 'checked' : '' %>
               />
               No</label
             >
@@ -1845,7 +1877,7 @@
             <p class="font-semibold text-gray-800 mb-1">Bachillerato</p>
             <label class="text-gray-800 mb-1">¿Cursaste bachillerato?</label>
             <%
-              const tieneBachilleratoDB = (locals.bachillerato) ? '1' : '0';
+              const tieneBachilleratoDB = locals.bachillerato ? '1' : '';
             %>
             <div class="flex gap-4">
               <label
@@ -1940,7 +1972,7 @@
               // Filtrar licenciaturas desde la BD
               const licenciaturasBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'LICENCIATURA');
               const numLicenciaturas = licenciaturasBD.length;
-              const tieneLic = numLicenciaturas > 0 ? '1' : '0';
+              const tieneLic = numLicenciaturas > 0 ? '1' : '';
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con licenciatura?</label>
             <div class="flex gap-4">
@@ -2065,7 +2097,7 @@
             <%
               const maestriasBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'MAESTRIA');
               const numMaestrias = maestriasBD.length;
-              const tieneMae = numMaestrias > 0 ? '1' : '0';
+              const tieneMae = numMaestrias > 0 ? '1' : '';
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con maestría?</label>
             <div class="flex gap-4">
@@ -2164,7 +2196,7 @@
             <%
               const doctoradosBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'DOCTORADO');
               const numDoctorados = doctoradosBD.length;
-              const tieneDoc = numDoctorados > 0 ? '1' : '0';
+              const tieneDoc = numDoctorados > 0 ? '1' : '';
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con doctorado?</label>
             <div class="flex gap-4">
@@ -2263,7 +2295,7 @@
             <%
               const posdoctoradosBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'POSDOCTORADO');
               const numPosdoctorados = posdoctoradosBD.length;
-              const tienePos = numPosdoctorados > 0 ? '1' : '0';
+              const tienePos = numPosdoctorados > 0 ? '1' : '';
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con posdoctorado?</label>
             <div class="flex gap-4">
@@ -2362,7 +2394,7 @@
             <%
               const especialidadesBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'ESPECIALIDAD');
               const numEspecialidades = especialidadesBD.length;
-              const tieneEsp = numEspecialidades > 0 ? '1' : '0';
+              const tieneEsp = numEspecialidades > 0 ? '1' : '';
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con especialidad?</label>
             <div class="flex gap-4">

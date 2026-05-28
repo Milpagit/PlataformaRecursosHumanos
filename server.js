@@ -25,6 +25,18 @@ dayjs.extend(localizedFormat);
 dayjs.locale("es");
 
 const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
+const CV_EXTERNAL_PATH =
+  process.env.CV_EXTERNAL_PATH || "/Recursos/FrmRep.aspx";
+
+function construirUrlCvExterno(noTrabajador, tipoTrabajador) {
+  const baseNormalizada = String(BASE_URL || "").replace(/\/+$/, "");
+  const rutaNormalizada = String(CV_EXTERNAL_PATH || "").startsWith("/")
+    ? CV_EXTERNAL_PATH
+    : `/${CV_EXTERNAL_PATH}`;
+  const w = encodeURIComponent(noTrabajador);
+  const t = encodeURIComponent(tipoTrabajador);
+  return `${baseNormalizada}${rutaNormalizada}?W=${w}&T=${t}`;
+}
 
 app.locals.formatearFecha = function (fecha) {
   if (!fecha) return "N/A";
@@ -249,8 +261,15 @@ app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
   }
 });
 
-app.get("/curriculum/:noTrabajador/:tipoTrabajador", async (req, res) => {
-  const { noTrabajador, tipoTrabajador } = req.params;
+async function renderCurriculumPrivado(req, res, noTrabajador, tipoTrabajador) {
+  const noTrabajadorSafe = String(noTrabajador || "").trim();
+  const tipoTrabajadorSafe = String(tipoTrabajador || "")
+    .trim()
+    .toUpperCase();
+
+  if (!noTrabajadorSafe || !tipoTrabajadorSafe) {
+    return res.status(400).send("Consulta invalida: W y T son requeridos.");
+  }
 
   try {
     // Seguridad: solo el propio trabajador logueado o un administrador pueden ver el curriculum
@@ -262,10 +281,14 @@ app.get("/curriculum/:noTrabajador/:tipoTrabajador", async (req, res) => {
         return res.redirect("/login");
       }
 
-      const noTrabajadorSesion = String(usuarioSesion.noTrabajador);
-      const noTrabajadorParam = String(noTrabajador);
-      const tipoSesion = String(usuarioSesion.tipoTrabajador || "");
-      const tipoParam = String(tipoTrabajador || "");
+      const noTrabajadorSesion = String(
+        usuarioSesion.noTrabajador || "",
+      ).trim();
+      const noTrabajadorParam = noTrabajadorSafe;
+      const tipoSesion = String(usuarioSesion.tipoTrabajador || "")
+        .trim()
+        .toUpperCase();
+      const tipoParam = tipoTrabajadorSafe;
 
       if (
         noTrabajadorSesion !== noTrabajadorParam ||
@@ -277,7 +300,10 @@ app.get("/curriculum/:noTrabajador/:tipoTrabajador", async (req, res) => {
       }
     }
 
-    const datos = await obtenerDatosCurriculum(noTrabajador, tipoTrabajador);
+    const datos = await obtenerDatosCurriculum(
+      noTrabajadorSafe,
+      tipoTrabajadorSafe,
+    );
     if (!datos) {
       return res.status(404).send("Trabajador no encontrado");
     }
@@ -294,6 +320,17 @@ app.get("/curriculum/:noTrabajador/:tipoTrabajador", async (req, res) => {
       .status(500)
       .send("Error interno al generar el curriculum: " + error.message);
   }
+}
+
+app.get("/curriculum", async (req, res) => {
+  const noTrabajador = req.query.W;
+  const tipoTrabajador = req.query.T;
+  return renderCurriculumPrivado(req, res, noTrabajador, tipoTrabajador);
+});
+
+app.get("/curriculum/:noTrabajador/:tipoTrabajador", async (req, res) => {
+  const { noTrabajador, tipoTrabajador } = req.params;
+  return renderCurriculumPrivado(req, res, noTrabajador, tipoTrabajador);
 });
 
 // Enlace publico para visualizar curriculum sin autenticacion
@@ -1282,11 +1319,12 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
       [noTrabajador, tipoTrabajador],
     );
     const trabajador = trabajadorRows[0];
-    const idTrabajador = trabajador.idTrabajador;
 
     if (!trabajador) {
       return res.status(404).send("No se encontró el trabajador");
     }
+
+    const idTrabajador = trabajador.idTrabajador;
 
     const [hijos] = await db.query(
       "SELECT * FROM hijo WHERE idTrabajador = ?",
@@ -1319,7 +1357,10 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
     worksheet.getCell("B13").value = trabajador.carreraTecnicaComercial;
 
     // Hipervínculo al curriculum
-    const curriculumUrl = `${BASE_URL}/curriculum/${trabajador.noTrabajador}/${trabajador.tipoTrabajador}`;
+    const curriculumUrl = construirUrlCvExterno(
+      trabajador.noTrabajador,
+      trabajador.tipoTrabajador,
+    );
     // Busca la columna correspondiente, por ejemplo C20 (ajusta según plantilla)
     // Si la columna es variable, busca por nombre o posición
     worksheet.getCell("C20").value = {
@@ -1328,7 +1369,8 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
     };
 
     const bachillerato = escolaridades.filter(
-      (exp) => exp.nivelAcademico.toUpperCase() === "BACHILLERATO",
+      (exp) =>
+        String(exp.nivelAcademico || "").toUpperCase() === "BACHILLERATO",
     );
     bachillerato.forEach((exp, index) => {
       const fila = 14 + index; // Empieza en la fila 14, 15, 16…
@@ -1447,7 +1489,7 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
 
     const PREPA_START_ROW = 14;
     const prepa = escolaridades.filter(
-      (e) => e.nivelAcademico.toUpperCase() === "BACHILLERATO",
+      (e) => String(e.nivelAcademico || "").toUpperCase() === "BACHILLERATO",
     );
     const prepaCount = prepa.length;
 
@@ -1465,7 +1507,7 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
       worksheet.getRow(PREPA_START_ROW).hidden = true;
     } else {
       if (prepaCount > 1) {
-        worksheet.duplicateRow(LIC_START_ROW, licCount - 1, true);
+        worksheet.duplicateRow(PREPA_START_ROW, prepaCount - 1, true);
       }
 
       const start = PREPA_START_ROW;
@@ -1499,7 +1541,7 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
 
     let LIC_START_ROW = 15;
     const licenciaturas = escolaridades.filter(
-      (e) => e.nivelAcademico.toUpperCase() === "LICENCIATURA",
+      (e) => String(e.nivelAcademico || "").toUpperCase() === "LICENCIATURA",
     );
     let licCount = licenciaturas.length;
     // console.log("length lic:", licCount); // Depuración conteo de licenciaturas
@@ -1564,7 +1606,7 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
 
     let MAE_START_ROW = 16 + acarreo; // ← ajusta esta fila al inicio de tu sección "Maestría"
     const maestrias = escolaridades.filter(
-      (e) => e.nivelAcademico.toUpperCase() === "MAESTRIA",
+      (e) => String(e.nivelAcademico || "").toUpperCase() === "MAESTRIA",
     );
     let maeCount = maestrias.length;
 
@@ -1624,7 +1666,7 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
 
     let DOC_START_ROW = 17 + acarreo; // ← ajusta esta fila al inicio de tu sección "Maestría"
     const doctorados = escolaridades.filter(
-      (e) => e.nivelAcademico.toUpperCase() === "DOCTORADO",
+      (e) => String(e.nivelAcademico || "").toUpperCase() === "DOCTORADO",
     );
     let docCount = doctorados.length;
     if (docCount === 0) {
@@ -1643,12 +1685,13 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
       worksheet.getRow(DOC_START_ROW).hidden = true;
       ///worksheet.getRow(MAE_START_ROW+1).hidden = true;
     } else {
-      if (maeCount > 1) {
-        acarreo = acarreo + maeCount - 1;
-        worksheet2.duplicateRow(MAE_START_ROW, maeCount - 1, true);
+      if (docCount > 1) {
+        acarreo = acarreo + docCount - 1;
+        worksheet.duplicateRow(DOC_START_ROW, docCount - 1, true);
       }
 
-      const start = MAE_START_ROW;
+      const start = DOC_START_ROW;
+      const end = DOC_START_ROW + docCount - 1;
 
       // Encabezado en A (si lo necesitas)
 
@@ -1677,7 +1720,7 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
     // console.log("acarreo doc: ", acarreo);
     let ESP_START_ROW = 18 + acarreo; // ← ajusta esta fila al inicio de tu sección "Maestría"
     const especialidades = escolaridades.filter(
-      (e) => e.nivelAcademico.toUpperCase() === "ESPECIALIDAD",
+      (e) => String(e.nivelAcademico || "").toUpperCase() === "ESPECIALIDAD",
     );
     let espCount = especialidades.length;
     if (espCount === 0) {
@@ -1702,12 +1745,12 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
     } else {
       if (espCount > 1) {
         acarreo = acarreo + espCount - 1;
-        worksheet.duplicateRow(ESP_START_ROW, docCount - 1, true);
+        worksheet.duplicateRow(ESP_START_ROW, espCount - 1, true);
       }
 
       const start = ESP_START_ROW;
 
-      const end = ESP_START_ROW + docCount - 1;
+      const end = ESP_START_ROW + espCount - 1;
 
       // Encabezado en A (si lo necesitas)
 
@@ -1759,12 +1802,13 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
 
     ///////////////////////////////////////////////////////////
 
+    const expMerges2 = [];
     worksheet2.model.merges.forEach((range) => {
       const [start, end] = range.split(":");
       const startRow = +start.match(/\d+$/)[0];
       const endRow = +end.match(/\d+$/)[0];
       if (startRow === EXPERIENCE_ROW && endRow === EXPERIENCE_ROW) {
-        expMerges.push(range);
+        expMerges2.push(range);
       }
     });
 
@@ -1784,7 +1828,7 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
       worksheet2.duplicateRow(EXPERIENCE_ROW, totalExp - 1, true);
     }
 
-    expMerges.forEach((range) => {
+    expMerges2.forEach((range) => {
       const [start, end] = range.split(":");
       const colStart = start.match(/^[A-Z]+/)[0];
       const colEnd = end.match(/^[A-Z]+/)[0];
@@ -1813,12 +1857,13 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
     });
     ///////////////////////////////////////////////////
 
+    const updateMerges2 = [];
     worksheet2.model.merges.forEach((range) => {
       const [start, end] = range.split(":");
       const startRow = parseInt(start.match(/\d+$/)[0], 10);
       const endRow = parseInt(end.match(/\d+$/)[0], 10);
       if (startRow === UPDATE_ROW && endRow === UPDATE_ROW) {
-        updateMerges.push(range);
+        updateMerges2.push(range);
       }
     });
 
@@ -1839,18 +1884,21 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
       };
     }
 
-    updateMerges.forEach((range) => {
+    updateMerges2.forEach((range) => {
       const [start, end] = range.split(":");
       const colStart = start.match(/^[A-Z]+/)[0];
       const colEnd = end.match(/^[A-Z]+/)[0];
       for (let i = 1; i < totalActualizaciones; i++) {
-        console.log(
-          "rango de merge1: ",
-          `${colStart}${UPDATE_ROW + i}:${colEnd}${UPDATE_ROW + i}`,
-        );
-        worksheet2.mergeCells(
-          `${colStart}${UPDATE_ROW + i}:${colEnd}${UPDATE_ROW + i}`,
-        );
+        const mergeRange = `${colStart}${UPDATE_ROW + i}:${colEnd}${UPDATE_ROW + i}`;
+        console.log("rango de merge1: ", mergeRange);
+        try {
+          worksheet2.unMergeCells(mergeRange);
+        } catch (err) {}
+        try {
+          worksheet2.mergeCells(mergeRange);
+        } catch (err) {
+          console.warn(`No se pudo mergear ${mergeRange}:`, err.message);
+        }
       }
     });
 
@@ -1879,7 +1927,7 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
       // 2) Si hay más de 1, duplicamos la fila base licCount-1 veces
       if (prepaCount > 1) {
         // (filaBase, númeroDeDuplicados, insert => true para desplazar filas hacia abajo)
-        worksheet2.duplicateRow(LIC_START_ROW, licCount - 1, true);
+        worksheet2.duplicateRow(PREPA_START_ROW, prepaCount - 1, true);
       }
 
       const start = PREPA_START_ROW;
@@ -2066,10 +2114,10 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
       if (docCount > 1) {
         const mergeRange = `A${start}:A${end}`;
         try {
-          worksheet.unMergeCells(mergeRange);
+          worksheet2.unMergeCells(mergeRange);
         } catch (err) {}
         try {
-          worksheet.mergeCells(mergeRange);
+          worksheet2.mergeCells(mergeRange);
         } catch (err) {
           console.warn(`No se pudo mergear ${mergeRange}:`, err);
         }
@@ -2104,12 +2152,12 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
     } else {
       if (espCount > 1) {
         acarreo = acarreo + espCount - 1;
-        worksheet2.duplicateRow(ESP_START_ROW, docCount - 1, true);
+        worksheet2.duplicateRow(ESP_START_ROW, espCount - 1, true);
       }
 
       const start = ESP_START_ROW;
 
-      const end = ESP_START_ROW + docCount - 1;
+      const end = ESP_START_ROW + espCount - 1;
 
       // Encabezado en A (si lo necesitas)
 
@@ -2263,21 +2311,44 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
     });
     //archive.file(rutaCompleta25, { name: path.basename(rutaCompleta25) });
 
-    // Archivos PDF
+    // Adjunta todos los anexos del trabajador que existan en uploads
     const uploadsPath = path.join(__dirname, "uploads");
-    const pdfs = [
-      `${trabajador.nombreTrabajador}_INE.pdf`,
-      `${trabajador.nombreTrabajador}_ACTA-NACIMIENTO.pdf`,
-      `${trabajador.nombreTrabajador}_COMPROBANTE-DOMICILIO.pdf`,
-      `${trabajador.nombreTrabajador}_RFC.pdf`,
-      `${trabajador.nombreTrabajador}_GRADO-ESTUDIOS.pdf`,
-    ];
+    const normalizarNombre = (valor) =>
+      String(valor || "")
+        .trim()
+        .toUpperCase()
+        .replace(/\s+/g, " ")
+        .split(" ")
+        .filter(Boolean)
+        .sort()
+        .join(" ");
 
-    pdfs.forEach((nombre) => {
+    const nombreTrabajadorNormalizado = normalizarNombre(
+      trabajador.nombreTrabajador,
+    );
+
+    const anexosTrabajador = fs.readdirSync(uploadsPath).filter((nombre) => {
       const ruta = path.join(uploadsPath, nombre);
-      if (fs.existsSync(ruta)) {
-        archive.file(ruta, { name: `${carpetaTrabajador}/${nombre}` });
+      let stat;
+      try {
+        stat = fs.statSync(ruta);
+      } catch (err) {
+        return false;
       }
+      if (!stat.isFile()) return false;
+
+      const baseSinExt = path.parse(nombre).name;
+      const idxUltimoGuionBajo = baseSinExt.lastIndexOf("_");
+      if (idxUltimoGuionBajo <= 0) return false;
+
+      const nombreEnArchivo = baseSinExt.slice(0, idxUltimoGuionBajo);
+      const nombreArchivoNormalizado = normalizarNombre(nombreEnArchivo);
+      return nombreArchivoNormalizado === nombreTrabajadorNormalizado;
+    });
+
+    anexosTrabajador.forEach((nombre) => {
+      const ruta = path.join(uploadsPath, nombre);
+      archive.file(ruta, { name: `${carpetaTrabajador}/${nombre}` });
     });
 
     await archive.finalize();
@@ -2292,6 +2363,11 @@ app.get("/reporte/:noTrabajador/:tipoTrabajador", async (req, res) => {
     }
   } catch (error) {
     console.error("Error generando el reporte:", error);
+    if (req.query.debug === "1") {
+      return res
+        .status(500)
+        .send(`Error interno del servidor: ${error.message}`);
+    }
     res.status(500).send("Error interno del servidor");
   }
 });
