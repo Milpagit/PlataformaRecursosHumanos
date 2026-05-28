@@ -76,8 +76,65 @@ app.use(
   }),
 );
 
+async function obtenerDatosCurriculum(noTrabajador, tipoTrabajador) {
+  const [rows] = await db.query(
+    "SELECT * FROM trabajador WHERE noTrabajador = ? AND tipoTrabajador = ?",
+    [noTrabajador, tipoTrabajador],
+  );
+
+  if (!rows || rows.length === 0) {
+    return null;
+  }
+
+  const trabajador = rows[0];
+  const idReal = trabajador.idTrabajador;
+
+  const [escolaridad] = await db.query(
+    "SELECT * FROM escolaridad WHERE idTrabajador = ?",
+    [idReal],
+  );
+
+  const [experienciaPJ] = await db.query(
+    `SELECT
+        institucion,
+        adscripcion,
+        cargo,
+        campoExperiencia,
+        periodoInicio,
+        periodoFin
+     FROM experienciapj
+     WHERE idTrabajador = ?`,
+    [idReal],
+  );
+
+  const [actualizacion] = await db.query(
+    "SELECT * FROM actualizacionprofesional WHERE idTrabajador = ?",
+    [idReal],
+  );
+
+  return {
+    trabajador,
+    escolaridad,
+    experienciaPJ,
+    actualizacion,
+  };
+}
+
 app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
   const { noTrabajador, tipoTrabajador } = req.params;
+
+  const renderErrorAccesoAcuse = (status, titulo, mensaje, detalle = null) => {
+    return res.status(status).render("error-acceso-acuse", {
+      titulo,
+      mensaje,
+      detalle,
+      volverUrl: "/index",
+      loginUrl: "/login",
+      dashboardUrl: "/admin/dashboard",
+      esAdmin: !!req.session.admin,
+      usuarioSesion: req.session.user || null,
+    });
+  };
 
   try {
     // Seguridad: solo el propio trabajador logueado o un administrador pueden ver el acuse
@@ -87,20 +144,36 @@ app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
     if (!esAdmin) {
       // Si no es admin, debe estar logueado como trabajador
       if (!usuarioSesion) {
-        return res.redirect("/login");
+        return renderErrorAccesoAcuse(
+          401,
+          "Sesion expirada",
+          "Tu sesion termino y por eso no se pudo abrir el acuse.",
+          "Vuelve a iniciar sesion para continuar.",
+        );
       }
 
       // El trabajador solo puede ver su propio acuse (normalizamos a string para evitar problemas de tipo)
-      const noTrabajadorSesion = String(usuarioSesion.noTrabajador);
-      const noTrabajadorParam = String(noTrabajador);
-      const tipoSesion = String(usuarioSesion.tipoTrabajador || "");
-      const tipoParam = String(tipoTrabajador || "");
+      const noTrabajadorSesion = String(
+        usuarioSesion.noTrabajador || "",
+      ).trim();
+      const noTrabajadorParam = String(noTrabajador || "").trim();
+      const tipoSesion = String(usuarioSesion.tipoTrabajador || "")
+        .trim()
+        .toUpperCase();
+      const tipoParam = String(tipoTrabajador || "")
+        .trim()
+        .toUpperCase();
 
       if (
         noTrabajadorSesion !== noTrabajadorParam ||
         tipoSesion !== tipoParam
       ) {
-        return res.status(403).send("No tienes permiso para ver este acuse.");
+        return renderErrorAccesoAcuse(
+          403,
+          "No tienes permiso para este acuse",
+          "El enlace que abriste no coincide con tu cuenta de trabajador.",
+          `Estas en sesion como No. ${noTrabajadorSesion || "N/A"} Tipo ${tipoSesion || "N/A"}, pero intentaste abrir No. ${noTrabajadorParam || "N/A"} Tipo ${tipoParam || "N/A"}.`,
+        );
       }
     }
     const [rows] = await db.query(
@@ -109,7 +182,12 @@ app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
     );
 
     if (!rows || rows.length === 0) {
-      return res.status(404).send("Trabajador no encontrado");
+      return renderErrorAccesoAcuse(
+        404,
+        "No se encontro informacion del acuse",
+        "No localizamos un trabajador con los datos del enlace.",
+        "Verifica el numero de trabajador y el tipo (C o H).",
+      );
     }
     const trabajador = rows[0];
     const idReal = trabajador.idTrabajador;
@@ -162,7 +240,12 @@ app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
     });
   } catch (error) {
     console.error("Error en /acuse:", error);
-    res.status(500).send("Error interno al generar el acuse: " + error.message);
+    return renderErrorAccesoAcuse(
+      500,
+      "Error al generar el acuse",
+      "Ocurrio un problema interno al abrir el acuse.",
+      error.message,
+    );
   }
 });
 
@@ -194,9 +277,17 @@ app.get("/curriculum/:noTrabajador/:tipoTrabajador", async (req, res) => {
       }
     }
 
-    return res.redirect(
-      `/reporte/${encodeURIComponent(noTrabajador)}/${encodeURIComponent(tipoTrabajador)}?preview=1`,
-    );
+    const datos = await obtenerDatosCurriculum(noTrabajador, tipoTrabajador);
+    if (!datos) {
+      return res.status(404).send("Trabajador no encontrado");
+    }
+
+    return res.render("curriculum", {
+      trabajador: datos.trabajador,
+      escolaridad: datos.escolaridad,
+      experienciaPJ: datos.experienciaPJ,
+      actualizacion: datos.actualizacion,
+    });
   } catch (error) {
     console.error("Error en /curriculum:", error);
     return res
@@ -212,9 +303,17 @@ app.get(
     const { noTrabajador, tipoTrabajador } = req.params;
 
     try {
-      return res.redirect(
-        `/reporte/${encodeURIComponent(noTrabajador)}/${encodeURIComponent(tipoTrabajador)}?preview=1`,
-      );
+      const datos = await obtenerDatosCurriculum(noTrabajador, tipoTrabajador);
+      if (!datos) {
+        return res.status(404).send("Trabajador no encontrado");
+      }
+
+      return res.render("curriculum", {
+        trabajador: datos.trabajador,
+        escolaridad: datos.escolaridad,
+        experienciaPJ: datos.experienciaPJ,
+        actualizacion: datos.actualizacion,
+      });
     } catch (error) {
       console.error("Error en /curriculum_transparencia:", error);
       return res
@@ -270,6 +369,12 @@ app.get("/index", async (req, res) => {
     [trabajadorActual.idTrabajador],
   );
 
+  // Consultar actualizaciones profesionales existentes
+  const [actualizacion] = await db.query(
+    "SELECT tema, fecha, institucion, documento, idTrabajador FROM actualizacionprofesional WHERE idTrabajador = ? ORDER BY fecha DESC",
+    [trabajadorActual.idTrabajador],
+  );
+
   // Filtrar por nivel académico
   const tecnica =
     escolaridad.filter(
@@ -304,6 +409,7 @@ app.get("/index", async (req, res) => {
     experienciaPJ,
     hijos,
     escolaridad,
+    actualizacion,
     tecnica,
     bachillerato,
     tienePrimaria,
@@ -608,14 +714,31 @@ app.post(
     if (req.body.discapacidad === "0") {
       discapacidadEspecificada = "N/A";
     }
-    ///let carreraTecnica = req.body.tecnica_institucion;
     const vigenciaINE = req.body.vigenciaINE;
     const tieneTecnica = req.body.tieneTecnica === "1";
-    const tecnicaNombre = (req.body.tecnica_institucion || "")
+    const tecnicaTitulo = (
+      req.body.tecnica_titulo ||
+      req.body.tecnica_institucion ||
+      ""
+    )
       .trim()
       .toUpperCase();
+    const tecnicaInstitucion = (req.body.tecnica_institucion || "")
+      .trim()
+      .toUpperCase();
+    const tecnicaFecha =
+      tieneTecnica && req.body.tecnica_fecha
+        ? convertirFechaTexto(req.body.tecnica_fecha)
+        : null;
+    const tecnicaDocumento = tieneTecnica
+      ? req.body.tecnica_documento || null
+      : null;
+    const tecnicaEstatus = tieneTecnica
+      ? req.body.tecnica_estatus || null
+      : null;
+    const tecnicaCedula = tieneTecnica ? req.body.tecnica_cedula || null : null;
     const carreraTecnicaComercial =
-      tieneTecnica && tecnicaNombre ? tecnicaNombre : "No";
+      tieneTecnica && tecnicaTitulo ? tecnicaTitulo : "No";
 
     let cantidadHijosSegura = parseInt(cantidadHijos, 10);
     if (Number.isNaN(cantidadHijosSegura) || cantidadHijosSegura < 0) {
@@ -785,6 +908,17 @@ app.post(
       // console.log(`Escolaridad eliminada para trabajador ${idTrabajador}`); // Log informativo, mantener comentado
 
       const escolaridades = [
+        // CARRERA TÉCNICA O COMERCIAL
+        {
+          nivel: "TECNICA",
+          titulo: tieneTecnica ? tecnicaTitulo || null : null,
+          fecha: tecnicaFecha,
+          institucion: tieneTecnica ? tecnicaInstitucion || null : null,
+          documento: tecnicaDocumento,
+          estatus: tecnicaEstatus,
+          cedula: tecnicaCedula,
+        },
+
         // BACHILLERATO
         {
           nivel: "BACHILLERATO",

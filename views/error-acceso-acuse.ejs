@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Error de acceso al acuse</title>
+    <link href="/css/styles.css" rel="stylesheet" />
+  </head>
+  <body class="min-h-screen bg-slate-100 text-slate-800">
+    <div class="mx-auto max-w-3xl px-4 py-10">
+      <div class="overflow-hidden rounded-2xl border border-red-200 bg-white shadow-sm">
+        <div class="bg-red-50 px-6 py-4 border-b border-red-100">
+          <h1 class="text-xl md:text-2xl font-bold text-red-700"><%= titulo %></h1>
+        </div>
+
+        <div class="px-6 py-6 space-y-4">
+          <p class="text-base text-slate-700"><%= mensaje %></p>
+
+          <% if (detalle) { %>
+            <div class="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+              <strong class="block mb-1">Detalle:</strong>
+              <span><%= detalle %></span>
+            </div>
+          <% } %>
+
+          <div class="rounded-lg border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-600">
+            <strong class="block mb-1">Que puedes hacer:</strong>
+            <ul class="list-disc pl-5 space-y-1">
+              <li>Regresar al formulario principal.</li>
+              <li>Iniciar sesion de nuevo si tu sesion caduco.</li>
+              <li>Verificar que el enlace del acuse corresponda a tu numero y tipo de trabajador.</li>
+            </ul>
+          </div>
+
+          <div class="flex flex-wrap gap-3 pt-2">
+            <a href="<%= volverUrl %>" class="inline-flex items-center rounded-md bg-[#4a7d59] px-4 py-2 text-sm font-semibold text-white hover:bg-[#3f6a4b]">
+              Ir a mi formulario
+            </a>
+            <a href="<%= loginUrl %>" class="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+              Iniciar sesion
+            </a>
+            <% if (esAdmin) { %>
+              <a href="<%= dashboardUrl %>" class="inline-flex items-center rounded-md border border-slate-300 bg-white px-4 py-2 text-sm font-semibold text-slate-700 hover:bg-slate-100">
+                Volver al dashboard
+              </a>
+            <% } %>
+          </div>
+        </div>
+      </div>
+    </div>
+  </body>
+</html>

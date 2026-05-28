@@ -578,7 +578,7 @@
           <input
             type="file"
             name="ACTA-NACIMIENTO"
-            accept="application/pdf"
+            accept=".pdf"
             class="mb-4"
             <%= locals.existeActa ? '' : 'required' %>
           />
@@ -754,7 +754,7 @@
             <input
               type="file"
               name="INE"
-              accept="application/pdf"
+            accept=".pdf"
               class="mb-4"
               <%= locals.existeIne ? '' : 'required' %>
             />
@@ -970,7 +970,7 @@
           <input
             type="file"
             name="COMPROBANTE-DOMICILIO"
-            accept="application/pdf"
+            accept=".pdf"
             class="mb-4"
             <%= locals.existeDomicilio ? '' : 'required' %>
           />
@@ -1751,7 +1751,8 @@
               >¿Cursaste carrera técnica o comercial?</label
             >
             <%
-              const valorTecnicaBD = (user.carreraTecnicaComercial || '').toString().trim().toUpperCase();
+              const tecnicaBD = locals.tecnica || null;
+              const valorTecnicaBD = (tecnicaBD?.nombreTitulo || user.carreraTecnicaComercial || '').toString().trim().toUpperCase();
               const tieneTecnicaDB = valorTecnicaBD && valorTecnicaBD !== 'NO' ? '1' : (valorTecnicaBD === 'NO' ? '0' : '');
             %>
             <div class="flex gap-4">
@@ -1779,13 +1780,63 @@
             </div>
           </div>
           <div id="tecnicaContainer" class="<%= tieneTecnicaDB === '1' ? '' : 'hidden' %> mb-4">
-            <p class="text-gray-800 mb-1">Nombre de la carrera</p>
+            <label class="block mb-1 text-gray-700">Nombre de la carrera</label>
+            <input
+              type="text"
+              name="tecnica_titulo"
+              placeholder="Nombre de la carrera"
+              value="<%= tecnicaBD ? tecnicaBD.nombreTitulo : (valorTecnicaBD && valorTecnicaBD !== 'NO' ? valorTecnicaBD : '') %>"
+              class="acentos border p-2 rounded-md bg-gray-50 w-full mb-2"
+            />
+
+            <label class="block mb-1 text-gray-700">Institución que expidió el documento</label>
             <input
               type="text"
               name="tecnica_institucion"
-              placeholder="Nombre de la carrera"
-              value="<%= locals.tecnica ? locals.tecnica.nombreTitulo : '' %>"
               class="acentos border p-2 rounded-md bg-gray-50 w-full mb-2"
+              value="<%= tecnicaBD ? tecnicaBD.institucion : '' %>"
+            />
+
+            <label class="block mb-1 text-gray-700">Estatus</label>
+            <select
+              name="tecnica_estatus"
+              class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
+            >
+              <option value="">Selecciona estatus</option>
+              <option value="INCONCLUSO" <%= tecnicaBD && tecnicaBD.estatus === 'INCONCLUSO' ? 'selected' : '' %>>INCONCLUSO</option>
+              <option value="CURSANDO" <%= tecnicaBD && tecnicaBD.estatus === 'CURSANDO' ? 'selected' : '' %>>CURSANDO</option>
+              <option value="CONCLUIDO" <%= tecnicaBD && tecnicaBD.estatus === 'CONCLUIDO' ? 'selected' : '' %>>CONCLUIDO</option>
+            </select>
+
+            <label class="block mb-1 text-gray-700">Documento adquirido</label>
+            <select
+              name="tecnica_documento"
+              class="border border-gray-300 w-full p-3 rounded-md bg-gray-50 mb-2"
+            >
+              <option value="">Seleccione según el caso</option>
+              <option value="TÍTULO Y CÉDULA" <%= tecnicaBD && tecnicaBD.documentoAdquirido === 'TÍTULO Y CÉDULA' ? 'selected' : '' %>>TÍTULO Y CÉDULA</option>
+              <option value="TÍTULO" <%= tecnicaBD && tecnicaBD.documentoAdquirido === 'TÍTULO' ? 'selected' : '' %>>TÍTULO</option>
+              <option value="CÉDULA" <%= tecnicaBD && tecnicaBD.documentoAdquirido === 'CÉDULA' ? 'selected' : '' %>>CÉDULA</option>
+              <option value="DIPLOMA" <%= tecnicaBD && tecnicaBD.documentoAdquirido === 'DIPLOMA' ? 'selected' : '' %>>DIPLOMA</option>
+              <option value="CONSTANCIA" <%= tecnicaBD && tecnicaBD.documentoAdquirido === 'CONSTANCIA' ? 'selected' : '' %>>CONSTANCIA</option>
+              <option value="CERTIFICADO" <%= tecnicaBD && tecnicaBD.documentoAdquirido === 'CERTIFICADO' ? 'selected' : '' %>>CERTIFICADO</option>
+            </select>
+
+            <label class="block mb-1 text-gray-700">Fecha de obtención del documento</label>
+            <input
+              type="date"
+              name="tecnica_fecha"
+              class="border p-2 rounded-md bg-gray-50 w-full mb-2"
+              value="<% if (tecnicaBD && tecnicaBD.fechaObtencion) { %><%- new Date(tecnicaBD.fechaObtencion).toISOString().split('T')[0] %><% } %>"
+            />
+
+            <label class="block mb-1">Cédula profesional (Si no cuenta con una deje el campo vacio)</label>
+            <input
+              type="number"
+              name="tecnica_cedula"
+              value="<%= tecnicaBD && tecnicaBD.cedulaProfesional ? tecnicaBD.cedulaProfesional : '' %>"
+              placeholder="Ej. 1234567"
+              class="border p-2 w-full rounded mb-2"
             />
           </div>
 
@@ -2504,7 +2555,7 @@
           <input
             type="file"
             name="GRADO-ESTUDIOS"
-            accept="application/pdf"
+            accept=".pdf"
             class="mb-4"
             <%= locals.existeGrado ? '' : 'required' %>
           />
@@ -2622,7 +2673,7 @@
           <input
             type="file"
             name="RFC"
-            accept="application/pdf"
+            accept=".pdf"
             class="mb-4"
             <%= locals.existeRfc ? '' : 'required' %>
           />

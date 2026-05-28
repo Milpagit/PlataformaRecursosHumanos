@@ -945,6 +945,19 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
       }
     });
   });
+
+  // Validación estricta para asegurar que solo se suban archivos PDF
+  document.querySelectorAll('input[type="file"]').forEach((input) => {
+    input.addEventListener("change", function () {
+      if (this.files.length > 0) {
+        const file = this.files[0];
+        if (file.type !== "application/pdf") {
+          alert("Error: Solo se permiten archivos en formato PDF.");
+          this.value = ""; // Limpia el input si el archivo no es válido
+        }
+      }
+    });
+  });
 });
 
 function configurarFechaInput() {
@@ -1181,15 +1194,15 @@ function reindexExperiencias() {
         if (value === "PJ") {
           adscripContainer.classList.remove("hidden");
           otraContainer.classList.add("hidden");
-            if (otraInstInput) {
-              otraInstInput.value = "";
-            }
+          if (otraInstInput) {
+            otraInstInput.value = "";
+          }
         } else {
           adscripContainer.classList.add("hidden");
           otraContainer.classList.remove("hidden");
-            if (adscripInput) {
-              adscripInput.value = "";
-            }
+          if (adscripInput) {
+            adscripInput.value = "";
+          }
         }
       };
 
@@ -1354,9 +1367,7 @@ function validarActualizaciones(cantidadMaxima) {
       inst.value.trim() ||
       doc.value.trim();
     const incompleto =
-      !tema.value.trim() ||
-      !fecha.value.trim() ||
-      !inst.value.trim();
+      !tema.value.trim() || !fecha.value.trim() || !inst.value.trim();
 
     if (hayAlgo && incompleto) {
       alert(

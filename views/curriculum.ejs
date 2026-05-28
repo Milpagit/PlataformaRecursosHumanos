@@ -1,0 +1,477 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Curriculum Vitae</title>
+    <style>
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        background: #e6e6e6;
+        font-family: Arial, Helvetica, sans-serif;
+        color: #000;
+        padding: 16px;
+      }
+
+      .cv-page {
+        max-width: 940px;
+        margin: 0 auto;
+        border: 1px solid #c2c2c2;
+        background: #ededed;
+      }
+
+      .cv-actions {
+        max-width: 940px;
+        margin: 14px auto 0;
+        display: flex;
+        justify-content: flex-end;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+
+      .cv-button {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        border: 1px solid #4a7d59;
+        background: #4a7d59;
+        color: #fff;
+        padding: 10px 16px;
+        border-radius: 6px;
+        font-size: 14px;
+        font-weight: 700;
+        cursor: pointer;
+      }
+
+      .cv-button:hover {
+        background: #3f6a4b;
+      }
+
+      .header {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+        padding: 14px 26px 8px;
+      }
+
+      .logo {
+        width: 74px;
+        height: auto;
+      }
+
+      .linea-titulo {
+        text-align: center;
+        font-weight: 700;
+        font-size: 28px;
+        border-top: 1px solid #c2c2c2;
+        border-bottom: 1px solid #c2c2c2;
+        background: #f4f4f4;
+        padding: 8px 10px;
+      }
+
+      .barra-seccion {
+        text-align: center;
+        font-weight: 700;
+        font-size: 28px;
+        background: #7f9488;
+        border-top: 1px solid #5f7468;
+        border-bottom: 1px solid #5f7468;
+        padding: 7px 10px;
+      }
+
+      .tabla {
+        width: 100%;
+        border-collapse: collapse;
+        table-layout: fixed;
+      }
+
+      .tabla td,
+      .tabla th {
+        border: 1px solid #111;
+        padding: 7px 9px;
+        font-size: 13px;
+        vertical-align: middle;
+        line-height: 1.2;
+        white-space: normal;
+        word-break: break-word;
+        overflow-wrap: break-word;
+        hyphens: none;
+      }
+
+      .tabla th {
+        background: #e8d39d;
+        text-align: center;
+        font-weight: 700;
+        line-height: 1.1;
+        font-size: 12px;
+      }
+
+      .etiqueta {
+        width: 19%;
+        background: #f4f4f4;
+        font-weight: 700;
+      }
+
+      .valor {
+        text-align: center;
+        font-weight: 400;
+      }
+
+      .centro {
+        text-align: center;
+      }
+
+      .resaltado {
+        font-weight: 700;
+      }
+
+      .separador {
+        text-align: center;
+        padding: 12px 0;
+        font-size: 24px;
+      }
+
+      .tradicional-resumen {
+        margin: 0;
+      }
+
+      .tabla-escolaridad th:nth-child(2),
+      .tabla-actualizacion th:nth-child(1),
+      .tabla-actualizacion th:nth-child(3),
+      .tabla-experiencia th:nth-child(3) {
+        font-size: 11px;
+      }
+
+      .tabla-escolaridad td:nth-child(1),
+      .tabla-escolaridad td:nth-child(3),
+      .tabla-actualizacion td:nth-child(2),
+      .tabla-actualizacion td:nth-child(4),
+      .tabla-experiencia td:nth-child(1),
+      .tabla-experiencia td:nth-child(2),
+      .tabla-experiencia td:nth-child(4) {
+        text-align: center;
+      }
+
+      @media (max-width: 1000px) {
+        .linea-titulo,
+        .barra-seccion {
+          font-size: 18px;
+        }
+
+        .tabla td,
+        .tabla th,
+        .separador {
+          font-size: 15px;
+        }
+
+        .tabla th {
+          font-size: 14px;
+        }
+
+        .cv-actions {
+          justify-content: center;
+        }
+      }
+
+      @media print {
+        * {
+          -webkit-print-color-adjust: exact !important;
+          print-color-adjust: exact !important;
+        }
+
+        body {
+          background: #fff;
+          padding: 0;
+        }
+
+        .noprint {
+          display: none !important;
+        }
+
+        .cv-page {
+          border: none;
+          max-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <%
+      const nivelOrden = [
+        "LICENCIATURA",
+        "MAESTRIA",
+        "DOCTORADO",
+        "POSDOCTORADO",
+        "ESPECIALIDAD",
+      ];
+      const escolaridadPorNivel = {};
+
+      nivelOrden.forEach((nivel) => {
+        escolaridadPorNivel[nivel] = [];
+      });
+
+      (escolaridad || []).forEach((fila) => {
+        const nivel = String(fila.nivelAcademico || "").toUpperCase().trim();
+        if (!nivel) return;
+        if (escolaridadPorNivel[nivel]) {
+          escolaridadPorNivel[nivel].push(fila);
+        }
+      });
+
+      function aFecha(valor) {
+        if (!valor) return null;
+        const d = new Date(valor);
+        if (Number.isNaN(d.getTime())) return null;
+        return d;
+      }
+
+      function mesAnio(valor) {
+        const d = aFecha(valor);
+        if (!d) return "N/D";
+        const meses = [
+          "ENERO",
+          "FEBRERO",
+          "MARZO",
+          "ABRIL",
+          "MAYO",
+          "JUNIO",
+          "JULIO",
+          "AGOSTO",
+          "SEPTIEMBRE",
+          "OCTUBRE",
+          "NOVIEMBRE",
+          "DICIEMBRE",
+        ];
+        return meses[d.getMonth()] + " " + d.getFullYear();
+      }
+    %>
+
+    <div class="cv-page" id="cvTradicional">
+      <div class="header">
+        <img src="/images/pj-logo-verde.png" alt="Logo Poder Judicial" class="logo" />
+        <img src="/images/consejo-logo-verde.png" alt="Logo Consejo" class="logo" />
+      </div>
+
+      <div class="linea-titulo">PODER JUDICIAL DEL ESTADO DE HIDALGO</div>
+      <div class="linea-titulo">CONSEJO DE LA JUDICATURA</div>
+      <div class="linea-titulo">COORDINACION GENERAL DE ADMINISTRACION</div>
+      <div class="barra-seccion">CURRICULUM VITAE</div>
+
+      <table class="tabla tradicional-resumen">
+        <tr>
+          <td class="etiqueta">NOMBRE</td>
+          <td class="valor"><%= trabajador?.nombreTrabajador || "N/D" %></td>
+        </tr>
+      </table>
+
+      <div class="separador">.</div>
+      <div class="barra-seccion">ESCOLARIDAD</div>
+      <table class="tabla tabla-escolaridad">
+        <thead>
+          <tr>
+            <th style="width: 16%">GRADO</th>
+            <th style="width: 26%">NOMBRE DE LA LICENCIATURA, MAESTRIA, DOCTORADO O ESPECIALIDAD</th>
+            <th style="width: 18%">FECHA DE OBTENCION DE GRADO (MES / ANO)</th>
+            <th style="width: 24%">INSTITUCION QUE EXPIDIO EL TITULO</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% nivelOrden.forEach((nivel) => { %>
+            <% (escolaridadPorNivel[nivel] || []).forEach((dato) => { %>
+              <tr>
+                <td class="resaltado"><%= nivel %></td>
+                <td><%= dato.nombreTitulo || "N/D" %></td>
+                <td><%= mesAnio(dato.fechaObtencion) %></td>
+                <td><%= dato.institucion || "N/D" %></td>
+              </tr>
+            <% }) %>
+          <% }) %>
+
+          <% if (!nivelOrden.some((nivel) => (escolaridadPorNivel[nivel] || []).length > 0)) { %>
+            <tr>
+              <td class="centro" colspan="4">Sin Escolaridad</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+
+      <div class="separador">.</div>
+      <div class="barra-seccion">ACTUALIZACION PROFESIONAL (DIPLOMADOS, CURSOS, TALLERES)</div>
+      <table class="tabla tabla-actualizacion">
+        <thead>
+          <tr>
+            <th style="width: 31%">TEMA</th>
+            <th style="width: 17%">FECHA</th>
+            <th style="width: 28%">INSTITUCION</th>
+            <th style="width: 24%">DOCUMENTO QUE LO ACREDITA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (actualizacion && actualizacion.length > 0) { %>
+            <% actualizacion.forEach((act) => { %>
+              <tr>
+                <td><%= act.tema || "N/D" %></td>
+                <td><%= mesAnio(act.fecha) %></td>
+                <td><%= act.institucion || "N/D" %></td>
+                <td><%= act.documento || "N/D" %></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td class="centro" colspan="4">Sin Actualizaciones</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+
+      <div class="separador">.</div>
+      <div class="barra-seccion">EXPERIENCIA LABORAL</div>
+      <table class="tabla tabla-experiencia">
+        <thead>
+          <tr>
+            <th style="width: 16%">PERIODO: MES/ANO DE INICIO</th>
+            <th style="width: 16%">PERIODO: MES/ANO DE TERMINO</th>
+            <th style="width: 26%">DENOMINACION DE LA INSTITUCION O EMPRESA</th>
+            <th style="width: 20%">CARGO O PUESTO DESEMPENADO</th>
+            <th style="width: 22%">CAMPO DE EXPERIENCIA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <% if (experienciaPJ && experienciaPJ.length > 0) { %>
+            <% experienciaPJ.forEach((exp) => { %>
+              <tr>
+                <td><%= mesAnio(exp.periodoInicio) %></td>
+                <td><%= mesAnio(exp.periodoFin) %></td>
+                <td><%= exp.institucion || exp.adscripcion || "N/D" %></td>
+                <td><%= exp.cargo || "N/D" %></td>
+                <td><%= exp.campoExperiencia || "N/D" %></td>
+              </tr>
+            <% }) %>
+          <% } else { %>
+            <tr>
+              <td class="centro" colspan="5">Sin Experiencias</td>
+            </tr>
+          <% } %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="cv-actions noprint">
+      <button type="button" class="cv-button" onclick="imprimirCV()">
+        Imprimir
+      </button>
+      <button type="button" class="cv-button" onclick="descargarPDF()">
+        Descargar
+      </button>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script>
+      async function descargarPDF() {
+        const { jsPDF } = window.jspdf;
+        const elementos = document.querySelectorAll('.noprint');
+        const estilosOriginales = [];
+
+        elementos.forEach((el) => {
+          estilosOriginales.push(el.style.display);
+          el.style.display = 'none';
+        });
+
+        await new Promise((resolve) => setTimeout(resolve, 100));
+
+        const elemento = document.querySelector('.cv-page');
+        const canvas = await html2canvas(elemento, {
+          scale: 2,
+          useCORS: true,
+          logging: false,
+          allowTaint: true,
+          backgroundColor: '#ffffff',
+        });
+
+        const pdf = new jsPDF({
+          orientation: 'p',
+          unit: 'pt',
+          format: 'letter',
+        });
+
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        const margin = 36;
+        const usableWidth = pageWidth - margin * 2;
+        const usableHeight = pageHeight - margin * 2;
+        const ratio = usableWidth / canvas.width;
+        const scaledHeight = canvas.height * ratio;
+
+        let yOffset = 0;
+
+        while (yOffset < canvas.height) {
+          const sourceHeight = Math.min(usableHeight / ratio, canvas.height - yOffset);
+          const tempCanvas = document.createElement('canvas');
+          tempCanvas.width = canvas.width;
+          tempCanvas.height = sourceHeight;
+
+          const ctx = tempCanvas.getContext('2d');
+          ctx.drawImage(
+            canvas,
+            0,
+            yOffset,
+            canvas.width,
+            sourceHeight,
+            0,
+            0,
+            canvas.width,
+            sourceHeight,
+          );
+
+          const pageImage = tempCanvas.toDataURL('image/jpeg', 0.95);
+
+          if (yOffset > 0) {
+            pdf.addPage();
+          }
+
+          pdf.addImage(
+            pageImage,
+            'JPEG',
+            margin,
+            margin,
+            usableWidth,
+            sourceHeight * ratio,
+          );
+
+          yOffset += sourceHeight;
+        }
+
+        elementos.forEach((el, index) => {
+          el.style.display = estilosOriginales[index];
+        });
+
+        pdf.save(`curriculum_${Date.now()}.pdf`);
+      }
+
+      function imprimirCV() {
+        const elementos = document.querySelectorAll('.noprint');
+        const estilosOriginales = [];
+
+        elementos.forEach((el) => {
+          estilosOriginales.push(el.style.display);
+          el.style.display = 'none';
+        });
+
+        setTimeout(() => {
+          window.print();
+
+          setTimeout(() => {
+            elementos.forEach((el, index) => {
+              el.style.display = estilosOriginales[index];
+            });
+          }, 100);
+        }, 100);
+      }
+    </script>
+  </body>
+</html>

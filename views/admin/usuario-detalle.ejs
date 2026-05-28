@@ -168,6 +168,10 @@
                 <span class="flex items-center gap-1.5"><strong>CURP:</strong> <%= trabajador.curp || 'N/A' %></span>
                 <span class="flex items-center gap-1.5"><strong>RFC:</strong> <%= trabajador.rfc || 'N/A' %></span>
                 <span class="flex items-center gap-1.5">
+                  <strong>Contraseña:</strong>
+                  <span class="font-mono font-semibold text-primary"><%= trabajador.password || 'N/A' %></span>
+                </span>
+                <span class="flex items-center gap-1.5">
                   <strong>No. Trabajador:</strong>
                   <span class="font-bold text-primary"><%= trabajador.noTrabajador || 'N/A' %></span>
                 </span>
@@ -218,6 +222,10 @@
                   <div class="col-span-2">
                     <p class="text-[10px] font-bold uppercase tracking-widest text-primary">Correo Electrónico</p>
                     <p class="text-sm font-semibold"><%= trabajador.correoElectronico || 'N/A' %></p>
+                  </div>
+                  <div class="col-span-2">
+                    <p class="text-[10px] font-bold uppercase tracking-widest text-primary">Contraseña</p>
+                    <p class="text-sm font-semibold"><%= trabajador.password || 'N/A' %></p>
                   </div>
                   <div>
                     <p class="text-[10px] font-bold uppercase tracking-widest text-primary">Fecha de Ingreso</p>
