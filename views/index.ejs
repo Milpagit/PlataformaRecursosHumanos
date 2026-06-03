@@ -1874,7 +1874,8 @@
             <p class="font-semibold text-gray-800 mb-1">Bachillerato</p>
             <label class="text-gray-800 mb-1">¿Cursaste bachillerato?</label>
             <%
-              const tieneBachilleratoDB = locals.bachillerato ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
+              const tieneBachilleratoDB = user.Bachillerato ? String(user.Bachillerato).trim().toUpperCase() : '';
+              const bachilleratoSeleccionado = tieneBachilleratoDB === 'SI' ? '1' : (tieneBachilleratoDB === 'NO' ? '0' : '');
             %>
             <div class="flex gap-4">
               <label
@@ -1882,7 +1883,7 @@
                   type="radio"
                   name="tieneBachillerato"
                   value="1"
-                  <%= tieneBachilleratoDB === '1' ? 'checked' : '' %>
+                  <%= bachilleratoSeleccionado === '1' ? 'checked' : '' %>
                   required
                   class="mr-2"
                 />
@@ -1893,14 +1894,14 @@
                   type="radio"
                   name="tieneBachillerato"
                   value="0"
-                  <%= tieneBachilleratoDB === '0' ? 'checked' : '' %>
+                  <%= bachilleratoSeleccionado === '0' ? 'checked' : '' %>
                   class="mr-2"
                 />
                 No</label
               >
             </div>
           </div>
-          <div id="bachilleratoContainer" class="<%= tieneBachilleratoDB === '1' ? '' : 'hidden' %> mb-4">
+          <div id="bachilleratoContainer" class="<%= bachilleratoSeleccionado === '1' ? '' : 'hidden' %> mb-4">
             <label class="block mb-1 text-gray-700">Tipo de bachillerato</label>
 
             <select
@@ -1969,7 +1970,8 @@
               // Filtrar licenciaturas desde la BD
               const licenciaturasBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'LICENCIATURA');
               const numLicenciaturas = licenciaturasBD.length;
-              const tieneLic = numLicenciaturas > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
+              const valLicenciatura = user.Licenciatura ? String(user.Licenciatura).trim().toUpperCase() : '';
+              const tieneLic = valLicenciatura === 'SI' ? '1' : (valLicenciatura === 'NO' ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con licenciatura?</label>
             <div class="flex gap-4">
@@ -2094,7 +2096,8 @@
             <%
               const maestriasBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'MAESTRIA');
               const numMaestrias = maestriasBD.length;
-              const tieneMae = numMaestrias > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
+              const valMaestria = user.Maestria ? String(user.Maestria).trim().toUpperCase() : '';
+              const tieneMae = valMaestria === 'SI' ? '1' : (valMaestria === 'NO' ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con maestría?</label>
             <div class="flex gap-4">
@@ -2193,7 +2196,8 @@
             <%
               const doctoradosBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'DOCTORADO');
               const numDoctorados = doctoradosBD.length;
-              const tieneDoc = numDoctorados > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
+              const valDoctorado = user.Doctorado ? String(user.Doctorado).trim().toUpperCase() : '';
+              const tieneDoc = valDoctorado === 'SI' ? '1' : (valDoctorado === 'NO' ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con doctorado?</label>
             <div class="flex gap-4">
@@ -2292,7 +2296,8 @@
             <%
               const posdoctoradosBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'POSDOCTORADO');
               const numPosdoctorados = posdoctoradosBD.length;
-              const tienePos = numPosdoctorados > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
+              const valPosdoctorado = user.Posdoctorado ? String(user.Posdoctorado).trim().toUpperCase() : '';
+              const tienePos = valPosdoctorado === 'SI' ? '1' : (valPosdoctorado === 'NO' ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con posdoctorado?</label>
             <div class="flex gap-4">
@@ -2391,7 +2396,8 @@
             <%
               const especialidadesBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'ESPECIALIDAD');
               const numEspecialidades = especialidadesBD.length;
-              const tieneEsp = numEspecialidades > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
+              const valEspecialidad = user.Especialidad ? String(user.Especialidad).trim().toUpperCase() : '';
+              const tieneEsp = valEspecialidad === 'SI' ? '1' : (valEspecialidad === 'NO' ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con especialidad?</label>
             <div class="flex gap-4">

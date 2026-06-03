@@ -809,18 +809,24 @@ app.post(
 
     const telefonoCasaLimpio = (telefonocasa || "").trim();
 
-    const tieneBachillerato = req.body.tieneBachillerato === "1";
-    const prepaTitulo = tieneBachillerato
+    const Bachillerato = req.body.tieneBachillerato === "1" ? "Si" : "No";
+    const Licenciatura = req.body.tieneLicenciatura === "1" ? "Si" : "No";
+    const Maestria = req.body.tieneMaestria === "1" ? "Si" : "No";
+    const Doctorado = req.body.tieneDoctorado === "1" ? "Si" : "No";
+    const Posdoctorado = req.body.tienePosdoctorado === "1" ? "Si" : "No";
+    const Especialidad = req.body.tieneEspecialidad === "1" ? "Si" : "No";
+    
+    const prepaTitulo = Bachillerato === "Si"
       ? req.body.prepa_titulo.trim().toUpperCase()
       : null;
-    const prepaFecha = tieneBachillerato
+    const prepaFecha = Bachillerato === "Si"
       ? convertirFechaTexto(req.body.prepa_fecha)
       : null;
-    const prepaInst = tieneBachillerato
+    const prepaInst = Bachillerato === "Si"
       ? req.body.prepa_institucion.trim().toUpperCase()
       : null;
-    const prepaDocumento = tieneBachillerato ? req.body.prepa_documento : null;
-    const prepaEstatus = tieneBachillerato ? req.body.prepa_estatus : null;
+    const prepaDocumento = Bachillerato === "Si" ? req.body.prepa_documento : null;
+    const prepaEstatus = Bachillerato === "Si" ? req.body.prepa_estatus : null;
 
     let dominioLSM = req.body.nivelLSM;
 
@@ -829,7 +835,7 @@ app.post(
     }
 
     const query =
-      "UPDATE trabajador SET  fechaIngreso=?, adscripcionActual=?,cargoActual=?,sexoTrabajador = ?,fechaNacimiento=?,lugarNacimiento=?,estadoCivil=?,nombreConyuge=?,fechaNacimientoConyuge=?,sexoConyuge=?,tipoSangre=?,vigenciaINE=?,calleNumero=?,colonia=?,municipio=?,estado=?,codigoPostal=?,actualCalleNumero=?,actualColonia=?,actualMunicipio=?,actualEstado=?, actualCP=?,  noTelefono = ?,telefonoCasa=?,telefonoFamiliar=?,parentescoFamiliar=?, correoElectronico=?,comunidadIndigena=?,familiaLinguistica=?,tipoDiscapacidad=?,discapacidadEspecificada=?,lenguajeSenias=?,dominioLSM=?,tieneEnfermedadCronica=?,tipoCronica=?, es_padre_madre=? , embarazada = ?, cantidadHijos = ?,primaria=?,secundaria=?, carreraTecnicaComercial=? WHERE idTrabajador = ?";
+      "UPDATE trabajador SET fechaIngreso=?, adscripcionActual=?,cargoActual=?,sexoTrabajador=?,fechaNacimiento=?,lugarNacimiento=?,estadoCivil=?,nombreConyuge=?,fechaNacimientoConyuge=?,sexoConyuge=?,tipoSangre=?,vigenciaINE=?,calleNumero=?,colonia=?,municipio=?,estado=?,codigoPostal=?,actualCalleNumero=?,actualColonia=?,actualMunicipio=?,actualEstado=?,actualCP=?,noTelefono=?,telefonoCasa=?,telefonoFamiliar=?,parentescoFamiliar=?,correoElectronico=?,comunidadIndigena=?,familiaLinguistica=?,tipoDiscapacidad=?,discapacidadEspecificada=?,lenguajeSenias=?,dominioLSM=?,tieneEnfermedadCronica=?,tipoCronica=?,es_padre_madre=?,embarazada=?,cantidadHijos=?,primaria=?,secundaria=?,carreraTecnicaComercial=?,Licenciatura=?,Maestria=?,Doctorado=?,Posdoctorado=?,Especialidad=?,Bachillerato=? WHERE idTrabajador = ?";
 
     if (papa == 1 && sexo == "Femenino") {
       padre = "Madre";
@@ -914,6 +920,12 @@ app.post(
         primaria,
         secundaria_institucion,
         carreraTecnicaComercial,
+        Licenciatura,
+        Maestria,
+        Doctorado,
+        Posdoctorado,
+        Especialidad,
+        Bachillerato,
         idTrabajador,
       ]);
       // console.log("✅ Actualización exitosa:", result); // Log de seguimiento general de actualización
