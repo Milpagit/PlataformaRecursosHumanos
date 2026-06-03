@@ -1,0 +1,151 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <title>Documentos - <%= trabajador.nombreTrabajador %></title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet" />
+  <link href="/css/styles.css" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            primary: "#4a7d59",
+            "background-light": "#f6f7f7",
+          },
+          fontFamily: {
+            display: ["Inter"],
+          },
+          borderRadius: {
+            DEFAULT: "0.25rem",
+            lg: "0.5rem",
+            xl: "0.75rem",
+            full: "9999px",
+          },
+        },
+      },
+    };
+  </script>
+</head>
+<body class="bg-background-light font-display min-h-screen">
+  <div class="max-w-6xl mx-auto p-6">
+    
+    <!-- Header Card -->
+    <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-6 mb-6">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="material-symbols-outlined text-primary text-3xl">folder_open</span>
+        <h1 class="text-2xl font-bold text-slate-800">Documentos del Trabajador</h1>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-slate-400">person</span>
+          <span class="text-slate-600"><strong>Nombre:</strong> <%= trabajador.nombreTrabajador %></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-slate-400">badge</span>
+          <span class="text-slate-600"><strong>No. Trabajador:</strong> <%= trabajador.noTrabajador %></span>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-slate-400">work</span>
+          <span class="text-slate-600"><strong>Tipo:</strong> 
+            <span class="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-bold
+              <%= trabajador.tipoTrabajador === 'C' ? 'bg-blue-50 text-blue-700' : 'bg-amber-50 text-amber-700' %>">
+              <%= trabajador.tipoTrabajador === 'C' ? 'Confianza' : 'Honorario' %>
+            </span>
+          </span>
+        </div>
+      </div>
+    </div>
+
+    <% if (documentos.length === 0) { %>
+      <!-- Empty State -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-12 text-center">
+        <span class="material-symbols-outlined text-slate-300 text-8xl mb-4">description</span>
+        <p class="text-xl font-semibold text-slate-700 mb-2">No hay documentos disponibles</p>
+        <p class="text-slate-500">Aún no se han generado reportes ni se han subido anexos para este trabajador.</p>
+      </div>
+    <% } else { %>
+      <!-- Documents Count -->
+      <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-4 mb-4 flex items-center justify-between">
+        <div class="flex items-center gap-2">
+          <span class="material-symbols-outlined text-primary">inventory_2</span>
+          <span class="font-semibold text-slate-700">Total de documentos:</span>
+          <span class="bg-primary text-white px-3 py-1 rounded-full text-sm font-bold"><%= documentos.length %></span>
+        </div>
+      </div>
+
+      <!-- Documents List -->
+      <div class="space-y-3">
+        <% documentos.forEach(doc => { %>
+          <div class="bg-white rounded-xl shadow-sm border border-slate-200 p-5 hover:shadow-md hover:border-primary/30 transition-all">
+            <div class="flex items-center justify-between">
+              <div class="flex items-center gap-4 flex-1">
+                <div class="flex-shrink-0">
+                  <% if (doc.tipo === 'pdf') { %>
+                    <div class="w-12 h-12 rounded-lg bg-red-50 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-red-500 text-2xl">picture_as_pdf</span>
+                    </div>
+                  <% } else if (doc.tipo === 'excel') { %>
+                    <div class="w-12 h-12 rounded-lg bg-green-50 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-green-600 text-2xl">table_chart</span>
+                    </div>
+                  <% } else { %>
+                    <div class="w-12 h-12 rounded-lg bg-blue-50 flex items-center justify-center">
+                      <span class="material-symbols-outlined text-blue-500 text-2xl">attach_file</span>
+                    </div>
+                  <% } %>
+                </div>
+                <div class="flex-1">
+                  <div class="flex items-center gap-2 mb-1">
+                    <h3 class="font-semibold text-slate-800"><%= doc.nombre %></h3>
+                    <% if (doc.tipo === 'pdf') { %>
+                      <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-red-50 text-red-600">PDF</span>
+                    <% } else if (doc.tipo === 'excel') { %>
+                      <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-green-50 text-green-600">Excel</span>
+                    <% } else { %>
+                      <span class="px-2 py-0.5 rounded-full text-xs font-bold bg-blue-50 text-blue-600">Anexo</span>
+                    <% } %>
+                  </div>
+                  <div class="flex items-center gap-4 text-sm text-slate-500">
+                    <span class="flex items-center gap-1">
+                      <span class="material-symbols-outlined text-base">storage</span>
+                      <%= doc.tamano %>
+                    </span>
+                    <span class="flex items-center gap-1">
+                      <span class="material-symbols-outlined text-base">calendar_today</span>
+                      <%= doc.fecha %>
+                    </span>
+                  </div>
+                </div>
+              </div>
+              <div class="flex items-center gap-2 ml-4">
+                <a href="<%= doc.ruta %>" target="_blank" 
+                   class="flex items-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-bold text-white hover:bg-primary/90 transition-colors shadow-sm">
+                  <span class="material-symbols-outlined text-base">visibility</span>
+                  Ver
+                </a>
+                <a href="<%= doc.ruta %>" download 
+                   class="flex items-center gap-2 rounded-lg bg-white border border-primary/30 px-4 py-2.5 text-sm font-bold text-primary hover:bg-primary/5 transition-colors">
+                  <span class="material-symbols-outlined text-base">download</span>
+                  Descargar
+                </a>
+              </div>
+            </div>
+          </div>
+        <% }) %>
+      </div>
+    <% } %>
+
+    <!-- Back Button -->
+    <div class="mt-6 text-center">
+      <a href="/admin/dashboard" class="inline-flex items-center gap-2 rounded-lg bg-slate-600 px-6 py-3 text-sm font-bold text-white hover:bg-slate-700 transition-colors shadow-sm">
+        <span class="material-symbols-outlined text-base">arrow_back</span>
+        Volver al Panel
+      </a>
+    </div>
+  </div>
+</body>
+</html>

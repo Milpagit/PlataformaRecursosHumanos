@@ -45,12 +45,9 @@
       window.open(`/curriculum?W=${noTrabajadorEncoded}&T=${tipoTrabajadorEncoded}`, '_blank');
     }
 
-    function descargarZip() {
-      const noTrabajador = document.getElementById('noTrabajador').value;
-      const tipoTrabajador = document.getElementById('tipoTrabajador').value;
-      const noTrabajadorEncoded = encodeURIComponent(noTrabajador);
-      const tipoTrabajadorEncoded = encodeURIComponent(tipoTrabajador);
-      window.location.href = `/reporte/${noTrabajadorEncoded}/${tipoTrabajadorEncoded}`;
+    function verDocumentos() {
+      const idTrabajador = document.getElementById('idTrabajador').value;
+      window.open(`/documentos/${idTrabajador}`, '_blank');
     }
 
     function toggleEdicion() {
@@ -197,9 +194,9 @@
                 <span class="material-symbols-outlined text-base">visibility</span>
                 Ver CV
               </button>
-              <button onclick="descargarZip()" class="flex items-center gap-2 rounded-md bg-white border border-primary/30 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/5 transition-colors">
-                <span class="material-symbols-outlined text-base">download</span>
-                Descargar Todo
+              <button onclick="verDocumentos()" class="flex items-center gap-2 rounded-md bg-white border border-primary/30 px-3 py-2 text-xs font-bold text-primary hover:bg-primary/5 transition-colors">
+                <span class="material-symbols-outlined text-base">folder_open</span>
+                Ver Documentos
               </button>
             </div>
           </div>
