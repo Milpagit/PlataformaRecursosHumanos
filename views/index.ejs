@@ -84,7 +84,6 @@
         function formatearFechaInput(valor) {
           if (!valor) return '';
 
-          // Caso string tipo YYYY-MM-DD o ISO
           if (typeof valor === 'string') {
             const fechaLimpia = valor.split('T')[0].split(' ')[0];
             const partes = fechaLimpia.split('-');
@@ -96,12 +95,11 @@
             return valor;
           }
 
-          // Caso Date u objeto fecha válido
           const d = new Date(valor);
           if (!Number.isNaN(d.getTime())) {
-            const dia = String(d.getDate()).padStart(2, '0');
-            const mes = String(d.getMonth() + 1).padStart(2, '0');
-            const anio = d.getFullYear();
+            const dia = String(d.getUTCDate()).padStart(2, '0');
+            const mes = String(d.getUTCMonth() + 1).padStart(2, '0');
+            const anio = d.getUTCFullYear();
             return `${dia}-${mes}-${anio}`;
           }
 
@@ -983,11 +981,12 @@
           </label>
           <div class="flex gap-4">
             <% 
-              // Triestado: '1' (sí), '0' (no), '' (sin respuesta)
               const valComunidad = user.comunidadIndigena ? user.comunidadIndigena.trim().toUpperCase() : '';
               let esIndigena = '';
-              if (valComunidad && valComunidad !== 'N/A') {
-                esIndigena = valComunidad === 'NO' ? '0' : '1';
+              if (valComunidad && valComunidad !== 'N/A' && valComunidad !== 'NO') {
+                esIndigena = '1';
+              } else if (valComunidad === 'N/A' || valComunidad === 'NO') {
+                esIndigena = '0';
               }
             %>
 
@@ -1099,11 +1098,12 @@
           >
           <div class="flex gap-4">
             <% 
-              // Triestado: '1' (sí), '0' (no), '' (sin respuesta)
               const valFamilia = user.familiaLinguistica ? user.familiaLinguistica.trim().toUpperCase() : '';
               let leIndigena = '';
-              if (valFamilia && valFamilia !== 'N/A') {
-                leIndigena = valFamilia === 'NO' ? '0' : '1';
+              if (valFamilia && valFamilia !== 'N/A' && valFamilia !== 'NO') {
+                leIndigena = '1';
+              } else if (valFamilia === 'N/A' || valFamilia === 'NO') {
+                leIndigena = '0';
               }
             %>
             <label
@@ -1583,7 +1583,7 @@
                   type="text" 
                   name="fechaNacimientoHijo<%= index %>" 
                   placeholder="dd-mm-yyyy" 
-                  value="<%= hijo.fechaNacimientoHijo ? new Date(hijo.fechaNacimientoHijo).toISOString().split('T')[0] : '' %>"
+                  value="<%= formatearFechaInput(hijo.fechaNacimientoHijo) %>"
                   class="border rounded-full bg-gray-50 m-2 p-3 datepicker" 
                   required
                   data-format="dd-mm-yyyy"
@@ -1650,10 +1650,7 @@
             <% 
                let fechaConyugeVal = '';
                if (user.fechaNacimientoConyuge && user.fechaNacimientoConyuge !== '00-00-0000') {
-                 try {
-                   // Convertimos a DD-MM-YYYY para que coincida con el inputmask/flatpickr del formulario
-                   fechaConyugeVal = new Date(user.fechaNacimientoConyuge).toISOString().split('T')[0].split('-').reverse().join('-');
-                 } catch(e) {}
+                 fechaConyugeVal = formatearFechaInput(user.fechaNacimientoConyuge);
                }
             %>
             <input
@@ -1877,7 +1874,7 @@
             <p class="font-semibold text-gray-800 mb-1">Bachillerato</p>
             <label class="text-gray-800 mb-1">¿Cursaste bachillerato?</label>
             <%
-              const tieneBachilleratoDB = locals.bachillerato ? '1' : '';
+              const tieneBachilleratoDB = locals.bachillerato ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
             %>
             <div class="flex gap-4">
               <label
@@ -1972,7 +1969,7 @@
               // Filtrar licenciaturas desde la BD
               const licenciaturasBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'LICENCIATURA');
               const numLicenciaturas = licenciaturasBD.length;
-              const tieneLic = numLicenciaturas > 0 ? '1' : '';
+              const tieneLic = numLicenciaturas > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con licenciatura?</label>
             <div class="flex gap-4">
@@ -2097,7 +2094,7 @@
             <%
               const maestriasBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'MAESTRIA');
               const numMaestrias = maestriasBD.length;
-              const tieneMae = numMaestrias > 0 ? '1' : '';
+              const tieneMae = numMaestrias > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con maestría?</label>
             <div class="flex gap-4">
@@ -2196,7 +2193,7 @@
             <%
               const doctoradosBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'DOCTORADO');
               const numDoctorados = doctoradosBD.length;
-              const tieneDoc = numDoctorados > 0 ? '1' : '';
+              const tieneDoc = numDoctorados > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con doctorado?</label>
             <div class="flex gap-4">
@@ -2295,7 +2292,7 @@
             <%
               const posdoctoradosBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'POSDOCTORADO');
               const numPosdoctorados = posdoctoradosBD.length;
-              const tienePos = numPosdoctorados > 0 ? '1' : '';
+              const tienePos = numPosdoctorados > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con posdoctorado?</label>
             <div class="flex gap-4">
@@ -2394,7 +2391,7 @@
             <%
               const especialidadesBD = (locals.escolaridad || []).filter(e => e.nivelAcademico === 'ESPECIALIDAD');
               const numEspecialidades = especialidadesBD.length;
-              const tieneEsp = numEspecialidades > 0 ? '1' : '';
+              const tieneEsp = numEspecialidades > 0 ? '1' : ((locals.escolaridad || []).length > 0 ? '0' : '');
             %>
             <label class="text-gray-800 mb-1">¿Cuentas con especialidad?</label>
             <div class="flex gap-4">

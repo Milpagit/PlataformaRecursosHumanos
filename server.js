@@ -1,4 +1,4 @@
-﻿﻿require("dotenv").config();
+﻿require("dotenv").config();
 const express = require("express");
 const bodyParser = require("body-parser"); // Leer y entender los datos del formulario
 const db = require("./config/db"); // Ahora es el pool
@@ -41,12 +41,36 @@ function construirUrlCvExterno(noTrabajador, tipoTrabajador) {
 app.locals.formatearFecha = function (fecha) {
   if (!fecha) return "N/A";
 
-  // Convierte la fecha ISO a hora local sin perder el día
-  const f = dayjs.utc(fecha).tz("America/Mexico_City", true);
+  let year, month, day;
 
-  if (!f.isValid()) return "N/A";
+  if (fecha instanceof Date) {
+    year = fecha.getUTCFullYear();
+    month = fecha.getUTCMonth();
+    day = fecha.getUTCDate();
+  } else if (typeof fecha === "string") {
+    const fechaLimpia = fecha.split("T")[0].split(" ")[0];
+    const partes = fechaLimpia.split("-");
+    if (partes.length === 3 && partes[0].length === 4) {
+      year = parseInt(partes[0], 10);
+      month = parseInt(partes[1], 10) - 1;
+      day = parseInt(partes[2], 10);
+    } else {
+      return "N/A";
+    }
+  } else {
+    return "N/A";
+  }
 
-  return f.format("D [de] MMMM [de] YYYY"); // Ejemplo: 29 de marzo de 1984
+  if (Number.isNaN(year) || Number.isNaN(month) || Number.isNaN(day)) {
+    return "N/A";
+  }
+
+  const nombresMeses = [
+    "enero", "febrero", "marzo", "abril", "mayo", "junio",
+    "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+  ];
+
+  return `${day} de ${nombresMeses[month]} de ${year}`;
 };
 
 const multer = require("multer");
@@ -537,7 +561,7 @@ function formatearFecha(fecha) {
     return "N/A";
   }
 
-  const opciones = { day: "2-digit", month: "long", year: "numeric" };
+  const opciones = { day: "2-digit", month: "long", year: "numeric", timeZone: "UTC" };
   const fechaFormateada = d.toLocaleDateString("es-MX", opciones);
 
   return fechaFormateada.charAt(0).toUpperCase() + fechaFormateada.slice(1);
@@ -1096,6 +1120,30 @@ app.post(
           documento: req.body.doctorado_documento2 || null,
           estatus: req.body.doctorado_estatus2 || null,
           cedula: req.body.doctorado_cedula2 || null,
+        },
+
+        // POSDOCTORADOS
+        {
+          nivel: "POSDOCTORADO",
+          titulo: req.body.posdoctorado_titulo1 || null,
+          fecha: req.body.posdoctorado_fecha1
+            ? convertirFechaTexto(req.body.posdoctorado_fecha1)
+            : null,
+          institucion: req.body.posdoctorado_institucion1 || null,
+          documento: req.body.posdoctorado_documento1 || null,
+          estatus: req.body.posdoctorado_estatus1 || null,
+          cedula: req.body.posdoctorado_cedula1 || null,
+        },
+        {
+          nivel: "POSDOCTORADO",
+          titulo: req.body.posdoctorado_titulo2 || null,
+          fecha: req.body.posdoctorado_fecha2
+            ? convertirFechaTexto(req.body.posdoctorado_fecha2)
+            : null,
+          institucion: req.body.posdoctorado_institucion2 || null,
+          documento: req.body.posdoctorado_documento2 || null,
+          estatus: req.body.posdoctorado_estatus2 || null,
+          cedula: req.body.posdoctorado_cedula2 || null,
         },
       ];
 
