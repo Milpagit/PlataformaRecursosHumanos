@@ -183,9 +183,9 @@ app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
       if (!usuarioSesion) {
         return renderErrorAccesoAcuse(
           401,
-          "Sesion expirada",
-          "Tu sesion termino y por eso no se pudo abrir el acuse.",
-          "Vuelve a iniciar sesion para continuar.",
+          "Sesión expirada",
+          "Tu sesión terminó y por eso no se pudo abrir el acuse.",
+          "Vuelve a iniciar sesión para continuar.",
         );
       }
 
@@ -209,7 +209,7 @@ app.get("/acuse/:noTrabajador/:tipoTrabajador", async (req, res) => {
           403,
           "No tienes permiso para este acuse",
           "El enlace que abriste no coincide con tu cuenta de trabajador.",
-          `Estas en sesion como No. ${noTrabajadorSesion || "N/A"} Tipo ${tipoSesion || "N/A"}, pero intentaste abrir No. ${noTrabajadorParam || "N/A"} Tipo ${tipoParam || "N/A"}.`,
+          `Estás en sesión como No. ${noTrabajadorSesion || "N/A"} Tipo ${tipoSesion || "N/A"}, pero intentaste abrir No. ${noTrabajadorParam || "N/A"} Tipo ${tipoParam || "N/A"}.`,
         );
       }
     }
@@ -385,6 +385,9 @@ app.get(
   },
 );
 app.get("/login", (req, res) => {
+  if (req.session.user) {
+    return res.redirect("/index");
+  }
   res.render("login", { error: null });
 });
 
@@ -523,9 +526,37 @@ app.get("/", (req, res) => {
 });
 
 app.get("/logout", (req, res) => {
-  req.session.destroy(() => {
-    res.status(200).send("Sesión cerrada");
-  });
+  if (req.session) {
+    req.session.destroy((err) => {
+      if (err) {
+        console.error("Error al destruir sesión:", err);
+      }
+      res.redirect("/login");
+    });
+  } else {
+    res.redirect("/login");
+  }
+});
+
+app.post("/eliminar-pdf/:tipo", (req, res) => {
+  if (!req.session.user) {
+    return res.status(401).json({ success: false, message: "No autorizado" });
+  }
+  const tiposValidos = ["INE", "ACTA-NACIMIENTO", "COMPROBANTE-DOMICILIO", "RFC", "GRADO-ESTUDIOS"];
+  const tipo = req.params.tipo;
+  if (!tiposValidos.includes(tipo)) {
+    return res.status(400).json({ success: false, message: "Tipo de documento no válido" });
+  }
+  const nombreTrabajador = req.session.user.nombreTrabajador;
+  const filePath = path.join(__dirname, "uploads", `${nombreTrabajador}_${tipo}.pdf`);
+  try {
+    if (fs.existsSync(filePath)) {
+      fs.unlinkSync(filePath);
+    }
+    res.json({ success: true });
+  } catch (err) {
+    res.status(500).json({ success: false, message: "Error al eliminar el archivo" });
+  }
 });
 function calcularEdad(fecha) {
   return fecha ? dayjs().diff(fecha, "year") : 0;
@@ -1316,19 +1347,90 @@ app.post(
 );
 
 app.post("/login", async (req, res) => {
-  const curp = req.body.curp?.toUpperCase();
-  const rfc = req.body.rfc?.toUpperCase();
+  const curp = req.body.curp?.toUpperCase().trim();
+  const rfc = req.body.rfc?.toUpperCase().trim();
   const password = req.body.password;
 
+  // Validar campos vacíos
+  if (!curp && !rfc) {
+    return res.status(400).render("login", {
+      error: "Debes ingresar tu CURP o RFC para continuar.",
+      curp: "",
+      rfc: "",
+    });
+  }
+
+  if (!curp) {
+    return res.status(400).render("login", {
+      error: "El campo CURP está vacío. Ingrésalo para continuar.",
+      curp: "",
+      rfc,
+    });
+  }
+
+  if (!rfc) {
+    return res.status(400).render("login", {
+      error: "El campo RFC está vacío. Ingrésalo para continuar.",
+      curp,
+      rfc: "",
+    });
+  }
+
+  if (!password || password.trim() === "") {
+    return res.status(400).render("login", {
+      error: "Ingresa tu contraseña para continuar.",
+      curp,
+      rfc,
+    });
+  }
+
   try {
+    // Buscar por CURP
+    const [curpResults] = await db.query(
+      "SELECT * FROM trabajador WHERE curp = ?",
+      [curp]
+    );
+
+    // Buscar por RFC
+    const [rfcResults] = await db.query(
+      "SELECT * FROM trabajador WHERE rfc = ?",
+      [rfc]
+    );
+
+    // Validar si CURP no existe
+    if (curpResults.length === 0 && rfcResults.length === 0) {
+      return res.status(401).render("login", {
+        error: "CURP y RFC no encontrados. Verifica que ambos datos sean correctos.",
+        curp,
+        rfc,
+      });
+    }
+
+    if (curpResults.length === 0) {
+      return res.status(401).render("login", {
+        error: "CURP no encontrado. Verifica que esté escrito correctamente.",
+        curp,
+        rfc,
+      });
+    }
+
+    if (rfcResults.length === 0) {
+      return res.status(401).render("login", {
+        error: "RFC no encontrado. Verifica que esté escrito correctamente.",
+        curp,
+        rfc,
+      });
+    }
+
+    // Buscar coincidencia exacta de CURP y RFC
     const [results] = await db.query(
       "SELECT * FROM trabajador WHERE curp = ? AND rfc = ?",
-      [curp, rfc],
+      [curp, rfc]
     );
 
     if (results.length === 0) {
       return res.status(401).render("login", {
-        error: "CURP o RFC no encontrado. Verifica los datos.",
+        error: "CURP y RFC no coinciden. Verifica que ambos datos pertenezcan a la misma persona.",
         curp,
         rfc,
       });
@@ -1336,9 +1438,18 @@ app.post("/login", async (req, res) => {
 
     const usuario = results[0];
 
+    // Validar si el usuario tiene contraseña registrada
+    if (!usuario.password || usuario.password === "") {
+      return res.status(401).render("login", {
+        error: "Este usuario no tiene contraseña registrada. Contacta al administrador.",
+        curp,
+        rfc,
+      });
+    }
+
     if (usuario.password !== password) {
       return res.status(401).render("login", {
-        error: "Contraseña incorrecta. Intenta nuevamente.",
+        error: "Contraseña incorrecta. Verifica e intenta nuevamente.",
         curp,
         rfc,
       });
@@ -1348,7 +1459,11 @@ app.post("/login", async (req, res) => {
     req.session.regenerate((err) => {
       if (err) {
         console.error("❌ Error regenerando sesión:", err);
-        return res.send("Error al iniciar sesión");
+        return res.status(500).render("login", {
+          error: "Error al iniciar sesión. Intenta nuevamente.",
+          curp,
+          rfc,
+        });
       }
 
       // Asignar usuario a la nueva sesión
@@ -1360,8 +1475,7 @@ app.post("/login", async (req, res) => {
   } catch (err) {
     console.error("❌ Error en el query:", err);
     return res.status(500).render("login", {
-      error:
-        "Ocurrió un error al consultar la base de datos. Intenta nuevamente más tarde.",
+      error: "Ocurrió un error al consultar la base de datos. Intenta nuevamente más tarde.",
       curp,
       rfc,
     });
@@ -1449,6 +1563,9 @@ app.get("/documentos/:idTrabajador", async (req, res) => {
   }
 });
 app.get("/admin/login", (req, res) => {
+  if (req.session.admin) {
+    return res.redirect("/admin/dashboard");
+  }
   res.render("admin/login", { error: null });
 });
 
@@ -1902,20 +2019,27 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
   const { fechaInicio, fechaFin } = req.query;
 
   if (!fechaInicio || !fechaFin) {
-    return res.status(400).send("Debes enviar fechaInicio y fechaFin");
+    return res.status(400).json({ error: "Debes enviar fechaInicio y fechaFin" });
   }
 
   const inicio = dayjs(fechaInicio);
   const fin = dayjs(fechaFin);
+  const hoy = dayjs().startOf("day");
 
   if (!inicio.isValid() || !fin.isValid()) {
-    return res.status(400).send("Las fechas enviadas no son validas");
+    return res.status(400).json({ error: "Las fechas enviadas no son válidas" });
   }
 
   if (inicio.isAfter(fin, "day")) {
     return res
       .status(400)
-      .send("La fecha de inicio no puede ser mayor a la fecha de termino");
+      .json({ error: "La fecha de inicio no puede ser mayor a la fecha de término" });
+  }
+
+  if (fin.isAfter(hoy, "day")) {
+    return res
+      .status(400)
+      .json({ error: "La fecha de término no puede ser posterior al día de hoy" });
   }
 
   try {
@@ -2088,7 +2212,7 @@ app.get("/admin/reporte-transparencia", verificarAdmin, async (req, res) => {
     return res.end();
   } catch (error) {
     console.error("Error al generar reporte de transparencia:", error);
-    return res.status(500).send("Error al generar el reporte de transparencia");
+    return res.status(500).json({ error: "Error al generar el reporte de transparencia" });
   }
 });
 
@@ -2174,6 +2298,47 @@ app.post("/admin/desactivar-admin", verificarAdmin, async (req, res) => {
     return res.status(500).json({
       success: false,
       error: "Error interno al desactivar el administrador",
+    });
+  }
+});
+
+// POST - Activar administrador
+app.post("/admin/activar-admin", verificarAdmin, async (req, res) => {
+  const { idAdminObjetivo, password } = req.body;
+  const idAdminActual = req.session.admin?.idAdmin;
+
+  if (!idAdminObjetivo || !password) {
+    return res.status(400).json({
+      success: false,
+      error: "ID del administrador y contraseña son requeridos",
+    });
+  }
+
+  try {
+    const [adminValido] = await db.query(
+      "SELECT * FROM administrador WHERE idAdmin = ? AND password = ? AND activo = 1",
+      [idAdminActual, password],
+    );
+    if (!adminValido || adminValido.length === 0) {
+      return res.status(403).json({
+        success: false,
+        error: "Contraseña de administrador incorrecta",
+      });
+    }
+
+    await db.query("UPDATE administrador SET activo = 1 WHERE idAdmin = ?", [
+      idAdminObjetivo,
+    ]);
+
+    return res.json({
+      success: true,
+      mensaje: "Administrador activado correctamente",
+    });
+  } catch (error) {
+    console.error("Error al activar administrador:", error);
+    return res.status(500).json({
+      success: false,
+      error: "Error interno al activar el administrador",
     });
   }
 });

@@ -6,6 +6,10 @@
     <link href="/css/styles.css" rel="stylesheet" />
     <link
       rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap"
+    />
+    <link
+      rel="stylesheet"
       href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css"
     />
     <link
@@ -33,40 +37,42 @@
       </div>
     </header>
 
-    <section class="w-full py-2">
-      <div class="container mx-auto text-center space-y-1">
-        <!-- Nivel 1: más destacado -->
-        <h3
-          class="text-xl md:text-2xl font-extrabold text-verdegris uppercase tracking-wide"
-        >
-          Consejo de la Judicatura
-        </h3>
-        <div class="mx-auto w-16 border-t-2 border-verdegris"></div>
-        <!-- Nivel 2 -->
-        <p class="text-lg font-bold text-grisTexto uppercase tracking-normal">
-          Comisión de Administración
-        </p>
-        <div class="mx-auto w-12 border-t border-grisTexto"></div>
-        <!-- Nivel 3 -->
-        <p
-          class="text-base font-semibold text-grisTexto uppercase tracking-wide"
-        >
-          Coordinación General de Administración
-        </p>
-        <div class="mx-auto w-8 border-t border-grisTexto"></div>
-        <!-- Nivel 4 -->
-        <p class="text-sm font-medium text-grisTexto uppercase tracking-wide">
-          Dirección de Recursos Humanos
-        </p>
-      </div>
-    </section>
+    <section class="w-full py-4 relative">
+  <div class="container mx-auto px-4">
+    
+    <div class=" absolute left-4 top-4 md:w-24 flex justify-end w-full md:w-auto">
+      <a href="/logout" class="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 px-4 py-2 text-xs font-bold text-red-600 hover:bg-red-600 hover:text-white transition-all duration-200 shadow-sm hover:shadow">
+        <span class="material-symbols-outlined text-sm">logout</span>
+        Salir
+      </a>
+    </div>
 
-    <!-- FRASE INSTITUCIONAL 
-  <p class="italic text-green-800 font-medium text-xl mx-auto mt-4">
-    “POR LA JUSTICIA QUE MERECEMOS.”
-  </p> -->
+    
+    <div class="text-center space-y-1">
+      <h3 class="text-xl md:text-2xl font-extrabold text-verdegris uppercase tracking-wide">
+        Consejo de la Judicatura
+      </h3>
+      <div class="mx-auto w-16 border-t-2 border-verdegris"></div>
+      
+      <p class="text-lg font-bold text-grisTexto uppercase tracking-normal">
+        Comisión de Administración
+      </p>
+      <div class="mx-auto w-12 border-t border-grisTexto"></div>
+      
+      <p class="text-base font-semibold text-grisTexto uppercase tracking-wide">
+        Coordinación General de Administración
+      </p>
+      <div class="mx-auto w-8 border-t border-grisTexto"></div>
+      
+      <p class="text-sm font-medium text-grisTexto uppercase tracking-wide">
+        Dirección de Recursos Humanos
+      </p>
+    </div>
 
-    <!-- TÍTULOS DE LA PÁGINA -->
+    
+
+  </div>
+</section>
 
     <!-- FORMULARIO PRINCIPAL -->
     <form
@@ -571,6 +577,7 @@
           <% if (locals.existeActa) { %>
             <div class="mb-2 text-green-600 font-bold text-sm">
               Documento previamente cargado <a href="/uploads/<%= user.nombreTrabajador %>_ACTA-NACIMIENTO.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+              <button type="button" onclick="eliminarPDF('ACTA-NACIMIENTO', this)" class="text-red-600 hover:text-red-800 underline text-xs ml-2">Eliminar</button>
             </div>
           <% } %>
           <input
@@ -722,11 +729,13 @@
             ></label
           >
           <input
-            type="text"
+            type="email"
             class="border border-gray-300 w-full p-3 rounded-md bg-gray-50"
             name="correo"
             placeholder="Correo Electrónico"
             required
+            pattern="[^\s@]+@[^\s@]+\.[^\s@]+"
+            title="Ingresa un correo electrónico válido (ejemplo: nombre@dominio.com)"
             value="<%= user.correoElectronico ? user.correoElectronico:'' %>"
           />
         </div>
@@ -747,6 +756,7 @@
             <% if (locals.existeIne) { %>
               <div class="mb-2 text-green-600 font-bold text-sm">
                 Documento previamente cargado <a href="/uploads/<%= user.nombreTrabajador %>_INE.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+                <button type="button" onclick="eliminarPDF('INE', this)" class="text-red-600 hover:text-red-800 underline text-xs ml-2">Eliminar</button>
               </div>
             <% } %>
             <input
@@ -963,6 +973,7 @@
           <% if (locals.existeDomicilio) { %>
             <div class="mb-2 text-green-600 font-bold text-sm">
               Documento previamente cargado <a href="/uploads/<%= user.nombreTrabajador %>_COMPROBANTE-DOMICILIO.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+              <button type="button" onclick="eliminarPDF('COMPROBANTE-DOMICILIO', this)" class="text-red-600 hover:text-red-800 underline text-xs ml-2">Eliminar</button>
             </div>
           <% } %>
           <input
@@ -2585,6 +2596,7 @@
           <% if (locals.existeGrado) { %>
             <div class="mb-2 text-green-600 font-bold text-sm">
               Documento previamente cargado <a href="/uploads/<%= user.nombreTrabajador %>_GRADO-ESTUDIOS.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+              <button type="button" onclick="eliminarPDF('GRADO-ESTUDIOS', this)" class="text-red-600 hover:text-red-800 underline text-xs ml-2">Eliminar</button>
             </div>
           <% } %>
           <input
@@ -2703,6 +2715,7 @@
           <% if (locals.existeRfc) { %>
             <div class="mb-2 text-green-600 font-bold text-sm">
               Documento cargado <a href="/uploads/<%= user.nombreTrabajador %>_RFC.pdf" target="_blank" class="underline text-blue-600 ml-2">Ver actual</a>
+              <button type="button" onclick="eliminarPDF('RFC', this)" class="text-red-600 hover:text-red-800 underline text-xs ml-2">Eliminar</button>
             </div>
           <% } %>
           <input

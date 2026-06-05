@@ -5,6 +5,13 @@ document.addEventListener("DOMContentLoaded", function () {
   const sangrecombo = document.getElementById("sangre-opciones");
   const botonFormulario = document.getElementById("botonFormulario");
 
+  window.addEventListener("pageshow", function (event) {
+    if (event.persisted && botonFormulario) {
+      botonFormulario.disabled = false;
+      botonFormulario.textContent = "Enviar";
+    }
+  });
+
   const camposAcentos = document.querySelectorAll(".acentos");
   const inputsFecha = document.querySelectorAll(
     "input[data-format='dd-mm-yyyy']",
@@ -946,16 +953,34 @@ Lo anterior en cumplimiento a lo dispuesto en los artículos 67 fracción III de
     });
   });
 
-  // Validación estricta para asegurar que solo se suban archivos PDF
   document.querySelectorAll('input[type="file"]').forEach((input) => {
+    const wrapper = document.createElement("div");
+    wrapper.className = "flex items-center gap-2";
+    input.parentNode.insertBefore(wrapper, input);
+    wrapper.appendChild(input);
+
+    const btnClear = document.createElement("button");
+    btnClear.type = "button";
+    btnClear.textContent = "✕ Quitar archivo";
+    btnClear.className = "text-xs text-red-600 hover:text-red-800 underline hidden";
+    wrapper.appendChild(btnClear);
+
     input.addEventListener("change", function () {
       if (this.files.length > 0) {
         const file = this.files[0];
         if (file.type !== "application/pdf") {
           alert("Error: Solo se permiten archivos en formato PDF.");
-          this.value = ""; // Limpia el input si el archivo no es válido
+          this.value = "";
+          btnClear.classList.add("hidden");
+        } else {
+          btnClear.classList.remove("hidden");
         }
       }
+    });
+
+    btnClear.addEventListener("click", function () {
+      input.value = "";
+      btnClear.classList.add("hidden");
     });
   });
 });
@@ -1371,7 +1396,7 @@ function validarActualizaciones(cantidadMaxima) {
 
     if (hayAlgo && incompleto) {
       alert(
-        `⚠️ Completa todos los campos de la actualización profesional ${i + 1} o deja todos vacíos.`,
+        `Completa todos los campos de la actualizacion profesional ${i + 1} o deja todos vacios.`,
       );
       if (!tema.value.trim()) tema.focus();
       else if (!fecha.value.trim()) fecha.focus();
@@ -1382,3 +1407,52 @@ function validarActualizaciones(cantidadMaxima) {
   }
   return true;
 }
+
+function cerrarSesion() {
+  fetch('/logout').then(function() {
+    window.location.href = '/login';
+  });
+}
+
+function eliminarPDF(tipo, btn) {
+  if (!confirm('Estas seguro de eliminar este documento?')) return;
+  fetch('/eliminar-pdf/' + tipo, { method: 'POST' })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        btn.parentElement.remove();
+        var fileInput = btn.parentElement.parentElement.querySelector('input[type="file"]');
+        if (fileInput) fileInput.required = true;
+      } else {
+        alert('Error al eliminar el documento');
+      }
+    })
+    .catch(function() {
+      alert('Error al eliminar el documento');
+    });
+}
+
+document.addEventListener("DOMContentLoaded", function() {
+  var correoInput = document.querySelector('input[name="correo"]');
+  if (correoInput) {
+    correoInput.addEventListener("input", function() {
+      if (this.value.length > 0 && !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(this.value)) {
+        this.setCustomValidity("Ingresa un correo electronico valido (ejemplo: nombre@dominio.com)");
+      } else {
+        this.setCustomValidity("");
+      }
+    });
+  }
+
+  document.querySelectorAll('select').forEach(function(select) {
+    var options = Array.from(select.options);
+    if (options.length <= 2) return;
+    var placeholder = options.shift();
+    options.sort(function(a, b) {
+      return a.textContent.localeCompare(b.textContent, 'es');
+    });
+    while (select.options.length > 0) select.remove(0);
+    select.appendChild(placeholder);
+    options.forEach(function(opt) { select.appendChild(opt); });
+  });
+});
